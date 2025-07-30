@@ -20,7 +20,104 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  /* Remove background and color so Tailwind classes apply */
   font-family: Arial, Helvetica, sans-serif;
+  /* Improve mobile touch scrolling */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Improve touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+nav a,
+nav a:link,
+nav a:visited,
+nav a:active,
+nav a:hover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  /* Force remove all button-like styles from nav links */
+}
+
+.animate-slide-in-right {
+  transform: translateX(100%);
+  animation: slideInRight 0.5s forwards;
+}
+.animate-slide-in-left {
+  transform: translateX(-100%);
+  animation: slideInLeft 0.5s forwards;
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-carousel-slide-in-right {
+  animation: carouselSlideInRight 0.5s forwards;
+}
+.animate-carousel-slide-in-left {
+  animation: carouselSlideInLeft 0.5s forwards;
+}
+.animate-carousel-slide-out-left {
+  animation: carouselSlideOutLeft 0.5s forwards;
+}
+.animate-carousel-slide-out-right {
+  animation: carouselSlideOutRight 0.5s forwards;
+}
+@keyframes carouselSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes carouselSlideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes carouselSlideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes carouselSlideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+/* Touch-friendly improvements */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Mobile hover alternatives */
+@media (hover: none) and (pointer: coarse) {
+  .group:hover .group-hover\:opacity-100 {
+    opacity: 0;
+  }
+  
+  .group:active .group-hover\:opacity-100 {
+    opacity: 1;
+  }
 }

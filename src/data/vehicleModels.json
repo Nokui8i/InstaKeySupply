@@ -1,0 +1,63 @@
+{
+  "Acura": {"CL":[],"CSX (Canada)":[],"EL (Canada)":[],"ILX":[],"Integra":[],"Legend":[],"MDX":[],"NSX":[],"RDX":[],"RL":[],"RLX":[],"RSX":[],"SLX":[],"TL":[],"TLX":[],"TSX":[],"Vigor":[],"ZDX":[]},
+  "Alfa Romeo": {"4C Coupe":[],"4C Spider":[],"Giulia":[],"Giulietta Coupe":[],"MiTo":[],"Stelvio":[]},
+  "Audi": {"100":[],"80":[],"90":[],"A3":[],"A4":[],"A4 ALLROAD":[],"A5":[],"A5 Cabriolet":[],"A6":[],"A6 ALLROAD":[],"A7":[],"A8":[],"Q3":[],"Q5":[],"Q7":[],"Q8":[],"R8":[],"RS4":[],"RS6":[],"S3":[],"S4":[],"S5":[],"S6":[],"S7":[],"S8":[],"SQ7":[],"TT":[]},
+  "Bentley": {"Continental":[]},
+  "BMW": {"1-Series M":[],"1600":[],"2-Series":[],"2002":[],"3-Series":[],"3.0 CS":[],"4-Series":[],"400 RS":[],"450":[],"5-Series":[],"6-Series":[],"650":[],"7-Series":[],"8-Series":[],"Bavaria":[],"F650":[],"F650 GS":[],"F650 ST":[],"F650 Xcountry":[],"F900":[],"G650 Xchallenge":[],"G650 Xmoto":[],"I3":[],"I8":[],"K100":[],"K100RS":[],"K100LS":[],"K1100LT":[],"K1200":[],"K1200LT":[],"K75":[],"M3":[],"M4":[],"M5":[],"M6":[],"Misc Models":[],"R100":[],"R100GS":[],"R1100GS":[],"R1100R":[],"R1100RT":[],"R1200":[],"R45":[],"R65":[],"R80":[],"R90":[],"R90/6":[],"R90S":[],"X1":[],"X2":[],"X3":[],"X4":[],"X5":[],"X6":[],"Z3":[],"Z4":[],"Z8":[]},
+  "Buick": {"Allure (Canada)":[],"Allure":[],"Cascada":[],"Century":[],"Enclave":[],"Encore":[],"Encore GX":[],"Envision":[],"Envista":[],"LaCrosse":[],"LeSabre":[],"Lucerne":[],"Misc Models":[],"Park Avenue":[],"Rainier":[],"Reatta":[],"Regal":[],"Rendezvous":[],"Riviera":[],"Roadmaster":[],"Skylark":[],"Terraza":[],"Verano":[]},
+  "Cadillac": {"Allante":[],"ATS":[],"Brougham":[],"BRX":[],"Catera":[],"Concours":[],"CT4":[],"CT4-V":[],"CT5":[],"CT5-V":[],"CT6":[],"CT6 Plug-In":[],"CTS":[],"Deville":[],"DTS":[],"Eldorado":[],"ELR":[],"Escalade":[],"Escalade-V":[],"Fleetwood":[],"Lyriq":[],"Misc Models":[],"Seville":[],"SRX":[],"STS":[],"XLR":[],"XT4":[],"XT5":[],"XT6":[],"XTS":[]},
+  "Chevrolet": {"Astro":[],"Avalanche":[],"Aveo":[],"Blazer":[],"Blazer EV":[],"Bolt EUV":[],"Bolt EV":[],"Camaro":[],"Caprice":[],"Caprice Classic":[],"Caprice PPV":[],"Captiva Sport":[],"Cavalier":[],"City Express":[],"Cobalt":[],"Colorado":[],"Corvette":[],"Cruze":[],"Equinox":[],"Equinox EV":[],"Express":[],"HHR":[],"Impala":[],"Lumina":[],"Lumina Car":[],"Malibu":[],"Metro":[],"Misc Models":[],"Monte Carlo":[],"NQR":[],"Prizm":[],"S-10":[],"S-15 Sonoma":[],"Silverado":[],"Silverado EV":[],"Sonic":[],"Spark":[],"SS":[],"SSR":[],"Suburban":[],"Tahoe":[],"Tracker":[],"Trailblazer":[],"Traverse":[],"Trax":[],"Uplander":[],"Venture":[],"Volt":[]},
+  "Lexus": {"CT200h":[],"ES250":[],"ES300":[],"ES300h":[],"ES330":[],"ES350":[],"GS F":[],"GS200t":[],"GS300":[],"GS350":[],"GS400":[],"GS430":[],"GS450h":[],"GS460":[],"GX460":[],"GX470":[],"GX550":[],"HS250":[],"HS250h":[],"IS C":[],"IS F":[],"IS200":[],"IS200t":[],"IS250":[],"IS300":[],"IS350":[],"LC500":[],"LC500 Convertible":[],"LC500h":[],"LS400":[],"LS430":[],"LS460":[],"LS500":[],"LS500h":[],"LS600h":[],"LX450":[],"LX470":[],"LX570":[],"LX600":[],"NX200":[],"NX200t":[],"NX250":[],"NX300":[],"NX300h":[],"NX350":[],"NX350h":[],"NX450h+":[],"RC200":[],"RC200t":[],"RC300":[],"RC350":[],"RCF":[],"RX300":[],"RX330":[],"RX350":[],"RX350h":[],"RX350L":[],"RX400h":[],"RX450h":[],"RX450hL":[],"RX500h":[],"SC300":[],"SC400":[],"SC430":[],"TX 350":[],"TX500h":[],"TX550h+":[],"UX200":[],"UX250h":[]}
+  ,
+  "Lincoln": {"All Models":[],"Aviator":[],"Blackwood":[],"Continental":[],"Corsair":[],"LS":[],"Mark LT":[],"Mark Series":[],"Mark V":[],"Mark VI":[],"Mark VII":[],"Mark VIII":[],"MKC":[],"MKS":[],"MKT":[],"MKX":[],"MKZ":[],"Nautilus":[],"Navigator":[],"Town Car":[],"Versailles":[],"Zephyr":[]}
+  ,
+  "Mack": {"All Models":[]}
+  ,
+  "Maserati": {"Ghibli":[],"Granturismo Sedan":[],"Levante":[],"Quattroporte":[]}
+  ,
+  "Mazda": {"B-Series Pickup":[],"CX-3":[],"CX-30":[],"CX-5":[],"CX-50":[],"CX-7":[],"CX-70":[],"CX-9":[],"CX-90":[],"Mazda2":[],"Mazda3":[],"Mazda323":[],"Mazda5":[],"Mazda6":[],"Mazda626":[],"Mazda929":[],"MazdaSpeed3":[],"MazdaSpeed6":[],"Miata MX5":[],"Millenia":[],"Misc Models":[],"MPV":[],"MX-30":[],"MX3":[],"MX6":[],"Navajo":[],"Protege":[],"RX4":[],"RX7":[],"RX8":[],"Tribute":[]}
+  ,
+  "Mercury": {"All Models":[],"Capri":[],"Cougar":[],"Grand Marquis":[],"LN7 Lynx":[],"Marauder":[],"Mariner":[],"Milan":[],"Montego":[],"Monterey":[],"Mountaineer":[],"Mystique":[],"Sable":[],"Topaz":[],"Tracer":[],"Villager":[]}
+  ,
+  "Mercedes": {"190D":[],"190E":[],"All Mercedes Models":[],"C-Class":[],"E-Class":[],"G-Class":[],"M-Class/GLE-Class":[],"Newer Models":[],"R-Class":[],"S-Class":[],"Sprinter":[]}
+  ,
+  "MG": {"All Models":[]}
+  ,
+  "Mini": {"Cooper":[]}
+  ,
+  "Mitsubishi": {"3000GT":[],"Cordia":[],"Diamante":[],"Eclipse":[],"Eclipse Cross":[],"Eclipse Spider":[],"Endeavor":[],"Expo":[],"FUSO F SERIES":[],"Galant":[],"I-MiEV":[],"Lancer":[],"Lancer EVO":[],"Lancer GTS":[],"Mirage":[],"Mitsubishi Pickup":[],"Montero":[],"Montero Sport":[],"Outlander":[],"Outlander Sport":[],"Precis":[],"Raider":[],"RVR":[],"Sigma":[],"Starion":[],"Tredia":[],"Van Wagon":[]}
+  ,
+  "Moto Guzzi": {"1200 Sport":[],"350 / 750 Nevada":[],"Audace":[],"Bellagio":[],"Breva":[],"Breva 1100":[],"Breva V1100":[],"California 1400":[],"California EV V11":[],"Eldorado":[],"Griso":[],"Griso 1100":[],"Misc Models":[],"Norge":[],"Norge 1200":[],"Stelvio 1200":[],"V9 Bobber":[],"V9 Roamer":[]}
+  ,
+  "MV Agusta": {"Misc Models":[]}
+  ,
+  "Nissan": {"200SX":[],"240SX":[],"300ZX":[],"350Z":[],"370Z":[],"Altima":[],"Ariya":[],"Armada":[],"Axxess":[],"Cube":[],"Frontier":[],"GT-R":[],"Juke":[],"Kicks":[],"Leaf":[],"Maxima":[],"Micra (Canada)":[],"Murano":[],"Murano Crosscabriolet":[],"NV Van":[],"NV1500":[],"NV2500":[],"NV3500":[],"NX1600":[],"NX2000":[],"Pathfinder":[],"Pickup":[],"Pulsar":[],"Quest":[],"Sentra":[],"Stanza":[],"Titan":[],"Versa":[],"Versa Note":[],"X-Trail":[],"Xterra":[],"Z":[]}
+  ,
+  "Oldsmobile": {"Achieva":[],"Alero":[],"Aurora":[],"Bravada":[],"Cutlass":[],"Cutlass Ciera":[],"Cutlass Cruiser":[],"Cutlass Supreme":[],"Eighty Eight":[],"Intrigue":[],"LSS":[],"Misc Models":[],"Ninety Eight":[],"Regency":[],"Silhouette":[],"Toronado":[]}
+  ,
+  "Peterbilt": {"All Models":[]}
+  ,
+  "Plymouth": {"Acclaim":[],"All Models":[],"Breeze":[],"Caravelle":[],"Champ":[],"Colt":[],"Conquest":[],"Gran Fury":[],"Grand Voyager":[],"Horizon":[],"Laser":[],"Misc Models":[],"Neon":[],"Prowler":[],"Reliant":[],"Sapporo":[],"Sundance":[],"Volare":[],"Voyager":[]}
+  ,
+  "Polestar": {"1":[],"2":[]}
+  ,
+  "Pontiac": {"Aztek":[],"Bonneville":[],"Fiero":[],"Firebird":[],"G3":[],"G5":[],"G6":[],"G8":[],"Grand Am":[],"Grand Prix":[],"GTO":[],"Lemans":[],"Misc Models":[],"Montana":[],"Pursuit":[],"Sky":[],"Solstice":[],"Sunbird":[],"Sunfire":[],"Torrent":[],"Trans Am":[],"Trans Sport":[],"Vibe":[],"Wave (Canada)":[]}
+  ,
+  "Porsche": {"911":[],"914":[],"924":[],"928":[],"944":[],"968":[],"All Models":[],"Boxster":[],"Carrera":[],"Cayenne":[],"Cayman":[],"Macan":[],"Panamera":[]}
+  ,
+  "RAM": {"1500":[],"2500":[],"3500":[],"Cargo":[],"Promaster":[],"ProMaster City":[]}
+  ,
+  "Rolls Royce": {"All Models":[]}
+  ,
+  "Saab": {"9-2X":[],"9-3":[],"9-4X":[],"9-5":[],"9-7X":[],"90":[],"900":[],"9000":[],"99":[],"Misc Models":[]}
+  ,
+  "Saturn": {"Astra":[],"Aura":[],"Ion":[],"L-Series":[],"Outlook":[],"Relay":[],"S-Series":[],"SC":[],"SC1":[],"SC2":[],"Sky":[],"SL":[],"SL1":[],"SL2":[],"SW":[],"SW1":[],"SW2":[],"Vue":[]}
+  ,
+  "Scion": {"FR-S":[],"IA":[],"IM":[],"IQ":[],"TC":[],"XA":[],"XB":[],"XD":[]}
+  ,
+  "Smart": {"Forfour":[],"Fortwo":[]}
+  ,
+  "Subaru": {"All Models":[],"Ascent":[],"B9 Tribeca":[],"Baja":[],"Brat":[],"BRZ":[],"DL":[],"Forester":[],"GL":[],"Impreza":[],"Impreza WRX":[],"Impreza WRX STi":[],"Justy":[],"Legacy":[],"Loyale":[],"Outback":[],"Solterra":[],"STI":[],"SVX":[],"Tribeca":[],"WRX":[],"XV Crosstrek":[]}
+  ,
+  "Suzuki": {"4 Wheeler/ATV":[],"400S":[],"650 Djebel":[],"Address":[],"Address 100":[],"Aerio":[],"AH50":[],"AJ50 ZZ":[],"AJ60 ZZ":[],"AN125":[],"AP50":[],"B-King":[],"Bandit":[],"Boulevard C109R":[],"Boulevard C50":[],"Boulevard C90":[],"Boulevard M109R":[],"Boulevard M50":[],"Boulevard M90":[],"Boulevard M95":[],"Boulevard S40":[],"Boulevard S50":[],"Boulevard S83":[],"Burgman 150/400/650":[],"Cavalcade GV1400":[],"CP50":[],"DL1000":[],"DR 125 SE":[],"DR-Z":[],"DR100/125/200/250/3":[],"DR350":[],"DR400":[],"DR500":[],"DR600R":[],"DR750S":[],"DR800SL":[],"Enduro 400":[],"Equator":[],"Esteem":[],"Forenza":[],"Gladius":[],"GN400":[],"GNX250E":[],"GR650":[],"Grand Vitara":[],"GS1000":[],"GS125ES":[],"GS400":[],"GS450":[],"GS500":[],"GS500F":[],"GS550M":[],"GS550T":[],"GS650 G/GT/GT Turbo":[],"GS750L":[],"GS850":[],"GSF Bandit":[],"GSF1250":[],"GSF400":[],"GSF500":[],"GSF600":[],"GSX 600F/700F Katana":[],"GSX Katana":[],"GSX-R1000":[],"GSX-R1100":[],"GSX-R600":[]}
+} 
