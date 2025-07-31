@@ -625,7 +625,6 @@ function AdminInventoryContent() {
       price: product.price,
       oldPrice: product.oldPrice || "",
       category: product.category || "",
-      categoryId: product.categoryId || "",
       description: product.description || "",
         shortDescription: product.shortDescription || "",
       sku: product.sku || "",
