@@ -45,6 +45,7 @@ interface NavBarProps {
 export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, onSidebarToggle, sidebarOpen }: NavBarProps) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -196,8 +197,8 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           )}
           
           {/* Center: Logo */}
-          <a href="/" className="flex items-center justify-center">
-            <Image src="/Untitled design.png" alt="InstaKey Logo" width={40} height={40} className="object-contain" priority />
+          <a href="/" className="flex items-center justify-center flex-1">
+            <Image src="/Untitled design.png" alt="InstaKey Logo" width={56} height={56} className="object-contain" priority />
           </a>
           
           {/* Right: Cart & User */}
@@ -233,8 +234,8 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               className="w-full rounded-full border border-blue-900/30 bg-white/90 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm font-medium" 
             />
             <button
-              onClick={() => setSearchOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
+              onClick={() => setFilterOpen(true)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg"
               aria-label="Filters"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -581,6 +582,114 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   <p className="text-sm text-gray-400 mt-1">Enter keywords to find what you're looking for</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Filter Modal */}
+      {filterOpen && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20 px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setFilterOpen(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in slide-in-from-top-2 duration-200">
+            {/* Filter Header */}
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Vehicle Filters</h3>
+                <button
+                  onClick={() => setFilterOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Content */}
+            <div className="p-4 space-y-4">
+              {/* Make Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Make</label>
+                <select
+                  className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+                  value={selectedMake}
+                  onChange={e => {
+                    setSelectedMake(e.target.value);
+                    setSelectedModel('');
+                    setSelectedYear('');
+                  }}
+                >
+                  <option value="">Select Make</option>
+                  {Object.keys(vehicleData).map(make => (
+                    <option key={make} value={make}>{make}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Model Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Model</label>
+                <select
+                  className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+                  value={selectedModel}
+                  onChange={e => {
+                    setSelectedModel(e.target.value);
+                    setSelectedYear('');
+                  }}
+                  disabled={!selectedMake}
+                >
+                  <option value="">Select Model</option>
+                  {selectedMake && vehicleData[selectedMake] && Object.keys(vehicleData[selectedMake]).map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Year Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Year Range</label>
+                <select
+                  className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+                  value={selectedYear}
+                  onChange={e => setSelectedYear(e.target.value)}
+                  disabled={!selectedModel}
+                >
+                  <option value="">Select Year</option>
+                  {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
+                    <option key={yearRange} value={yearRange}>{yearRange}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    handleSearchClick();
+                    setFilterOpen(false);
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Apply Filters
+                </button>
+                <button
+                  onClick={() => {
+                    handleClearVehicleFilters();
+                    setFilterOpen(false);
+                  }}
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
         </div>

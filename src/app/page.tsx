@@ -2,6 +2,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import CarouselBanner from "./components/CarouselBanner";
 import ProductCarousel from "./components/ProductCarousel";
+import ProductCard from "./components/ProductCard";
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import PromoModal from './components/PromoModal';
@@ -456,7 +457,28 @@ function HomeContent() {
             )}
             
             {filteredProducts.length > 0 ? (
-              <ProductCarousel products={filteredProducts} />
+              <>
+                {/* Mobile: 2 cards per row */}
+                <div className="md:hidden">
+                  <div className="grid grid-cols-2 gap-3 px-2">
+                    {filteredProducts.slice(0, 8).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images?.[0] || product.imageUrl || '/sample-key-1.png'}
+                        title={product.title}
+                        model={product.model}
+                        price={product.price}
+                        oldPrice={product.oldPrice}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop: Carousel */}
+                <div className="hidden md:block">
+                  <ProductCarousel products={filteredProducts} />
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 sm:py-12">
                 <p className="text-gray-400 text-base sm:text-lg px-4">
@@ -492,15 +514,72 @@ function HomeContent() {
         <>
           <section className="mt-0 mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>
-            <ProductCarousel products={products.slice(0, 6)} />
+            {/* Mobile: 2 cards per row */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-2 gap-3 px-2">
+                {products.slice(0, 6).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    image={product.images?.[0] || product.imageUrl || '/sample-key-1.png'}
+                    title={product.title}
+                    model={product.model}
+                    price={product.price}
+                    oldPrice={product.oldPrice}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Desktop: Carousel */}
+            <div className="hidden md:block">
+              <ProductCarousel products={products.slice(0, 6)} />
+            </div>
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Best Sellers</h2>
-            <ProductCarousel products={products.slice(0, 6)} />
+            {/* Mobile: 2 cards per row */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-2 gap-3 px-2">
+                {products.slice(0, 6).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    image={product.images?.[0] || product.imageUrl || '/sample-key-1.png'}
+                    title={product.title}
+                    model={product.model}
+                    price={product.price}
+                    oldPrice={product.oldPrice}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Desktop: Carousel */}
+            <div className="hidden md:block">
+              <ProductCarousel products={products.slice(0, 6)} />
+            </div>
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">New Arrivals</h2>
-            <ProductCarousel products={products.slice(0, 6)} />
+            {/* Mobile: 2 cards per row */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-2 gap-3 px-2">
+                {products.slice(0, 6).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    image={product.images?.[0] || product.imageUrl || '/sample-key-1.png'}
+                    title={product.title}
+                    model={product.model}
+                    price={product.price}
+                    oldPrice={product.oldPrice}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Desktop: Carousel */}
+            <div className="hidden md:block">
+              <ProductCarousel products={products.slice(0, 6)} />
+            </div>
           </section>
         </>
       )}

@@ -121,7 +121,7 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
             <button
               key={i}
               onClick={() => handleDot(i)}
-              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full border border-white shadow transition-all duration-200 touch-manipulation ${i === current ? "bg-blue-400" : "bg-white/60 hover:bg-white/80"}`}
+              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 rounded-full border border-white shadow transition-all duration-200 touch-manipulation ${i === current ? "bg-blue-400" : "bg-white/60 hover:bg-white/80"}`}
               aria-label={`Go to banner ${i + 1}`}
             />
           ))}
