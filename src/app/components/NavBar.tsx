@@ -197,7 +197,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           )}
           
           {/* Center: Logo */}
-          <a href="/" className="flex items-center justify-center flex-1">
+          <a href="/" className="flex items-center justify-center flex-1 ml-4">
             <Image src="/Untitled design.png" alt="InstaKey Logo" width={56} height={56} className="object-contain" priority />
           </a>
           

@@ -39,11 +39,11 @@ export default function ProductCard({
   return (
     <div 
       onClick={handleCardClick}
-      className="group bg-white/90 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-200 p-1.5 sm:p-2 md:p-3 lg:p-4 max-w-[140px] sm:max-w-xs w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-2xl relative overflow-hidden cursor-pointer"
+      className="group bg-white/90 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-200 p-1 sm:p-2 md:p-3 lg:p-4 max-w-[150px] sm:max-w-xs w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-2xl relative overflow-hidden cursor-pointer"
     >
       {/* Badges */}
       {/* Product Image */}
-      <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center mb-1.5 sm:mb-2 md:mb-3 lg:mb-4 border border-gray-100">
+      <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center mb-1 sm:mb-2 md:mb-3 lg:mb-4 border border-gray-100">
         <Image src={image} alt={title} width={160} height={160} className="object-contain" />
       </div>
       

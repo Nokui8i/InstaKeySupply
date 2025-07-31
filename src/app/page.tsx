@@ -460,7 +460,7 @@ function HomeContent() {
               <>
                 {/* Mobile: 2 cards per row */}
                 <div className="md:hidden">
-                  <div className="grid grid-cols-2 gap-3 px-2">
+                  <div className="grid grid-cols-2 gap-2 px-1">
                     {filteredProducts.slice(0, 8).map((product) => (
                       <ProductCard
                         key={product.id}
@@ -516,7 +516,7 @@ function HomeContent() {
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-2">
+              <div className="grid grid-cols-2 gap-2 px-1">
                 {products.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
@@ -539,7 +539,7 @@ function HomeContent() {
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Best Sellers</h2>
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-2">
+              <div className="grid grid-cols-2 gap-2 px-1">
                 {products.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
@@ -562,7 +562,7 @@ function HomeContent() {
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">New Arrivals</h2>
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-2">
+              <div className="grid grid-cols-2 gap-2 px-1">
                 {products.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
