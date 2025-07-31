@@ -401,7 +401,7 @@ function HomeContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
+    <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
       <PromoModal open={showPromo} onClose={() => setShowPromo(false)} />
       
       {/* Hero Section - Carousel Banner */}
@@ -446,20 +446,20 @@ function HomeContent() {
                 {activeFilters.model && ` ${activeFilters.model}`}
                 {activeFilters.yearRange && ` (${activeFilters.yearRange})`}
                 </p>
-                                  <p className="text-xs text-blue-600 mt-1">
-                    Showing {filteredProducts.length} compatible product{filteredProducts.length !== 1 ? 's' : ''}
-                    {activeFilters.make && !activeFilters.model && ' for all ' + activeFilters.make + ' models'}
-                    {activeFilters.make && activeFilters.model && !activeFilters.yearRange && ' for all ' + activeFilters.make + ' ' + activeFilters.model + ' years'}
-                    {activeFilters.make && activeFilters.model && activeFilters.yearRange && ' for ' + activeFilters.make + ' ' + activeFilters.model + ' ' + activeFilters.yearRange}
-                  </p>
+                <p className="text-xs text-blue-600 mt-1 break-words">
+                  Showing {filteredProducts.length} compatible product{filteredProducts.length !== 1 ? 's' : ''}
+                  {activeFilters.make && !activeFilters.model && ' for all ' + activeFilters.make + ' models'}
+                  {activeFilters.make && activeFilters.model && !activeFilters.yearRange && ' for all ' + activeFilters.make + ' ' + activeFilters.model + ' years'}
+                  {activeFilters.make && activeFilters.model && activeFilters.yearRange && ' for ' + activeFilters.make + ' ' + activeFilters.model + ' ' + activeFilters.yearRange}
+                </p>
               </div>
             )}
             
             {filteredProducts.length > 0 ? (
               <ProductCarousel products={filteredProducts} />
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-400 text-base sm:text-lg px-4">
                   {searchParams.get('category') 
                     ? `No products found in "${categories.find(cat => cat.id === searchParams.get('category'))?.name || 'this category'}"`
                     : activeFilters 
@@ -476,7 +476,7 @@ function HomeContent() {
                         handleClearFilters();
                       }
                     }}
-                    className="mt-4 text-blue-400 hover:text-blue-300 underline"
+                    className="mt-4 text-blue-400 hover:text-blue-300 underline text-sm sm:text-base"
                   >
                     {searchParams.get('category') ? 'View All Products' : 'Clear filters'}
                   </button>
@@ -490,29 +490,29 @@ function HomeContent() {
       {/* Featured Product Carousels */}
       {products.length > 0 && (
         <>
-          <section className="mt-0 mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-blue-600 text-center drop-shadow">Featured Car Keys</h2>
+          <section className="mt-0 mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>
             <ProductCarousel products={products.slice(0, 6)} />
           </section>
-          <section className="mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-blue-600 text-center drop-shadow">Best Sellers</h2>
+          <section className="mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Best Sellers</h2>
             <ProductCarousel products={products.slice(0, 6)} />
           </section>
-          <section className="mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-blue-600 text-center drop-shadow">New Arrivals</h2>
+          <section className="mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">New Arrivals</h2>
             <ProductCarousel products={products.slice(0, 6)} />
           </section>
         </>
       )}
 
       {/* Call to Action */}
-      <section className="mt-16 sm:mt-24 text-center px-4">
-        <h3 className="text-lg sm:text-xl font-semibold mb-2 text-blue-600">Need help or have a question?</h3>
+      <section className="mt-12 sm:mt-16 md:mt-24 text-center px-4">
+        <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-blue-600">Need help or have a question?</h3>
         <p className="text-gray-300 mb-4 text-sm sm:text-base">Our expert team is here for you. Call, chat, or email us anytime.</p>
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('show-contact'))}
-          className="inline-block bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full px-6 sm:px-8 py-2 sm:py-3 font-bold shadow hover:scale-105 hover:shadow-xl transition-all duration-300 border border-blue-300/40 min-h-[44px] flex items-center justify-center touch-manipulation"
+          className="inline-block bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full px-4 sm:px-6 md:px-8 py-2 sm:py-3 font-bold shadow hover:scale-105 hover:shadow-xl transition-all duration-300 border border-blue-300/40 min-h-[44px] flex items-center justify-center touch-manipulation text-sm sm:text-base"
         >
           Contact Support
         </button>

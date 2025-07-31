@@ -223,15 +223,15 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             </span>
           </a>
           {/* Centered search and filter */}
-          <div className="flex-1 flex items-center justify-center gap-3">
-            {/* Search Bar (smaller) */}
+          <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3">
+            {/* Search Bar (mobile optimized) */}
             <div className="w-full max-w-xs flex justify-center relative">
               <input 
                 type="search" 
-                placeholder="Search products..." 
+                placeholder="Search..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-full border border-blue-900/30 bg-white/70 text-gray-900 px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-base font-medium" 
+                className="w-full rounded-full border border-blue-900/30 bg-white/70 text-gray-900 px-3 sm:px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm sm:text-base font-medium" 
               />
               {/* Desktop search results dropdown */}
               {searchTerm && (
@@ -292,10 +292,21 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 </div>
               )}
             </div>
-            {/* Filter fields */}
-            <div className="flex gap-2 items-center">
+            {/* Mobile Filter Button */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="sm:hidden p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              aria-label="Open filters"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+            
+            {/* Filter fields - Desktop only */}
+            <div className="hidden sm:flex gap-2 items-center">
               <select
-                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
                   selectedMake 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : 'bg-white border border-gray-300 text-gray-700'
@@ -313,7 +324,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 ))}
               </select>
               <select
-                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
                   selectedModel 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : selectedMake 
@@ -334,7 +345,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               </select>
               {/* Year/Range Dropdown - always dynamic */}
               <select
-                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
                   selectedYear 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : selectedModel 
@@ -345,7 +356,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 onChange={e => setSelectedYear(e.target.value)}
                 disabled={!selectedModel}
               >
-                <option value="">Please Select</option>
+                <option value="">Year</option>
                 {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
                   <option key={yearRange} value={yearRange}>{yearRange}</option>
                 ))}

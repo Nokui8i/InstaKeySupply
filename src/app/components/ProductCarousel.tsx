@@ -46,8 +46,8 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
 
   return (
     <div className="relative w-full">
-      {/* Mobile: show all products in a 2-column grid, no carousel */}
-      <div className="grid grid-cols-2 gap-4 md:hidden">
+      {/* Mobile: show all products in a responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:hidden">
         {products.map((p, i) => (
           <ProductCard 
             key={p.id || i} 

@@ -103,26 +103,25 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
         {/* Arrows - Mobile optimized */}
         <button
           onClick={handlePrev}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-2xl sm:text-4xl font-bold p-2 sm:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
+          className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-xl sm:text-2xl md:text-4xl font-bold p-1.5 sm:p-2 md:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex items-center justify-center touch-manipulation"
           aria-label="Previous banner"
         >
           {'<'}
         </button>
         <button
           onClick={handleNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-2xl sm:text-4xl font-bold p-2 sm:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
+          className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-xl sm:text-2xl md:text-4xl font-bold p-1.5 sm:p-2 md:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex items-center justify-center touch-manipulation"
           aria-label="Next banner"
         >
           {'>'}
         </button>
         {/* Dots - Mobile optimized */}
-        <div className="absolute bottom-0.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-0.5 sm:gap-3 z-40">
+        <div className="absolute bottom-1 sm:bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2 md:gap-3 z-40">
           {images.map((_, i) => (
             <button
               key={i}
               onClick={() => handleDot(i)}
-              className={`w-0.5 h-0.5 sm:w-3 sm:h-3 rounded-full border border-white shadow transition-all duration-200 touch-manipulation ${i === current ? "bg-blue-400" : "bg-white/60 hover:bg-white/80"}`}
-              style={{ minWidth: '2px', minHeight: '2px' }}
+              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full border border-white shadow transition-all duration-200 touch-manipulation ${i === current ? "bg-blue-400" : "bg-white/60 hover:bg-white/80"}`}
               aria-label={`Go to banner ${i + 1}`}
             />
           ))}
