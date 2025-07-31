@@ -181,13 +181,13 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 console.log('Sidebar toggle clicked');
                 onSidebarToggle?.();
               }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
               aria-label="Toggle sidebar"
             >
               {sidebarOpen ? (
-                <XMarkIcon className="w-6 h-6 text-white" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               ) : (
-                <Bars3Icon className="w-6 h-6 text-white" />
+                <Bars3Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               )}
             </button>
           )}
@@ -200,22 +200,22 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 console.log('Admin sidebar toggle clicked');
                 window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'));
               }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
               aria-label="Toggle admin sidebar"
             >
               {adminSidebarOpenState ? (
-                <XMarkIcon className="w-6 h-6 text-white" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               ) : (
-                <Cog6ToothIcon className="w-6 h-6 text-white" />
+                <Cog6ToothIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               )}
             </button>
           )}
           
           {/* Logo (always visible, left) */}
-          <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative" style={{marginLeft: '-8px', zIndex: 10}}>
-            {/* Mobile logo */}
-            <span className="relative flex items-center justify-center md:hidden" style={{position: 'absolute', top: '-12px', left: 0, height: '64px', width: '96px'}}>
-              <Image src="/Untitled design.png" alt="InstaKey Logo" width={96} height={96} className="object-contain" priority />
+          <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative">
+            {/* Mobile logo - much smaller */}
+            <span className="relative flex items-center justify-center md:hidden">
+              <Image src="/Untitled design.png" alt="InstaKey Logo" width={48} height={48} className="object-contain" priority />
             </span>
             {/* Desktop logo (larger) */}
             <span className="relative hidden md:flex items-center justify-center" style={{position: 'absolute', top: '-100px', left: '-300px', height: '260px', width: '340px'}}>
@@ -295,10 +295,10 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             {/* Mobile Filter Button */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="sm:hidden p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              className="sm:hidden p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
               aria-label="Open filters"
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
             </button>
@@ -407,21 +407,21 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             {/* User/account icon */}
             <div className="relative">
               <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none">
-                <UserIcon className="w-7 h-7 text-white hover:text-blue-300 transition" />
+                <UserIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
               </button>
               <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
             </div>
             {/* Wishlist icon (only if logged in) */}
             {user && (
               <Link href="/wishlist" className="relative group">
-                <HeartIcon className="w-7 h-7 text-pink-500 hover:text-pink-600 transition" />
+                <HeartIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-pink-500 hover:text-pink-600 transition" />
               </Link>
             )}
             {/* Cart icon */}
             <Link href="/cart" className="relative group">
-              <ShoppingCartIcon className="w-7 h-7 text-white hover:text-blue-300 transition" />
+              <ShoppingCartIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 shadow-lg">
+                <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-pink-500 text-white text-xs font-bold rounded-full px-1 py-0.5 sm:px-1.5 shadow-lg">
                   {cartCount}
                 </span>
               )}
