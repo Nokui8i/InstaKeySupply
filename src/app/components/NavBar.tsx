@@ -171,7 +171,82 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
   return (
     <>
-      <nav className="sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/80 via-[#181f2b]/80 to-[#232a36]/80 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl transition-all duration-500">
+      {/* Mobile Navigation Bar */}
+      <nav className="md:hidden sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/95 via-[#181f2b]/95 to-[#232a36]/95 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl">
+        <div className="flex items-center justify-between px-3 py-2">
+          {/* Left: Menu Button */}
+          {!pathname.startsWith('/admin') && (
+            <button
+              onClick={() => onSidebarToggle?.()}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Menu"
+            >
+              <Bars3Icon className="w-5 h-5 text-white" />
+            </button>
+          )}
+          
+          {pathname.startsWith('/admin') && (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'))}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Admin menu"
+            >
+              <Cog6ToothIcon className="w-5 h-5 text-white" />
+            </button>
+          )}
+          
+          {/* Center: Logo */}
+          <a href="/" className="flex items-center justify-center">
+            <Image src="/Untitled design.png" alt="InstaKey Logo" width={40} height={40} className="object-contain" priority />
+          </a>
+          
+          {/* Right: Cart & User */}
+          <div className="flex items-center gap-2">
+            <Link href="/cart" className="relative p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+              <ShoppingCartIcon className="w-5 h-5 text-white" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            
+            <button
+              ref={userIconRef}
+              onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="User menu"
+            >
+              <UserIcon className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Mobile Search Bar */}
+        <div className="px-3 pb-2">
+          <div className="relative">
+            <input 
+              type="search" 
+              placeholder="Search products..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-full border border-blue-900/30 bg-white/90 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm font-medium" 
+            />
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
+              aria-label="Filters"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Desktop Navigation Bar */}
+      <nav className="hidden md:block sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/80 via-[#181f2b]/80 to-[#232a36]/80 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl transition-all duration-500">
         <div className="max-w-7xl mx-auto flex flex-row items-center justify-between px-3 sm:px-4 py-2 sm:py-1 gap-3 sm:gap-6 rounded-xl text-center relative">
           {/* Sidebar Toggle Button - back to left side - hide on admin pages */}
           {!pathname.startsWith('/admin') && (
@@ -213,25 +288,21 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           
           {/* Logo (always visible, left) */}
           <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative">
-            {/* Mobile logo - much smaller */}
-            <span className="relative flex items-center justify-center md:hidden">
-              <Image src="/Untitled design.png" alt="InstaKey Logo" width={48} height={48} className="object-contain" priority />
-            </span>
             {/* Desktop logo (larger) */}
-            <span className="relative hidden md:flex items-center justify-center" style={{position: 'absolute', top: '-100px', left: '-300px', height: '260px', width: '340px'}}>
+            <span className="relative flex items-center justify-center" style={{position: 'absolute', top: '-100px', left: '-300px', height: '260px', width: '340px'}}>
               <Image src="/Untitled design.png" alt="InstaKey Logo" width={260} height={260} className="object-contain" priority />
             </span>
           </a>
           {/* Centered search and filter */}
-          <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3">
-            {/* Search Bar (mobile optimized) */}
+          <div className="flex-1 flex items-center justify-center gap-3">
+            {/* Search Bar */}
             <div className="w-full max-w-xs flex justify-center relative">
               <input 
                 type="search" 
                 placeholder="Search..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-full border border-blue-900/30 bg-white/70 text-gray-900 px-3 sm:px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm sm:text-base font-medium" 
+                className="w-full rounded-full border border-blue-900/30 bg-white/70 text-gray-900 px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-base font-medium" 
               />
               {/* Desktop search results dropdown */}
               {searchTerm && (
@@ -292,21 +363,10 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 </div>
               )}
             </div>
-            {/* Mobile Filter Button */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="sm:hidden p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-              aria-label="Open filters"
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-            </button>
-            
-            {/* Filter fields - Desktop only */}
-            <div className="hidden sm:flex gap-2 items-center">
+            {/* Filter fields */}
+            <div className="flex gap-2 items-center">
               <select
-                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-sm ${
                   selectedMake 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : 'bg-white border border-gray-300 text-gray-700'
@@ -324,7 +384,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 ))}
               </select>
               <select
-                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-sm ${
                   selectedModel 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : selectedMake 
@@ -345,7 +405,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               </select>
               {/* Year/Range Dropdown - always dynamic */}
               <select
-                className={`rounded-md px-2 sm:px-3 py-2 min-w-[80px] sm:min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-xs sm:text-sm ${
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-sm ${
                   selectedYear 
                     ? 'bg-white border border-blue-400 text-gray-800' 
                     : selectedModel 
@@ -407,21 +467,21 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             {/* User/account icon */}
             <div className="relative">
               <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none">
-                <UserIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+                <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
               </button>
               <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
             </div>
             {/* Wishlist icon (only if logged in) */}
             {user && (
               <Link href="/wishlist" className="relative group">
-                <HeartIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-pink-500 hover:text-pink-600 transition" />
+                <HeartIcon className="w-6 h-6 md:w-7 md:h-7 text-pink-500 hover:text-pink-600 transition" />
               </Link>
             )}
             {/* Cart icon */}
             <Link href="/cart" className="relative group">
-              <ShoppingCartIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+              <ShoppingCartIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-pink-500 text-white text-xs font-bold rounded-full px-1 py-0.5 sm:px-1.5 shadow-lg">
+                <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs font-bold rounded-full px-1.5 shadow-lg">
                   {cartCount}
                 </span>
               )}
