@@ -678,7 +678,8 @@ function AdminInventoryContent() {
         shippingInfo: product.shippingInfo || "",
         installationNotes: product.installationNotes || "",
         // Vehicle compatibility data
-        selectedCompatibility: product.selectedCompatibility || []
+        selectedCompatibility: product.selectedCompatibility || [],
+        vehicleTypes: product.vehicleTypes || []
     });
     setShowEditModal(true);
   };
