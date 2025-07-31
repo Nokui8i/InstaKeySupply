@@ -4,6 +4,7 @@ import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy, updateDoc, doc, where, limit, startAfter, getCountFromServer, deleteDoc } from "firebase/firestore";
 
 import { useAdminAuth } from "../context/AdminAuthContext";
+import AdminLayout from "../layout";
 
 export default function AdminOrdersPage() {
   const { isAuthenticated, isLoading } = useAdminAuth();
