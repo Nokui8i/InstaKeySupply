@@ -73,8 +73,6 @@ export default function WishlistPage() {
               <ProductCard
                 id={product.id}
                 image={product.images?.[0] || product.imageUrl || '/sample-key-1.png'}
-                imageUrl={product.imageUrl}
-                images={product.images}
                 title={product.title}
                 model={product.model}
                 price={product.price}

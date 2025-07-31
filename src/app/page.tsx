@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import CarouselBanner from "./components/CarouselBanner";
 import ProductCarousel from "./components/ProductCarousel";
 import { db } from "@/firebase";
@@ -47,7 +47,7 @@ const sampleProducts = [
   },
 ];
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [banners, setBanners] = useState<{ src: string; alt: string }[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -518,5 +518,13 @@ export default function Home() {
         </button>
       </section>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div></div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
