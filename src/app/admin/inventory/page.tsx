@@ -679,7 +679,6 @@ function AdminInventoryContent() {
         installationNotes: product.installationNotes || "",
         // Vehicle compatibility data
         selectedCompatibility: product.selectedCompatibility || [],
-        compatibility: product.compatibility || [],
         vehicleTypes: product.vehicleTypes || []
     });
     setShowEditModal(true);
