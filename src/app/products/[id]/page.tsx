@@ -75,6 +75,11 @@ interface Product {
   shippingClass?: string;
   allowReviews?: boolean;
   purchaseNote?: string;
+  customFields?: Array<{
+    id: string;
+    label: string;
+    value: string;
+  }>;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -174,21 +179,148 @@ export default function ProductDetail() {
     fetchProduct();
   }, [params.id]);
 
-  // Fetch best sellers (for now, just 6 products excluding the current one)
+  // Fetch random products (always show sample products for now)
   useEffect(() => {
-    async function fetchBestSellers() {
+    async function fetchRandomProducts() {
       try {
-        const productsSnap = await getDocs(query(collection(db, "products")));
-        const allProducts = productsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Product[];
-        // Exclude the current product
-        const filtered = allProducts.filter((p) => p.id !== params.id).slice(0, 6);
-        setBestSellers(filtered);
+        // Always use sample products for the carousel
+        const sampleProducts: Product[] = [
+          {
+            id: "sample-1",
+            imageUrl: "/sample-key-1.png",
+            title: "Toyota Camry Transponder Key",
+            model: "TOY-4D60",
+            price: "$89.99",
+            oldPrice: "$129.99",
+            category: "Car Keys",
+            vehicleType: "Car" as const,
+            description: "High-quality transponder key for Toyota Camry models",
+            selectedCompatibility: [
+              {
+                brand: "Toyota",
+                model: "Camry",
+                yearStart: "2012",
+                yearEnd: "2024",
+                keyTypes: ["Transponder Key", "Remote Key"]
+              }
+            ]
+          },
+          {
+            id: "sample-2", 
+            imageUrl: "/sample-key-2.png",
+            title: "Honda Accord Remote Key",
+            model: "HON-72MHz",
+            price: "$79.95",
+            category: "Car Keys",
+            vehicleType: "Car" as const,
+            description: "Remote key fob for Honda Accord with keyless entry",
+            selectedCompatibility: [
+              {
+                brand: "Honda",
+                model: "Accord",
+                yearStart: "2010",
+                yearEnd: "2024",
+                keyTypes: ["Remote Key", "Smart Key"]
+              }
+            ]
+          },
+          {
+            id: "sample-3",
+            imageUrl: "/sample-key-3.png", 
+            title: "BMW 3-Series Smart Key",
+            model: "BMW-868MHz",
+            price: "$199.99",
+            oldPrice: "$249.99",
+            category: "Car Keys",
+            vehicleType: "Car" as const,
+            description: "Advanced smart key for BMW 3-Series with comfort access",
+            selectedCompatibility: [
+              {
+                brand: "BMW",
+                model: "3-Series",
+                yearStart: "2015",
+                yearEnd: "2024",
+                keyTypes: ["Smart Key", "Proximity Key"]
+              }
+            ]
+          },
+          {
+            id: "sample-4",
+            imageUrl: "/sample-key-4.png",
+            title: "Ford F-150 Remote Key",
+            model: "FORD-315MHz",
+            price: "$69.99",
+            category: "Car Keys",
+            vehicleType: "Truck" as const,
+            description: "Remote key for Ford F-150 pickup trucks",
+            selectedCompatibility: [
+              {
+                brand: "Ford",
+                model: "F-150",
+                yearStart: "2009",
+                yearEnd: "2024",
+                keyTypes: ["Remote Key", "Transponder Key"]
+              }
+            ]
+          },
+          {
+            id: "sample-5",
+            imageUrl: "/sample-key-5.png",
+            title: "Chevrolet Silverado Key",
+            model: "CHEV-433MHz",
+            price: "$59.95",
+            category: "Car Keys",
+            vehicleType: "Truck" as const,
+            description: "Standard key for Chevrolet Silverado models",
+            selectedCompatibility: [
+              {
+                brand: "Chevrolet",
+                model: "Silverado",
+                yearStart: "2007",
+                yearEnd: "2024",
+                keyTypes: ["Transponder Key", "Remote Key"]
+              }
+            ]
+          },
+          {
+            id: "sample-6",
+            imageUrl: "/sample-key-6.png",
+            title: "Nissan Altima Smart Key",
+            model: "NISS-434MHz",
+            price: "$149.99",
+            category: "Car Keys",
+            vehicleType: "Car" as const,
+            description: "Smart key system for Nissan Altima with push-button start",
+            selectedCompatibility: [
+              {
+                brand: "Nissan",
+                model: "Altima",
+                yearStart: "2013",
+                yearEnd: "2024",
+                keyTypes: ["Smart Key", "Proximity Key"]
+              }
+            ]
+          }
+        ];
+        
+        // Exclude the current product if it's a sample product
+        const filtered = sampleProducts.filter((p) => p.id !== params.id);
+        
+        // Shuffle the array to get random products
+        const shuffled = filtered.sort(() => 0.5 - Math.random());
+        // Take first 6 random products
+        const randomProducts = shuffled.slice(0, 6);
+        
+        console.log('Random products for carousel:', randomProducts.length, randomProducts);
+        setBestSellers(randomProducts);
       } catch (err) {
+        console.error('Error fetching random products:', err);
         setBestSellers([]);
       }
     }
-    if (product) fetchBestSellers();
-  }, [product, params.id]);
+    
+    fetchRandomProducts();
+  }, [params.id]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= (product?.stock || 1)) {
@@ -430,7 +562,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Description - Centered */}
-        {product.description && (
+        {(product.description || product.customFields) && (
           <div className="mt-12 flex justify-center">
             <div className="w-full max-w-4xl">
               <div className="flex">
@@ -438,59 +570,86 @@ export default function ProductDetail() {
                 <div className="flex-1 bg-white border border-gray-200 rounded-xl shadow-md px-6 py-5">
                   <h3 className="text-2xl font-bold text-blue-900 mb-4 tracking-tight">Description</h3>
                   <div className="text-sm">
-                    {/* Parse and display description in table format */}
-                    {product.description.split('\n').map((line, index) => {
-                      // Skip the "TECHNICAL SPECIFICATIONS:" title line
-                      if (line.trim() === 'TECHNICAL SPECIFICATIONS:') {
-                        return null;
-                      }
-                      
-                      if (line.includes(':')) {
-                        const [label, value] = line.split(':').map(part => part.trim());
-                        if (label && value) {
-                          // Special handling for WORKS ON THE FOLLOWING MODELS
-                          if (label === 'WORKS ON THE FOLLOWING MODELS') {
-                            const models = value.split(',').map(model => model.trim());
+                    {/* Display custom fields if available (flexible form) */}
+                    {product.customFields && product.customFields.length > 0 ? (
+                      product.customFields.map((field, index) => (
+                        <div key={field.id || index} className="flex border-b border-gray-200 last:border-b-0">
+                          <div className="w-1/3 bg-gray-100 px-3 py-2 font-medium text-gray-700 border-r border-gray-200">
+                            {field.label}
+                          </div>
+                          <div className="w-2/3 px-3 py-2 text-gray-900">
+                            {/* Format all fields with each item on a separate line */}
+                            <div className="space-y-1">
+                              {field.value.split(/[\n\r*]+/).map((item, itemIndex) => {
+                                const trimmedItem = item.trim();
+                                if (trimmedItem.length > 0) {
+                                  return (
+                                    <div key={itemIndex} className="text-sm">
+                                      {trimmedItem}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      /* Parse and display description in table format (automotive form) */
+                      product.description?.split('\n').map((line, index) => {
+                        // Skip the "TECHNICAL SPECIFICATIONS:" title line
+                        if (line.trim() === 'TECHNICAL SPECIFICATIONS:') {
+                          return null;
+                        }
+                        
+                        if (line.includes(':')) {
+                          const [label, value] = line.split(':').map(part => part.trim());
+                          if (label && value) {
+                            // Special handling for WORKS ON THE FOLLOWING MODELS
+                            if (label === 'WORKS ON THE FOLLOWING MODELS') {
+                              const models = value.split(',').map(model => model.trim());
+                              return (
+                                <div key={index} className="flex border-b border-gray-200 last:border-b-0">
+                                  <div className="w-1/3 bg-gray-100 px-3 py-2 font-medium text-gray-700 border-r border-gray-200">
+                                    {label}
+                                  </div>
+                                  <div className="w-2/3 px-3 py-2 text-gray-900">
+                                    <div className="space-y-1">
+                                      {models.map((model, modelIndex) => (
+                                        <div key={modelIndex} className="text-sm">
+                                          {model}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            
                             return (
                               <div key={index} className="flex border-b border-gray-200 last:border-b-0">
                                 <div className="w-1/3 bg-gray-100 px-3 py-2 font-medium text-gray-700 border-r border-gray-200">
                                   {label}
                                 </div>
                                 <div className="w-2/3 px-3 py-2 text-gray-900">
-                                  <div className="space-y-1">
-                                    {models.map((model, modelIndex) => (
-                                      <div key={modelIndex} className="text-sm">
-                                        {model}
-                                      </div>
-                                    ))}
-                                  </div>
+                                  {value}
                                 </div>
                               </div>
                             );
                           }
-                          
+                        }
+                        // Handle lines without colons (like section headers)
+                        if (line.trim()) {
                           return (
-                            <div key={index} className="flex border-b border-gray-200 last:border-b-0">
-                              <div className="w-1/3 bg-gray-100 px-3 py-2 font-medium text-gray-700 border-r border-gray-200">
-                                {label}
-                              </div>
-                              <div className="w-2/3 px-3 py-2 text-gray-900">
-                                {value}
-                              </div>
+                            <div key={index} className="px-3 py-2 font-semibold text-gray-800 bg-blue-50 border-b border-gray-200">
+                              {line}
                             </div>
                           );
                         }
-                      }
-                      // Handle lines without colons (like section headers)
-                      if (line.trim()) {
-                        return (
-                          <div key={index} className="px-3 py-2 font-semibold text-gray-800 bg-blue-50 border-b border-gray-200">
-                            {line}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
+                        return null;
+                      })
+                    )}
                   </div>
                 </div>
               </div>
@@ -544,13 +703,13 @@ export default function ProductDetail() {
             </div>
           )}
         </div>
-        {/* Best Sellers Carousel (moved to bottom) */}
+        {/* Random Products Carousel (moved to bottom) */}
         <section className="mt-16 mb-12">
-          <h2 className="text-xl sm:text-2xl font-bold mb-6 text-blue-600 text-center drop-shadow">Best Sellers</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-6 text-blue-600 text-center drop-shadow">You Might Also Like</h2>
           {bestSellers.length > 0 ? (
             <ProductCarousel products={bestSellers} />
           ) : (
-            <div className="text-center text-gray-400 py-8">No best sellers yet.</div>
+            <div className="text-center text-gray-400 py-8">No products available.</div>
           )}
         </section>
       </div>

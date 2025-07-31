@@ -1,9 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { useAdminAuth } from "./context/AdminAuthContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { AdminSidebarProvider, useAdminSidebar } from "./context/AdminSidebarContext";
 import SessionTimeoutWarning from "./components/SessionTimeoutWarning";
 import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { HomeIcon, FolderIcon, ArchiveBoxIcon, ShoppingCartIcon, PhotoIcon, TagIcon, TruckIcon, EnvelopeIcon, MegaphoneIcon, DocumentTextIcon, ChatBubbleLeftRightIcon, InboxIcon } from "@heroicons/react/24/outline";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -11,8 +14,28 @@ interface AdminLayoutProps {
 
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useAdminSidebar();
   const { isAuthenticated, isLoading, logout, user } = useAdminAuth();
+
+  // Set up global event listener for admin sidebar toggle
+  React.useEffect(() => {
+    const handleAdminSidebarToggle = () => {
+      console.log('Admin sidebar toggle event received');
+      toggleSidebar();
+    };
+
+    window.addEventListener('admin-sidebar-toggle', handleAdminSidebarToggle);
+    return () => {
+      window.removeEventListener('admin-sidebar-toggle', handleAdminSidebarToggle);
+    };
+  }, [toggleSidebar]);
+
+  // Update global admin sidebar state when it changes
+  React.useEffect(() => {
+    window.dispatchEvent(new CustomEvent('admin-sidebar-state-change', { 
+      detail: { sidebarOpen } 
+    }));
+  }, [sidebarOpen]);
 
   // Allow login page to render without layout/auth checks
   if (pathname === '/admin/login') {
@@ -59,15 +82,15 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         />
       )}
 
-      {/* Fixed Sidebar */}
+      {/* Collapsible Sidebar */}
       <aside className={`
-        fixed lg:fixed top-0 left-0 z-50 w-56 lg:w-48 h-full bg-gradient-to-b from-blue-50 to-blue-100 text-blue-900 flex flex-col py-4 px-3 space-y-3 transform transition-transform duration-300 ease-in-out border-r border-blue-200 shadow-lg
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        fixed top-0 left-0 z-50 w-56 h-full bg-gradient-to-b from-blue-50 to-blue-100 text-blue-900 flex flex-col py-4 px-3 space-y-3 transform transition-transform duration-300 ease-in-out border-r border-blue-200 shadow-lg
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Mobile Close Button */}
+        {/* Close Button */}
         <button 
           onClick={() => setSidebarOpen(false)}
-          className="lg:hidden absolute top-3 right-3 text-blue-700 hover:text-blue-900"
+          className="absolute top-3 right-3 text-blue-700 hover:text-blue-900 p-1 rounded-lg hover:bg-blue-200 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -84,70 +107,56 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           </div>
         )}
         
-        <nav className="flex flex-col gap-1">
-          <a 
-            href="/admin" 
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
+        <nav className="space-y-2">
+          <Link href="/admin" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <HomeIcon className="w-5 h-5 mr-3" />
             Dashboard
-          </a>
-          <a 
-            href="/admin/inventory" 
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
+          </Link>
+
+          <Link href="/admin/categories" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/categories' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <FolderIcon className="w-5 h-5 mr-3" />
+            Categories
+          </Link>
+          <Link href="/admin/inventory" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/inventory' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <ArchiveBoxIcon className="w-5 h-5 mr-3" />
             Inventory
-          </a>
-          <a
-            href="/admin/orders"
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
+          </Link>
+          <Link href="/admin/orders" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/orders' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <ShoppingCartIcon className="w-5 h-5 mr-3" />
             Orders
-          </a>
-          <a
-            href="/admin/email-templates"
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
-            Email Templates
-          </a>
-          <a
-            href="/admin/promo-codes"
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
-            Promo Codes
-          </a>
-          <a
-            href="/admin/site-content"
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
-            Site Content
-          </a>
-          <a
-            href="/admin/contact-messages"
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
-            Contact Messages
-          </a>
-          <a 
-            href="/admin/banners" 
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
+          </Link>
+          <Link href="/admin/banners" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/banners' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <PhotoIcon className="w-5 h-5 mr-3" />
             Banners
-          </a>
-          <a 
-            href="/admin/vehicle-compatibility" 
-            className="hover:bg-blue-200 rounded px-2 py-1.5 transition-colors text-blue-800 hover:text-blue-900 text-sm"
-            onClick={() => setSidebarOpen(false)}
-          >
+          </Link>
+          <Link href="/admin/promo-codes" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/promo-codes' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <TagIcon className="w-5 h-5 mr-3" />
+            Promo Codes
+          </Link>
+          <Link href="/admin/vehicle-compatibility" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/vehicle-compatibility' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <TruckIcon className="w-5 h-5 mr-3" />
             Vehicle Compatibility
-          </a>
+          </Link>
+          <Link href="/admin/email-subscribers" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/email-subscribers' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <EnvelopeIcon className="w-5 h-5 mr-3" />
+            Email Subscribers
+          </Link>
+          <Link href="/admin/email-campaigns" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/email-campaigns' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <MegaphoneIcon className="w-5 h-5 mr-3" />
+            Email Campaigns
+          </Link>
+          <Link href="/admin/email-templates" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/email-templates' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <DocumentTextIcon className="w-5 h-5 mr-3" />
+            Email Templates
+          </Link>
+          <Link href="/admin/site-content" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/site-content' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <ChatBubbleLeftRightIcon className="w-5 h-5 mr-3" />
+            Site Content
+          </Link>
+          <Link href="/admin/contact-messages" className={`flex items-center px-4 py-2 rounded-lg transition-colors ${pathname === '/admin/contact-messages' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <InboxIcon className="w-5 h-5 mr-3" />
+            Contact Messages
+          </Link>
         </nav>
         <div className="pt-3 border-t border-blue-300">
           <button 
@@ -160,23 +169,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content - Separate from sidebar */}
-      <div className="lg:ml-48">
-        {/* Mobile Header */}
-        <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900">Admin Panel</h1>
-            <div className="w-6"></div> {/* Spacer for centering */}
-          </div>
-        </header>
-
+      <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-56' : 'ml-0'}`}>
         {/* Content Area */}
         <main className="p-4 sm:p-8">
           {children}
@@ -192,9 +185,11 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <AdminAuthProvider>
-      <AdminLayoutContent>
-        {children}
-      </AdminLayoutContent>
+      <AdminSidebarProvider>
+        <AdminLayoutContent>
+          {children}
+        </AdminLayoutContent>
+      </AdminSidebarProvider>
     </AdminAuthProvider>
   );
 } 

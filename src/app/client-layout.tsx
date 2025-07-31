@@ -25,8 +25,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <AuthProvider>
       <CartProvider>
-        <MainLayoutClient>{children}</MainLayoutClient>
-        <Footer onShowTerms={() => setShowTerms(true)} onShowPrivacy={() => setShowPrivacy(true)} />
+        <MainLayoutClient>
+          {children}
+          <Footer onShowTerms={() => setShowTerms(true)} onShowPrivacy={() => setShowPrivacy(true)} />
+        </MainLayoutClient>
         <TermsModal open={showTerms} onClose={() => setShowTerms(false)} />
         <PrivacyModal open={showPrivacy} onClose={() => setShowPrivacy(false)} />
       </CartProvider>

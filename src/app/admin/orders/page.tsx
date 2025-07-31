@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy, updateDoc, doc, where, limit, startAfter, getCountFromServer, deleteDoc } from "firebase/firestore";
-import AdminLayout from "../layout";
+
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 export default function AdminOrdersPage() {
@@ -149,7 +149,6 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <AdminLayout>
       <h1 className="text-2xl font-bold mb-8 text-blue-900">Orders</h1>
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
         <div className="flex items-center gap-4">
@@ -290,6 +289,5 @@ export default function AdminOrdersPage() {
         </button>
       </div>
       {notification && <div className="mt-4 text-center text-sm font-semibold text-blue-700">{notification}</div>}
-    </AdminLayout>
   );
 } 

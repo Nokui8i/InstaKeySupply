@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import PasswordResetModal from './PasswordResetModal';
 
 export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: boolean; onClose: () => void; anchorRef: React.RefObject<HTMLButtonElement> }) {
   const { login, register, loading, user, logout, signInWithGoogle, isAdmin } = useAuth();
@@ -11,10 +12,15 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
   const [success, setSuccess] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   // Close on outside click
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset password reset state when modal closes
+      setShowPasswordReset(false);
+      return;
+    }
     function handleClick(e: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -22,6 +28,8 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
         (!anchorRef.current || !anchorRef.current.contains(e.target as Node))
       ) {
         onClose();
+        // Reset password reset state when closing
+        setShowPasswordReset(false);
       }
     }
     document.addEventListener('mousedown', handleClick);
@@ -32,8 +40,6 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   return (
     <div ref={dropdownRef} className="absolute right-0 mt-2 w-72 max-w-xs bg-white rounded-xl shadow-xl border border-gray-200 z-50 animate-scale-in p-4">
-      {/* Arrow */}
-      <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l border-t border-gray-200 rotate-45 z-10" />
       {/* Google button */}
       {!user && (
         <>
@@ -114,6 +120,15 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
           <div>
             <label className="block font-semibold mb-1 text-gray-700 text-xs">Password</label>
             <input type="password" className="w-full border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200" value={password} onChange={e => setPassword(e.target.value)} required />
+            {tab === 'login' && (
+              <button
+                type="button"
+                onClick={() => setShowPasswordReset(true)}
+                className="text-blue-600 hover:text-blue-700 text-xs mt-1 transition-colors"
+              >
+                Forgot Password?
+              </button>
+            )}
           </div>
           {tab === 'register' && (
             <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -153,6 +168,12 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
           animation: scale-in 0.2s cubic-bezier(0.4,0,0.2,1);
         }
       `}</style>
+
+      {/* Password Reset Modal */}
+      <PasswordResetModal 
+        isOpen={showPasswordReset} 
+        onClose={() => setShowPasswordReset(false)} 
+      />
     </div>
   );
 } 

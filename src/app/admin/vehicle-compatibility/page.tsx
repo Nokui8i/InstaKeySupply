@@ -17,6 +17,12 @@ export default function VehicleCompatibilityAdmin() {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [newYearRange, setNewYearRange] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
+  
+  // Editing states
+  const [editingYearRange, setEditingYearRange] = useState<string>('');
+  const [editingYearRangeValue, setEditingYearRangeValue] = useState<string>('');
+  const [editingModel, setEditingModel] = useState<string>('');
+  const [editingModelValue, setEditingModelValue] = useState<string>('');
 
   // Fetch data
   const fetchData = async () => {
@@ -50,7 +56,7 @@ export default function VehicleCompatibilityAdmin() {
 
   // Remove Make
   const handleRemoveMake = async (make: string) => {
-    if (!window.confirm(`Are you sure you want to delete the make "${make}" and all its models and year ranges?`)) return;
+    if (!window.confirm(`Are you sure you want to delete the make "${make}" and all its models and year ranges?\n\nThis action cannot be undone.`)) return;
     await fetch('/api/vehicle-compatibility/makes-models', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -77,7 +83,7 @@ export default function VehicleCompatibilityAdmin() {
 
   // Remove Model
   const handleRemoveModel = async (make: string, model: string) => {
-    if (!window.confirm(`Are you sure you want to delete the model "${model}" and all its year ranges?`)) return;
+    if (!window.confirm(`Are you sure you want to delete the model "${model}" and all its year ranges?\n\nThis action cannot be undone.`)) return;
     await fetch('/api/vehicle-compatibility/makes-models', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -87,21 +93,131 @@ export default function VehicleCompatibilityAdmin() {
     fetchData();
   };
 
+  // Start editing model
+  const startEditModel = (model: string) => {
+    setEditingModel(model);
+    setEditingModelValue(model);
+  };
+
+  // Save edited model
+  const saveEditModel = async () => {
+    if (!selectedMake || !editingModel || !editingModelValue.trim()) return;
+    
+    try {
+      // First, add the new model name
+      await fetch('/api/vehicle-compatibility/makes-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          make: selectedMake, 
+          model: editingModelValue.trim(),
+          yearRanges: data[selectedMake]?.[editingModel] || []
+        })
+      });
+      
+      // Then, remove the old model name
+      await fetch('/api/vehicle-compatibility/makes-models', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ make: selectedMake, model: editingModel })
+      });
+      
+      setEditingModel('');
+      setEditingModelValue('');
+      fetchData();
+    } catch (error) {
+      console.error('Error updating model:', error);
+      setError('Failed to update model');
+    }
+  };
+
+  // Cancel editing model
+  const cancelEditModel = () => {
+    setEditingModel('');
+    setEditingModelValue('');
+  };
+
   // Add Year Range
   const handleAddYearRange = async () => {
     if (!selectedMake || !selectedModel || !newYearRange.trim()) return;
+    
+    // Validate year range format
+    const yearRangeRegex = /^\d{4}(-\d{4})?$/;
+    if (!yearRangeRegex.test(newYearRange.trim())) {
+      setError('Year range must be in format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)');
+      return;
+    }
+    
     await fetch('/api/vehicle-compatibility/makes-models', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ make: selectedMake, model: selectedModel, yearRange: newYearRange.trim() })
     });
     setNewYearRange('');
+    setError(null);
     fetchData();
+  };
+
+  // Start editing year range
+  const startEditYearRange = (yearRange: string) => {
+    setEditingYearRange(yearRange);
+    setEditingYearRangeValue(yearRange);
+  };
+
+  // Save edited year range
+  const saveEditYearRange = async () => {
+    if (!selectedMake || !selectedModel || !editingYearRange || !editingYearRangeValue.trim()) return;
+    
+    // Validate year range format
+    const yearRangeRegex = /^\d{4}(-\d{4})?$/;
+    if (!yearRangeRegex.test(editingYearRangeValue.trim())) {
+      setError('Year range must be in format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)');
+      return;
+    }
+    
+    try {
+      // First, add the new year range
+      await fetch('/api/vehicle-compatibility/makes-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          make: selectedMake, 
+          model: selectedModel, 
+          yearRange: editingYearRangeValue.trim() 
+        })
+      });
+      
+      // Then, remove the old year range
+      await fetch('/api/vehicle-compatibility/makes-models', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          make: selectedMake, 
+          model: selectedModel, 
+          yearRange: editingYearRange 
+        })
+      });
+      
+      setEditingYearRange('');
+      setEditingYearRangeValue('');
+      setError(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating year range:', error);
+      setError('Failed to update year range');
+    }
+  };
+
+  // Cancel editing year range
+  const cancelEditYearRange = () => {
+    setEditingYearRange('');
+    setEditingYearRangeValue('');
+    setError(null);
   };
 
   // Remove Year Range
   const handleRemoveYearRange = async (make: string, model: string, yearRange: string) => {
-    if (!window.confirm(`Are you sure you want to delete the year range "${yearRange}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete the year range "${yearRange}"?\n\nThis action cannot be undone.`)) return;
     await fetch('/api/vehicle-compatibility/makes-models', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -116,6 +232,13 @@ export default function VehicleCompatibilityAdmin() {
   return (
     <div className="max-w-7xl mx-auto p-2 md:p-6 min-h-[80vh]">
       <h1 className="text-2xl font-bold mb-6 text-blue-800 text-center md:text-left">Vehicle Compatibility Management</h1>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full">
         {/* Mobile sidebar toggle */}
         <button
@@ -125,6 +248,7 @@ export default function VehicleCompatibilityAdmin() {
         >
           <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
+        
         {/* Sidebar: Makes */}
         <div className={`fixed md:static z-20 top-0 left-0 h-full md:h-auto w-64 min-w-[200px] bg-white rounded-xl shadow-lg border border-blue-200 p-4 transition-transform duration-300 md:translate-x-0 ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:block`}
           style={{ maxHeight: '90vh', overflowY: 'auto' }}
@@ -159,11 +283,12 @@ export default function VehicleCompatibilityAdmin() {
             ))}
           </div>
         </div>
+        
         {/* Overlay for mobile sidebar */}
         {showSidebar && <div className="fixed inset-0 bg-black/30 z-10 md:hidden" onClick={handleSidebarToggle}></div>}
+        
         {/* Models Panel */}
         <div className="w-64 min-w-[200px] md:w-64 md:min-w-[200px] flex-shrink-0">
-          {error && <div className="text-red-600 mb-4">{error}</div>}
           {selectedMake && (
             <div className="bg-white rounded-xl shadow-lg border border-blue-200 p-4 mb-6 animate-in fade-in duration-200 w-full">
               <h2 className="text-lg font-semibold mb-2 text-blue-700">Models for {selectedMake}</h2>
@@ -186,25 +311,95 @@ export default function VehicleCompatibilityAdmin() {
                     onClick={() => setSelectedModel(model)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <span className="truncate text-base md:text-sm">{model}</span>
-                    <button className="ml-2 text-red-500 hover:text-red-700 px-2 py-1 rounded focus:outline-none" onClick={e => { e.stopPropagation(); handleRemoveModel(selectedMake, model); }} aria-label={`Remove ${model}`}>
-                      ×
-                    </button>
+                    {editingModel === model ? (
+                      <div 
+                        className="flex items-center gap-2 w-full" 
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="text"
+                          value={editingModelValue}
+                          onChange={(e) => setEditingModelValue(e.target.value)}
+                          className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              saveEditModel();
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              cancelEditModel();
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            saveEditModel(); 
+                          }}
+                          className="text-green-600 hover:text-green-800 px-2 py-1 rounded"
+                          title="Save"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            cancelEditModel(); 
+                          }}
+                          className="text-gray-600 hover:text-gray-800 px-2 py-1 rounded"
+                          title="Cancel"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="truncate text-base md:text-sm">{model}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              startEditModel(model); 
+                            }}
+                            className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              handleRemoveModel(selectedMake, model); 
+                            }}
+                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           )}
         </div>
-        {/* Year Ranges Panel (right of models) */}
+        
+        {/* Year Ranges Panel */}
         {selectedMake && selectedModel && (
           <div className="w-64 min-w-[200px] md:w-64 md:min-w-[200px] flex-shrink-0">
             <div className="bg-white rounded-xl shadow-lg border border-blue-200 p-4 mb-6 animate-in fade-in duration-200 w-full">
-              <h2 className="text-lg font-semibold mb-2 text-blue-700">Year Ranges for {selectedModel} ({selectedMake})</h2>
+              <h2 className="text-lg font-semibold mb-2 text-blue-700">Year Ranges for {selectedModel}</h2>
+              <div className="text-xs text-gray-600 mb-3">Format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)</div>
               <div className="flex flex-col md:flex-row gap-2 mb-4 w-full">
                 <input
                   className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1 min-w-[120px] w-full md:w-auto"
-                  placeholder="Add new year range... (e.g. 2010-2015)"
+                  placeholder="Add new year range..."
                   value={newYearRange}
                   onChange={e => setNewYearRange(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddYearRange()}
@@ -217,16 +412,87 @@ export default function VehicleCompatibilityAdmin() {
               <ul className="divide-y divide-blue-100 overflow-y-auto" style={{ maxHeight: '420px' }}>
                 {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
                   <li key={yearRange} className="flex items-center justify-between py-2 px-2 rounded hover:bg-blue-50 transition-all duration-150">
-                    <span className="truncate text-base md:text-sm">{yearRange}</span>
-                    <button className="ml-2 text-red-500 hover:text-red-700 px-2 py-1 rounded focus:outline-none" onClick={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)} aria-label={`Remove ${yearRange}`}>×</button>
+                    {editingYearRange === yearRange ? (
+                      <div 
+                        className="flex items-center gap-2 w-full" 
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="text"
+                          value={editingYearRangeValue}
+                          onChange={(e) => setEditingYearRangeValue(e.target.value)}
+                          className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              saveEditYearRange();
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              cancelEditYearRange();
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            saveEditYearRange(); 
+                          }}
+                          className="text-green-600 hover:text-green-800 px-2 py-1 rounded"
+                          title="Save"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            cancelEditYearRange(); 
+                          }}
+                          className="text-gray-600 hover:text-gray-800 px-2 py-1 rounded"
+                          title="Cancel"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="truncate text-base md:text-sm">{yearRange}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              startEditYearRange(yearRange); 
+                            }}
+                            className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              handleRemoveYearRange(selectedMake, selectedModel, yearRange); 
+                            }}
+                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
         )}
+        
         {loading && <div className="text-gray-500">Loading...</div>}
       </div>
     </div>
   );
-} 
+}

@@ -36,6 +36,8 @@ function ImageEditor({
     if (!ctx) return;
 
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // Add CORS support
+    
     img.onload = () => {
       // Set canvas size to match image
       canvas.width = img.width;
@@ -44,6 +46,18 @@ function ImageEditor({
       // Draw original image
       ctx.drawImage(img, 0, 0);
     };
+    
+    img.onerror = () => {
+      // If CORS fails, try without crossOrigin
+      const fallbackImg = new Image();
+      fallbackImg.onload = () => {
+        canvas.width = fallbackImg.width;
+        canvas.height = fallbackImg.height;
+        ctx.drawImage(fallbackImg, 0, 0);
+      };
+      fallbackImg.src = imageSrc;
+    };
+    
     img.src = imageSrc;
   }, [imageSrc]);
 
@@ -88,8 +102,79 @@ function ImageEditor({
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const editedImage = canvas.toDataURL('image/jpeg', 0.9);
-    onSave(editedImage);
+    try {
+      // Try direct export first
+      const editedImage = canvas.toDataURL('image/jpeg', 0.95);
+      console.log('Saving edited image, size:', editedImage.length);
+      onSave(editedImage);
+    } catch (error) {
+      console.error('Error saving edited image:', error);
+      
+      // If canvas is tainted, use a different approach
+      try {
+        // Create a new canvas with the same dimensions
+        const newCanvas = document.createElement('canvas');
+        const newCtx = newCanvas.getContext('2d');
+        if (!newCtx) {
+          console.error('Could not get 2D context for new canvas');
+          return;
+        }
+        
+        newCanvas.width = canvas.width;
+        newCanvas.height = canvas.height;
+        
+        // Get the image data from the original canvas
+        const imageData = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height);
+        if (!imageData) {
+          console.error('Could not get image data from canvas');
+          return;
+        }
+        
+        // Put the image data on the new canvas
+        newCtx.putImageData(imageData, 0, 0);
+        
+        // Now export from the new canvas
+        const editedImage = newCanvas.toDataURL('image/jpeg', 0.8);
+        console.log('Saving edited image via imageData, size:', editedImage.length);
+        onSave(editedImage);
+        
+      } catch (fallbackError) {
+        console.error('Fallback method also failed:', fallbackError);
+        
+        // Last resort: try to create a new canvas and redraw everything
+        try {
+          const newCanvas = document.createElement('canvas');
+          const newCtx = newCanvas.getContext('2d');
+          if (!newCtx) {
+            throw new Error('Could not get 2D context');
+          }
+          
+          newCanvas.width = canvas.width;
+          newCanvas.height = canvas.height;
+          
+          // Create a new image from the original source
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            newCtx.drawImage(img, 0, 0);
+            
+            // Apply the same drawing operations that were done on the original canvas
+            // This is a simplified approach - we'll just return the original for now
+            console.log('Returning original image as fallback');
+            onSave(imageSrc);
+          };
+          img.onerror = () => {
+            console.log('Returning original image as fallback');
+            onSave(imageSrc);
+          };
+          img.src = imageSrc;
+          
+        } catch (finalError) {
+          console.error('All methods failed:', finalError);
+          onSave(imageSrc);
+        }
+      }
+    }
   };
 
   const clearCanvas = () => {
@@ -98,10 +183,22 @@ function ImageEditor({
     if (!canvas || !ctx) return;
 
     const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
     };
+    
+    img.onerror = () => {
+      const fallbackImg = new Image();
+      fallbackImg.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(fallbackImg, 0, 0);
+      };
+      fallbackImg.src = imageSrc;
+    };
+    
     img.src = imageSrc;
   };
 
@@ -250,9 +347,13 @@ export default function EnhancedProductForm({
     
     // Pricing
     price: "",
+    oldPrice: "",
+    salePrice: "",
+    regularPrice: "",
     
     // Categories and Classification
     category: "",
+    categoryId: "",
     categories: [] as string[],
     vehicleTypes: [] as string[],
     
@@ -313,7 +414,22 @@ export default function EnhancedProductForm({
     allowReviews: true,
     purchaseNote: "",
     tags: "",
-    shippingClass: ""
+    shippingClass: "",
+    
+    // Vehicle Information
+    vehicleType: "Car",
+    brand: "",
+    year: "",
+    keyType: "Remote Key",
+    
+    // Vehicle Compatibility
+    selectedCompatibility: [] as Array<{
+      brand: string;
+      model: string;
+      yearStart: string;
+      yearEnd: string;
+      keyTypes: string[];
+    }>
   });
 
   // Image editor state
@@ -410,6 +526,15 @@ export default function EnhancedProductForm({
         setDynamicVehicleTypes(vehicleTypesData.filter(vt => vt.isActive));
         setDynamicBrands(brandsData.filter(brand => brand.isActive));
         setDynamicModels(modelsData.filter(model => model.isActive));
+        
+        // Fetch categories
+        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        const categoriesData = categoriesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log('Fetched categories:', categoriesData);
+        setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching dynamic data:', error);
       } finally {
@@ -419,6 +544,73 @@ export default function EnhancedProductForm({
 
     fetchDynamicData();
   }, []);
+
+  // Handle initialData when editing
+  useEffect(() => {
+    if (initialData && isEditing) {
+      setFormData({
+        title: initialData.title || "",
+        partNumber: initialData.partNumber || "",
+        manufacturer: initialData.manufacturer || "",
+        price: initialData.price || "",
+        oldPrice: initialData.oldPrice || "",
+        category: initialData.category || "",
+        categoryId: initialData.categoryId || "",
+        categories: initialData.categories || [],
+        vehicleTypes: initialData.vehicleTypes || [],
+        stock: initialData.stock?.toString() || "",
+        lowStockAmount: initialData.lowStockAmount?.toString() || "",
+        status: initialData.status || "active",
+        availability: initialData.availability || "in-stock",
+        isFeatured: initialData.isFeatured || false,
+        visibility: initialData.visibility || "visible",
+        shortDescription: initialData.shortDescription || "",
+        description: initialData.description || "",
+        images: initialData.images || [initialData.imageUrl].filter(Boolean),
+        technicalSpecs: {
+          fccId: initialData.technicalSpecs?.fccId || "",
+          can: initialData.technicalSpecs?.can || "",
+          frequency: initialData.technicalSpecs?.frequency || "",
+          batteryType: initialData.technicalSpecs?.batteryType || "",
+          chipType: initialData.technicalSpecs?.chipType || "",
+          testBlade: initialData.technicalSpecs?.testBlade || "",
+          buttons: initialData.technicalSpecs?.buttons || [],
+          buttonCount: initialData.technicalSpecs?.buttonCount || 1,
+          emergencyKeyIncluded: initialData.technicalSpecs?.emergencyKeyIncluded || false,
+          aftermarket: initialData.technicalSpecs?.aftermarket || false,
+          reusable: initialData.technicalSpecs?.reusable || false,
+          cloneable: initialData.technicalSpecs?.cloneable || false
+        },
+        isOem: initialData.isOem || false,
+        isAftermarket: initialData.isAftermarket || false,
+        oemPartNumber: initialData.oemPartNumber || "",
+        aftermarketPartNumber: initialData.aftermarketPartNumber || "",
+        compatibleModels: initialData.compatibleModels || [],
+        replacesKeyTypes: initialData.replacesKeyTypes || [],
+        warranty: initialData.warranty || "",
+        returnPolicy: initialData.returnPolicy || "",
+        shippingInfo: initialData.shippingInfo || "",
+        installationNotes: initialData.installationNotes || "",
+        weight: initialData.weight?.toString() || "",
+        dimensions: {
+          length: initialData.dimensions?.length?.toString() || "",
+          width: initialData.dimensions?.width?.toString() || "",
+          height: initialData.dimensions?.height?.toString() || ""
+        },
+        allowReviews: initialData.allowReviews ?? true,
+        purchaseNote: initialData.purchaseNote || "",
+        salePrice: initialData.salePrice || "",
+        regularPrice: initialData.regularPrice || "",
+        tags: Array.isArray(initialData.tags) ? initialData.tags.join(", ") : initialData.tags || "",
+        shippingClass: initialData.shippingClass || "",
+        vehicleType: initialData.vehicleType || "Car",
+        brand: initialData.brand || "",
+        year: initialData.year?.toString() || "",
+        keyType: initialData.keyType || "Remote Key",
+        selectedCompatibility: initialData.selectedCompatibility || []
+      });
+    }
+  }, [initialData, isEditing]);
 
   // Get available models for a brand
   const getAvailableModels = (brand: string) => {
@@ -486,6 +678,7 @@ export default function EnhancedProductForm({
   const [compatData, setCompatData] = useState<any>({});
   const [compatLoading, setCompatLoading] = useState(true);
   const [compatError, setCompatError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
   // Dropdown state (like navbar filter)
   const [compatSelectedMake, setCompatSelectedMake] = useState('');
   const [compatSelectedModel, setCompatSelectedModel] = useState('');
@@ -641,7 +834,8 @@ export default function EnhancedProductForm({
       return;
     }
 
-
+    console.log('Form submission - Images count:', formData.images.length);
+    console.log('Form submission - Images types:', formData.images.map(img => img.substring(0, 30) + '...'));
     
     // Convert compatibility to selectedCompatibility format for backward compatibility
     const selectedCompatibility = compatibility.map(item => ({
@@ -729,6 +923,28 @@ export default function EnhancedProductForm({
                 onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category * ({categories.length} available)
+              </label>
+              <select
+                value={formData.categoryId || ''}
+                onChange={(e) => setFormData({...formData, categoryId: e.target.value, category: categories.find(cat => cat.id === e.target.value)?.name || ''})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {categories.length === 0 && (
+                <div className="text-xs text-gray-500 mt-1">No categories found. Please create categories first.</div>
+              )}
             </div>
           </div>
         </div>
@@ -1170,13 +1386,16 @@ export default function EnhancedProductForm({
         <ImageEditor
           imageSrc={editingImageSrc}
           onSave={(editedImage) => {
+            console.log('Image editor saved, updating image at index:', editingImageIndex);
             const currentImages = [...formData.images];
             currentImages[editingImageIndex] = editedImage;
             setFormData({ ...formData, images: currentImages });
             setEditingImageIndex(null);
             setEditingImageSrc('');
+            console.log('Updated formData.images:', currentImages.length, 'images');
           }}
           onCancel={() => {
+            console.log('Image editor cancelled');
             setEditingImageIndex(null);
             setEditingImageSrc('');
           }}

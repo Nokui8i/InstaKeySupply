@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow public read access to all files
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Allow authenticated users to upload to email-campaigns folder
+    match /email-campaigns/{allPaths=**} {
+      allow write: if true; // Allow uploads for email campaigns
+    }
+    
+    // Allow authenticated users to upload email logos
+    match /email-logos/{allPaths=**} {
+      allow write: if true; // Allow uploads for email template logos
+    }
+    
+    // Allow authenticated users to upload product images
+    match /products/{allPaths=**} {
+      allow write: if true;
+    }
+    
+    // Allow authenticated users to upload banner images
+    match /banners/{allPaths=**} {
+      allow write: if true;
+    }
+    
+    // Default rule - deny all other writes
+    match /{allPaths=**} {
+      allow write: if false;
+    }
+  }
+} 

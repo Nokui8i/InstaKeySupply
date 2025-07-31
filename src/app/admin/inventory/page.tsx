@@ -15,10 +15,10 @@ import {
 import { storage } from "@/firebase";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
-import AdminLayout from "../layout";
+
 import { useAdminAuth } from "../context/AdminAuthContext";
 import AdminProvider from "../AdminProvider";
-import EnhancedProductForm from "../../components/EnhancedProductForm";
+import FlexibleProductForm from "../../components/FlexibleProductForm";
 
 interface Product {
   id: string;
@@ -28,6 +28,7 @@ interface Product {
   oldPrice?: string;
   imageUrl: string;
   category?: string;
+  categoryId?: string;
   description?: string;
   shortDescription?: string;
   sku?: string;
@@ -92,14 +93,19 @@ interface Product {
   year?: number;
   keyType?: string;
   availability?: 'in-stock' | 'out-of-stock' | 'coming-soon' | 'discontinued';
-  // Vehicle compatibility for filtering
-  selectedCompatibility?: Array<{
-    brand: string;
-    model: string;
-    yearStart: string;
-    yearEnd: string;
-    keyTypes: string[];
-  }>;
+      // Vehicle compatibility for filtering
+    selectedCompatibility?: Array<{
+      brand: string;
+      model: string;
+      yearStart: string;
+      yearEnd: string;
+      keyTypes: string[];
+    }>;
+    compatibility?: Array<{
+      make: string;
+      model: string;
+      yearRange: string;
+    }>;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -116,8 +122,8 @@ function AdminInventoryContent() {
   const [cropping, setCropping] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showFlexibleUploadModal, setShowFlexibleUploadModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -126,6 +132,8 @@ function AdminInventoryContent() {
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(20);
   const [formData, setFormData] = useState({
     title: "",
     model: "",
@@ -204,15 +212,18 @@ function AdminInventoryContent() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Get unique categories for filter
-  const productCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+
 
   async function fetchProducts() {
     setLoading(true);
     try {
       const q = query(collection(db, "products"), orderBy("title"));
       const snap = await getDocs(q);
-      const fetchedProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      const fetchedProducts = snap.docs.map(doc => {
+        const data = doc.data();
+        console.log('Product compatibility data for', data.title, ':', data.compatibility);
+        return { id: doc.id, ...data } as Product;
+      });
       console.log('Fetched products from Firebase:', fetchedProducts);
       console.log('Product images data:', fetchedProducts.map(p => ({
         id: p.id,
@@ -227,9 +238,29 @@ function AdminInventoryContent() {
     setLoading(false);
   }
 
+  async function fetchCategories() {
+    try {
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      const categoriesData = categoriesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setAvailableCategories(categoriesData);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  }
+
+  // Helper function to get category name by ID
+  const getCategoryName = (categoryId: string) => {
+    const category = availableCategories.find(cat => cat.id === categoryId);
+    return category ? category.name : "Car Keys";
+  };
+
   useEffect(() => { 
     if (isAuthenticated) {
-      fetchProducts(); 
+      fetchProducts();
+      fetchCategories();
     }
   }, [isAuthenticated]);
 
@@ -238,10 +269,37 @@ function AdminInventoryContent() {
     const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    const matchesCategory = !selectedCategory || product.categoryId === selectedCategory;
     const matchesStatus = !selectedStatus || product.status === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  // Reset to first page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedStatus]);
+
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   // Handle drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -328,7 +386,6 @@ function AdminInventoryContent() {
       selectedCompatibility: [],
       vehicleTypes: []
     });
-    setShowUploadModal(false);
     setShowEditModal(false);
     setEditingProduct(null);
   };
@@ -339,6 +396,90 @@ function AdminInventoryContent() {
       handleCancelUpload();
     }
   };
+
+  // Handle flexible form submission
+  async function handleFlexibleUploadAndAdd(formData: any) {
+    setUploading(true);
+    
+    try {
+      let imageUrls: string[] = [];
+      
+      // Upload multiple images to Firebase Storage
+      if (formData.images && formData.images.length > 0) {
+        console.log('Uploading images to Firebase:', formData.images.length, 'images');
+        for (let i = 0; i < formData.images.length; i++) {
+          const image = formData.images[i];
+          console.log(`Processing image ${i + 1}:`, image.substring(0, 50) + '...');
+          
+          // If it's a base64 image (including edited images), upload it to Firebase Storage
+          if (image.startsWith('data:')) {
+            console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
+            try {
+              const response = await fetch(image);
+              const blob = await response.blob();
+              const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
+              await uploadBytes(storageRef, blob);
+              const downloadUrl = await getDownloadURL(storageRef);
+              console.log(`Image ${i + 1} uploaded successfully:`, downloadUrl);
+              imageUrls.push(downloadUrl);
+            } catch (uploadError) {
+              console.error(`Error uploading image ${i + 1}:`, uploadError);
+              // If upload fails, try to keep the original image if it's a URL
+              if (image.startsWith('http')) {
+                imageUrls.push(image);
+              }
+            }
+          } else if (image.startsWith('http')) {
+            // If it's already a URL, keep it
+            console.log(`Image ${i + 1} is already a URL:`, image);
+            imageUrls.push(image);
+          } else {
+            console.warn(`Skipping invalid image ${i + 1}:`, image.substring(0, 50) + '...');
+          }
+        }
+      }
+      
+      console.log('Final imageUrls array:', imageUrls);
+      
+      // Save to Firestore with flexible fields
+      await addDoc(collection(db, "products"), {
+        title: formData.title,
+        price: formData.price,
+        oldPrice: formData.oldPrice || null,
+        imageUrl: imageUrls[0] || "",
+        images: imageUrls,
+        category: formData.category || "General",
+        categoryId: formData.categoryId || null,
+        description: formData.description || "",
+        shortDescription: formData.shortDescription || "",
+        sku: formData.sku || "",
+        partNumber: formData.partNumber || "",
+        manufacturer: formData.manufacturer || "",
+        stock: formData.stock || 0,
+        status: formData.status || "active",
+        customFields: formData.customFields || [],
+        warranty: formData.warranty || "",
+        returnPolicy: formData.returnPolicy || "",
+        shippingInfo: formData.shippingInfo || "",
+        installationNotes: formData.installationNotes || "",
+        purchaseNote: formData.purchaseNote || "",
+        allowReviews: formData.allowReviews ?? true,
+        // Vehicle compatibility fields
+        compatibility: formData.compatibility || [],
+        selectedCompatibility: formData.selectedCompatibility || [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      setShowFlexibleUploadModal(false);
+      showNotification('success', 'Product added successfully!');
+      await fetchProducts();
+    } catch (error) {
+      console.error("Error uploading product:", error);
+      showNotification('error', 'Error adding product. Please try again.');
+    }
+    setUploading(false);
+  }
 
   // Calculate minZoom to ensure image fits properly in crop frame
   let minZoom = 1;
@@ -381,25 +522,37 @@ function AdminInventoryContent() {
           const image = formData.images[i];
           console.log(`Processing image ${i + 1}:`, image.substring(0, 50) + '...');
           
-          // If it's a base64 image, upload it to Firebase Storage
+          // If it's a base64 image (including edited images), upload it to Firebase Storage
           if (image.startsWith('data:')) {
             console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
-            const response = await fetch(image);
-            const blob = await response.blob();
-            const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
-            await uploadBytes(storageRef, blob);
-            const downloadUrl = await getDownloadURL(storageRef);
-            console.log(`Image ${i + 1} uploaded successfully:`, downloadUrl);
-            imageUrls.push(downloadUrl);
-          } else {
+            try {
+              const response = await fetch(image);
+              const blob = await response.blob();
+              const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
+              await uploadBytes(storageRef, blob);
+              const downloadUrl = await getDownloadURL(storageRef);
+              console.log(`Image ${i + 1} uploaded successfully:`, downloadUrl);
+              imageUrls.push(downloadUrl);
+            } catch (uploadError) {
+              console.error(`Error uploading image ${i + 1}:`, uploadError);
+              // If upload fails, try to keep the original image if it's a URL
+              if (image.startsWith('http')) {
+                imageUrls.push(image);
+              }
+            }
+          } else if (image.startsWith('http')) {
             // If it's already a URL, keep it
             console.log(`Image ${i + 1} is already a URL:`, image);
             imageUrls.push(image);
+          } else {
+            console.warn(`Skipping invalid image ${i + 1}:`, image.substring(0, 50) + '...');
           }
         }
       }
       
       console.log('Final imageUrls array:', imageUrls);
+      
+      console.log('Saving product with compatibility data:', formData.compatibility);
       
       // Save to Firestore with all fields
       await addDoc(collection(db, "products"), {
@@ -410,6 +563,7 @@ function AdminInventoryContent() {
         imageUrl: imageUrls[0] || "", // Keep main image for backward compatibility
         images: imageUrls, // Store all images in array
         category: formData.category || "Car Keys",
+        categoryId: formData.categoryId || null,
         description: formData.description || "",
         shortDescription: formData.shortDescription || "",
         sku: formData.sku || "",
@@ -445,13 +599,14 @@ function AdminInventoryContent() {
         shippingClass: formData.shippingClass || "",
         // Vehicle compatibility data for filtering
         selectedCompatibility: formData.selectedCompatibility || [],
+        compatibility: formData.compatibility || [], // Add this for consistent filtering
         vehicleTypes: formData.vehicleTypes || [],
         categories: formData.categories || [],
         createdAt: new Date(),
         updatedAt: new Date()
       });
       
-      setShowUploadModal(false);
+      setShowEditModal(false);
       showNotification('success', 'Product added successfully!');
       await fetchProducts();
     } catch (error) {
@@ -470,6 +625,7 @@ function AdminInventoryContent() {
       price: product.price,
       oldPrice: product.oldPrice || "",
       category: product.category || "",
+      categoryId: product.categoryId || "",
       description: product.description || "",
         shortDescription: product.shortDescription || "",
       sku: product.sku || "",
@@ -524,6 +680,7 @@ function AdminInventoryContent() {
         installationNotes: product.installationNotes || "",
         // Vehicle compatibility data
         selectedCompatibility: product.selectedCompatibility || [],
+        compatibility: product.compatibility || [],
         vehicleTypes: product.vehicleTypes || []
     });
     setShowEditModal(true);
@@ -543,20 +700,32 @@ function AdminInventoryContent() {
         for (let i = 0; i < formData.images.length; i++) {
           const image = formData.images[i];
           
-          // If it's a base64 image, upload it to Firebase Storage
+          // If it's a base64 image (including edited images), upload it to Firebase Storage
           if (image.startsWith('data:')) {
-            const response = await fetch(image);
-            const blob = await response.blob();
-            const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
-            await uploadBytes(storageRef, blob);
-            const downloadUrl = await getDownloadURL(storageRef);
-            imageUrls.push(downloadUrl);
-          } else {
+            try {
+              const response = await fetch(image);
+              const blob = await response.blob();
+              const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
+              await uploadBytes(storageRef, blob);
+              const downloadUrl = await getDownloadURL(storageRef);
+              imageUrls.push(downloadUrl);
+            } catch (uploadError) {
+              console.error(`Error uploading image ${i + 1}:`, uploadError);
+              // If upload fails, try to keep the original image if it's a URL
+              if (image.startsWith('http')) {
+                imageUrls.push(image);
+              }
+            }
+          } else if (image.startsWith('http')) {
             // If it's already a URL, keep it
             imageUrls.push(image);
+          } else {
+            console.warn(`Skipping invalid image ${i + 1}:`, image.substring(0, 50) + '...');
           }
         }
       }
+      
+      console.log('Updating product with compatibility data:', formData.compatibility);
       
       const updateData: any = {
         title: formData.title,
@@ -566,6 +735,7 @@ function AdminInventoryContent() {
         imageUrl: imageUrls[0] || "", // Keep main image for backward compatibility
         images: imageUrls, // Store all images in array
         category: formData.category || "Car Keys",
+        categoryId: formData.categoryId || null,
         description: formData.description || "",
         sku: formData.sku || "",
         stock: formData.stock ? parseInt(formData.stock) : 0,
@@ -575,6 +745,7 @@ function AdminInventoryContent() {
         manufacturer: formData.manufacturer || "",
         // Vehicle compatibility data for filtering
         selectedCompatibility: formData.selectedCompatibility || [],
+        compatibility: formData.compatibility || [], // Add this for consistent filtering
         vehicleTypes: formData.vehicleTypes || [],
         categories: formData.categories || [],
         updatedAt: new Date()
@@ -742,16 +913,24 @@ function AdminInventoryContent() {
 
   // Toggle product selection
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
+    setSelectedProducts(prev => {
+      const newSelection = prev.includes(productId) 
         ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+        : [...prev, productId];
+      return newSelection;
+    });
   };
 
-  // Select all products
-  const selectAllProducts = () => {
-    setSelectedProducts(() => filteredProducts.map(p => p.id));
+  // Toggle select all products
+  const toggleSelectAll = () => {
+    const allSelected = currentProducts.every(p => selectedProducts.includes(p.id));
+    if (allSelected) {
+      // If all are selected, clear selection
+      setSelectedProducts([]);
+    } else {
+      // If not all are selected, select all
+      setSelectedProducts(currentProducts.map(p => p.id));
+    }
   };
 
   // Clear selection
@@ -1005,7 +1184,7 @@ function AdminInventoryContent() {
   };
 
   return (
-    <AdminLayout>
+    <>
       {/* Notification */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
@@ -1025,21 +1204,29 @@ function AdminInventoryContent() {
       {isAuthenticated ? (
         <div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8 bg-white/90 rounded-2xl shadow-2xl border border-blue-100 mt-4 mb-24">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-blue-900 tracking-tight">Inventory Management</h2>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-900 tracking-tight">Inventory Management</h2>
+              <p className="text-gray-600 mt-1">
+                Total: {filteredProducts.length} products
+                {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <button 
                 onClick={addSampleProducts}
                 disabled={loading}
-                className="bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold rounded-lg px-3 sm:px-4 py-2 shadow hover:from-green-700 hover:to-green-600 transition disabled:opacity-50 text-sm sm:text-base"
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg px-3 py-2 shadow-sm hover:from-blue-700 hover:to-blue-600 hover:shadow-md transition-all duration-150 disabled:opacity-50 text-sm"
               >
                 {loading ? "Adding..." : "Add Sample Products"}
               </button>
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg px-3 sm:px-4 py-2 shadow hover:from-blue-700 hover:to-blue-600 transition text-sm sm:text-base"
-              >
-                Add Product
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFlexibleUploadModal(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg px-3 py-2 shadow-sm hover:from-blue-700 hover:to-blue-600 hover:shadow-md transition-all duration-150 text-sm"
+                >
+                  Add Any Product
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1064,8 +1251,8 @@ function AdminInventoryContent() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Categories</option>
-                  {productCategories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                  {availableCategories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>
               </div>
@@ -1132,18 +1319,12 @@ function AdminInventoryContent() {
                     <th className="px-4 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedProducts.includes(p.id))}
-                        disabled={filteredProducts.length === 0}
+                        checked={currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p.id))}
+                        disabled={currentProducts.length === 0}
                         onChange={() => {}}
-                        onClick={e => {
-                          const input = e.target as HTMLInputElement;
-                          if (input.checked) {
-                            selectAllProducts();
-                          } else {
-                            clearSelection();
-                          }
-                        }}
+                        onClick={toggleSelectAll}
                         className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
+                        style={{ pointerEvents: 'auto', zIndex: 1000 }}
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Image</th>
@@ -1157,7 +1338,7 @@ function AdminInventoryContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredProducts.map(product => (
+                  {currentProducts.map(product => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <input
@@ -1166,6 +1347,7 @@ function AdminInventoryContent() {
                           onChange={() => {}}
                           onClick={() => toggleProductSelection(product.id)}
                           className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
+                          style={{ pointerEvents: 'auto', zIndex: 1000 }}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1184,7 +1366,7 @@ function AdminInventoryContent() {
                       <td className="px-4 py-3 text-sm text-gray-900">{product.sku || "-"}</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {product.category || "Car Keys"}
+                          {getCategoryName(product.categoryId || "")}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -1234,9 +1416,32 @@ function AdminInventoryContent() {
             )}
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-6">
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-gray-700 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+
           {/* Product Cards - Mobile/Tablet */}
           <div className="lg:hidden space-y-4">
-            {filteredProducts.map(product => (
+            {currentProducts.map(product => (
               <div key={product.id} className="bg-white rounded-xl shadow border border-gray-200 p-4">
                 <div className="flex items-start gap-4">
                   {/* Checkbox */}
@@ -1286,7 +1491,7 @@ function AdminInventoryContent() {
                           {product.status || 'active'}
                           </span>
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {product.category || "Car Keys"}
+                          {getCategoryName(product.categoryId || "")}
                         </span>
                         <span className="text-xs text-gray-500">Stock: {product.stock || 0}</span>
                         </div>
@@ -1316,19 +1521,55 @@ function AdminInventoryContent() {
             {filteredProducts.length === 0 && (
               <div className="text-center py-8 text-gray-500 bg-white rounded-xl shadow border border-gray-200">
                 {loading ? "Loading products..." : "No products found"}
-                          </div>
-                        )}
-                    </div>
+              </div>
+            )}
+
+            {/* Pagination for Mobile */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-6">
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-gray-700 text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Add/Edit Product Modal */}
-          {(showEditModal || showUploadModal) && (
+          {showEditModal && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" onClick={handleCloseModal} style={{ pointerEvents: 'auto' }}>
               <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <EnhancedProductForm
-                  onSubmit={showEditModal ? handleUpdate : handleUploadAndAdd}
+                <FlexibleProductForm
+                  onSubmit={handleUpdate}
                   onCancel={handleCloseModal}
-                  initialData={showEditModal ? editingProduct : null}
-                  isEditing={showEditModal}
+                  initialData={editingProduct}
+                  isEditing={true}
+                  uploading={uploading}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Flexible Add Product Modal */}
+          {showFlexibleUploadModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" onClick={() => setShowFlexibleUploadModal(false)} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <FlexibleProductForm
+                  onSubmit={handleFlexibleUploadAndAdd}
+                  onCancel={() => setShowFlexibleUploadModal(false)}
                   uploading={uploading}
                 />
               </div>
@@ -1337,9 +1578,9 @@ function AdminInventoryContent() {
 
         </div>
       ) : (
-        <div></div>
+        <div>        </div>
       )}
-    </AdminLayout>
+    </>
   );
 }
 

@@ -2,9 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import Dropzone from "react-dropzone";
-import AdminLayout from "../layout";
+
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 const DEFAULTS = {
@@ -24,8 +22,8 @@ export default function EmailTemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-  const [logoUrl, setLogoUrl] = useState<string>("");
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [sendingTest, setSendingTest] = useState({ orderPlaced: false, orderShipped: false });
+  const [resettingTemplates, setResettingTemplates] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -35,7 +33,6 @@ export default function EmailTemplatesPage() {
       const snap = await getDoc(ref);
       if (snap.exists()) {
         setTemplates({ ...DEFAULTS, ...snap.data() });
-        if (snap.data().logoUrl) setLogoUrl(snap.data().logoUrl);
       }
       setLoading(false);
     }
@@ -45,7 +42,7 @@ export default function EmailTemplatesPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, "siteContent", "emailTemplates"), { ...templates, logoUrl });
+      await setDoc(doc(db, "siteContent", "emailTemplates"), { ...templates });
       setMsg("Templates saved!");
       setTimeout(() => setMsg(""), 2000);
     } catch {
@@ -55,18 +52,70 @@ export default function EmailTemplatesPage() {
     setSaving(false);
   };
 
-  const handleLogoDrop = async (acceptedFiles: File[]) => {
-    if (!acceptedFiles.length) return;
-    setUploadingLogo(true);
-    const file = acceptedFiles[0];
-    const storage = getStorage();
-    const fileRef = storageRef(storage, `email-logos/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-    setLogoUrl(url);
-    setUploadingLogo(false);
-    setMsg("Logo uploaded!");
-    setTimeout(() => setMsg(""), 2000);
+  const sendTestEmail = async (type: 'orderPlaced' | 'orderShipped') => {
+    setSendingTest(prev => ({ ...prev, [type]: true }));
+    try {
+      const testData = {
+        customer: {
+          name: "Test Customer",
+          email: process.env.OWNER_EMAIL || 'paylocksmith@gmail.com', // Send to admin email
+          phone: "+1 (555) 123-4567"
+        },
+        address: {
+          street: "123 Test Street",
+          city: "Test City",
+          state: "TS",
+          zip: "12345",
+          country: "United States"
+        },
+        items: [
+          {
+            title: "Test Product - Toyota Camry Key",
+            quantity: 1,
+            price: 89.99
+          },
+          {
+            title: "Test Product - Honda Accord Key",
+            quantity: 2,
+            price: 79.95
+          }
+        ],
+        total: 249.89,
+        trackingNumber: type === 'orderShipped' ? "1Z999AA1234567890" : undefined
+      };
+
+      const endpoint = type === 'orderPlaced' ? '/api/send-order-email' : '/api/send-shipped-email';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testData)
+      });
+
+      if (response.ok) {
+        setMsg(`Test ${type === 'orderPlaced' ? 'order confirmation' : 'shipping notification'} email sent!`);
+      } else {
+        setMsg(`Failed to send test email: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Test email error:', error);
+      setMsg('Failed to send test email. Check console for details.');
+    }
+    setSendingTest(prev => ({ ...prev, [type]: false }));
+    setTimeout(() => setMsg(""), 3000);
+  };
+
+  const resetTemplates = async () => {
+    setResettingTemplates(true);
+    try {
+      await setDoc(doc(db, "siteContent", "emailTemplates"), DEFAULTS);
+      setTemplates(DEFAULTS);
+      setMsg("Templates reset to defaults!");
+      setTimeout(() => setMsg(""), 2000);
+    } catch (error) {
+      console.error('Reset templates error:', error);
+      setMsg('Failed to reset templates. Check console for details.');
+    }
+    setResettingTemplates(false);
   };
 
   const exampleOrder = {
@@ -75,7 +124,6 @@ export default function EmailTemplatesPage() {
     shippingAddress: "6445 W Sunset Rd #168\nLas Vegas, NV 89118, United States",
     orderTotal: "10.00",
     trackingNumber: "Tracking Number: 1234567890",
-    logo: logoUrl ? `<img src='${logoUrl}' alt='Logo' style='max-width:180px; margin-bottom:16px;' />` : "",
   };
 
   function renderPreview(template: { subject: string; body: string }) {
@@ -93,36 +141,27 @@ export default function EmailTemplatesPage() {
   }
 
   if (isLoading) {
-    return <AdminLayout><div className="text-center py-12 text-gray-500">Loading...</div></AdminLayout>;
+    return <div className="text-center py-12 text-gray-500">Loading...</div>;
   }
   if (!isAuthenticated) {
-    return <AdminLayout><div className="text-center py-12 text-red-600">Access denied. Admins only.</div></AdminLayout>;
+    return <div className="text-center py-12 text-red-600">Access denied. Admins only.</div>;
   }
 
-  return (
-    <AdminLayout>
+    return (
+    <>
       <h1 className="text-2xl font-bold mb-8 text-blue-900">Email Templates</h1>
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow border border-blue-100 p-6 flex flex-col gap-8">
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">Logo for Emails</h2>
-          <Dropzone onDrop={handleLogoDrop} accept={{ 'image/*': [] }} multiple={false}>
-            {({ getRootProps, getInputProps }) => (
-              <div {...getRootProps()} className="border-2 border-dashed border-blue-300 rounded p-4 text-center cursor-pointer bg-blue-50 hover:bg-blue-100 transition mb-2">
-                <input {...getInputProps()} />
-                {uploadingLogo ? (
-                  <span className="text-blue-600">Uploading...</span>
-                ) : logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="mx-auto mb-2 max-h-24" />
-                ) : (
-                  <span className="text-gray-500">Drag & drop or click to upload a logo image</span>
-                )}
-              </div>
-            )}
-          </Dropzone>
-          <div className="text-xs text-gray-500">Use the <code>{'{logo}'}</code> placeholder in your email template to insert the logo.</div>
-        </div>
         <div>
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">Order Confirmation Email</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-blue-700">Order Confirmation Email</h2>
+            <button
+              onClick={() => sendTestEmail('orderPlaced')}
+              disabled={sendingTest.orderPlaced}
+              className="px-4 py-1 bg-green-600 text-white rounded text-sm font-semibold hover:bg-green-700 transition disabled:opacity-60"
+            >
+              {sendingTest.orderPlaced ? 'Sending...' : 'Send Test Email'}
+            </button>
+          </div>
           <label className="block text-xs font-semibold mb-1">Subject</label>
           <input
             type="text"
@@ -136,12 +175,21 @@ export default function EmailTemplatesPage() {
             value={templates.orderPlaced.body}
             onChange={e => setTemplates(t => ({ ...t, orderPlaced: { ...t.orderPlaced, body: e.target.value } }))}
           />
-          <div className="text-xs text-gray-500 mt-1">Placeholders: {'{logo}'}, {'{customerName}'}, {'{orderItems}'}, {'{shippingAddress}'}, {'{orderTotal}'}</div>
+          <div className="text-xs text-gray-500 mt-1">Placeholders: {'{customerName}'}, {'{orderItems}'}, {'{shippingAddress}'}, {'{orderTotal}'}</div>
           <div className="mt-2 font-semibold text-xs text-gray-700">Preview:</div>
           {renderPreview(templates.orderPlaced)}
         </div>
         <div>
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">Order Shipped Email</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-blue-700">Order Shipped Email</h2>
+            <button
+              onClick={() => sendTestEmail('orderShipped')}
+              disabled={sendingTest.orderShipped}
+              className="px-4 py-1 bg-green-600 text-white rounded text-sm font-semibold hover:bg-green-700 transition disabled:opacity-60"
+            >
+              {sendingTest.orderShipped ? 'Sending...' : 'Send Test Email'}
+            </button>
+          </div>
           <label className="block text-xs font-semibold mb-1">Subject</label>
           <input
             type="text"
@@ -155,7 +203,7 @@ export default function EmailTemplatesPage() {
             value={templates.orderShipped.body}
             onChange={e => setTemplates(t => ({ ...t, orderShipped: { ...t.orderShipped, body: e.target.value } }))}
           />
-          <div className="text-xs text-gray-500 mt-1">Placeholders: {'{logo}'}, {'{customerName}'}, {'{orderItems}'}, {'{shippingAddress}'}, {'{orderTotal}'}, {'{trackingNumber}'}</div>
+          <div className="text-xs text-gray-500 mt-1">Placeholders: {'{customerName}'}, {'{orderItems}'}, {'{shippingAddress}'}, {'{orderTotal}'}, {'{trackingNumber}'}</div>
           <div className="mt-2 font-semibold text-xs text-gray-700">Preview:</div>
           {renderPreview(templates.orderShipped)}
         </div>
@@ -166,8 +214,15 @@ export default function EmailTemplatesPage() {
         >
           {saving ? 'Saving...' : 'Save Templates'}
         </button>
+        <button
+          className="self-end px-8 py-2 bg-red-600 text-white rounded-full font-bold shadow hover:bg-red-700 transition disabled:opacity-60"
+          onClick={resetTemplates}
+          disabled={resettingTemplates}
+        >
+          {resettingTemplates ? 'Resetting...' : 'Reset Templates to Defaults'}
+        </button>
         {msg && <div className="text-center text-green-700 font-semibold text-sm mt-2">{msg}</div>}
       </div>
-    </AdminLayout>
+    </>
   );
 } 

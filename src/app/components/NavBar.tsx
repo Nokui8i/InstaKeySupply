@@ -10,6 +10,10 @@ import { UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from './AuthContext';
 import UserAuthDropdown from './UserAuthModal';
 import { HeartIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { usePathname } from 'next/navigation';
 
 interface Product {
   id: string;
@@ -25,10 +29,21 @@ interface Product {
 }
 
 interface NavBarProps {
-  // Removed filter props
+  // NEW: Filter callback props
+  onVehicleFiltersChange?: (filters: {
+    make: string;
+    model: string;
+    yearRange: string;
+  }) => void;
+  onClearVehicleFilters?: () => void;
+  // NEW: Sidebar toggle callback
+  onSidebarToggle?: () => void;
+  // NEW: Sidebar state
+  sidebarOpen?: boolean;
 }
 
-export default function NavBar({}: NavBarProps) {
+export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, onSidebarToggle, sidebarOpen }: NavBarProps) {
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -38,6 +53,19 @@ export default function NavBar({}: NavBarProps) {
   const { user, logout } = useAuth();
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const userIconRef = useRef<HTMLButtonElement>(null);
+  const [adminSidebarOpenState, setAdminSidebarOpenState] = useState(false);
+
+  // Listen for admin sidebar state changes
+  useEffect(() => {
+    const handleAdminSidebarStateChange = (event: CustomEvent) => {
+      setAdminSidebarOpenState(event.detail.sidebarOpen);
+    };
+
+    window.addEventListener('admin-sidebar-state-change', handleAdminSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('admin-sidebar-state-change', handleAdminSidebarStateChange as EventListener);
+    };
+  }, []);
 
   // Filter state
   const [selectedMake, setSelectedMake] = useState('');
@@ -113,6 +141,16 @@ export default function NavBar({}: NavBarProps) {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  // NEW: Clear vehicle filters function
+  const handleClearVehicleFilters = () => {
+    setSelectedMake('');
+    setSelectedModel('');
+    setSelectedYear('');
+    if (onClearVehicleFilters) {
+      onClearVehicleFilters();
+    }
+  };
+
   const handleSearchClick = () => {
     console.log('Search button clicked!'); // Debug log
     setSearchOpen(true);
@@ -135,8 +173,46 @@ export default function NavBar({}: NavBarProps) {
     <>
       <nav className="sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/80 via-[#181f2b]/80 to-[#232a36]/80 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl transition-all duration-500">
         <div className="max-w-7xl mx-auto flex flex-row items-center justify-between px-3 sm:px-4 py-2 sm:py-1 gap-3 sm:gap-6 rounded-xl text-center relative">
+          {/* Sidebar Toggle Button - back to left side - hide on admin pages */}
+          {!pathname.startsWith('/admin') && (
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Sidebar toggle clicked');
+                onSidebarToggle?.();
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
+              aria-label="Toggle sidebar"
+            >
+              {sidebarOpen ? (
+                <XMarkIcon className="w-6 h-6 text-white" />
+              ) : (
+                <Bars3Icon className="w-6 h-6 text-white" />
+              )}
+            </button>
+          )}
+          
+          {/* Admin Sidebar Toggle Button - only show on admin pages */}
+          {pathname.startsWith('/admin') && (
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Admin sidebar toggle clicked');
+                window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'));
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors z-50 relative"
+              aria-label="Toggle admin sidebar"
+            >
+              {adminSidebarOpenState ? (
+                <XMarkIcon className="w-6 h-6 text-white" />
+              ) : (
+                <Cog6ToothIcon className="w-6 h-6 text-white" />
+              )}
+            </button>
+          )}
+          
           {/* Logo (always visible, left) */}
-          <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative" style={{marginLeft: '-8px'}}>
+          <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative" style={{marginLeft: '-8px', zIndex: 10}}>
             {/* Mobile logo */}
             <span className="relative flex items-center justify-center md:hidden" style={{position: 'absolute', top: '-12px', left: 0, height: '64px', width: '96px'}}>
               <Image src="/Untitled design.png" alt="InstaKey Logo" width={96} height={96} className="object-contain" priority />
@@ -219,7 +295,11 @@ export default function NavBar({}: NavBarProps) {
             {/* Filter fields */}
             <div className="flex gap-2 items-center">
               <select
-                className="bg-white rounded-md px-3 py-2 text-gray-700 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                  selectedMake 
+                    ? 'bg-white border border-blue-400 text-gray-800' 
+                    : 'bg-white border border-gray-300 text-gray-700'
+                }`}
                 value={selectedMake}
                 onChange={e => {
                   setSelectedMake(e.target.value);
@@ -233,7 +313,13 @@ export default function NavBar({}: NavBarProps) {
                 ))}
               </select>
               <select
-                className="bg-white rounded-md px-3 py-2 text-gray-700 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                  selectedModel 
+                    ? 'bg-white border border-blue-400 text-gray-800' 
+                    : selectedMake 
+                      ? 'bg-white border border-gray-300 text-gray-700' 
+                      : 'bg-gray-100 border border-gray-300 text-gray-500'
+                }`}
                 value={selectedModel}
                 onChange={e => {
                   setSelectedModel(e.target.value);
@@ -248,7 +334,13 @@ export default function NavBar({}: NavBarProps) {
               </select>
               {/* Year/Range Dropdown - always dynamic */}
               <select
-                className="bg-white rounded-md px-3 py-2 text-gray-700 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`rounded-md px-3 py-2 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 ${
+                  selectedYear 
+                    ? 'bg-white border border-blue-400 text-gray-800' 
+                    : selectedModel 
+                      ? 'bg-white border border-gray-300 text-gray-700' 
+                      : 'bg-gray-100 border border-gray-300 text-gray-500'
+                }`}
                 value={selectedYear}
                 onChange={e => setSelectedYear(e.target.value)}
                 disabled={!selectedModel}
@@ -258,6 +350,45 @@ export default function NavBar({}: NavBarProps) {
                   <option key={yearRange} value={yearRange}>{yearRange}</option>
                 ))}
               </select>
+              
+              {/* NEW: Go Button */}
+              <button
+                onClick={() => {
+                  if (selectedMake && onVehicleFiltersChange) {
+                    onVehicleFiltersChange({
+                      make: selectedMake,
+                      model: selectedModel || '',
+                      yearRange: selectedYear || ''
+                    });
+                  }
+                }}
+                disabled={!selectedMake}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
+                  selectedMake
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-400 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
+                title="Search for compatible products"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Go
+              </button>
+              
+              {/* NEW: Clear Filters Button - Improved Styling */}
+              {(selectedMake || selectedModel || selectedYear) && (
+                <button
+                  onClick={handleClearVehicleFilters}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 flex items-center gap-1"
+                  title="Clear vehicle filters"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear
+                </button>
+              )}
             </div>
           </div>
           {/* Cart icon always at far right */}

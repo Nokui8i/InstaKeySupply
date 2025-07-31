@@ -59,7 +59,7 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       setError("Please enter a valid email address.");
@@ -69,11 +69,40 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
       setError("Please enter a valid phone number.");
       return;
     }
+    
     setError(null);
     setSubmitted(true);
-    localStorage.setItem("promoModalDismissed", "true");
-    // TODO: Connect to backend or email service here
-    setTimeout(onClose, 2000);
+    
+    try {
+      // Send to our API for storage
+      const response = await fetch('/api/collect-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          phone: phone,
+          source: 'promo_modal'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to collect email');
+      }
+
+      // Store dismissal preference
+      localStorage.setItem("promoModalDismissed", "true");
+      
+      // Close modal after success
+      setTimeout(onClose, 2000);
+      
+    } catch (error) {
+      console.error('Error collecting email:', error);
+      setError("Failed to collect your information. Please try again.");
+      setSubmitted(false);
+    }
   };
 
   const handleClose = () => {
@@ -93,7 +122,7 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
         <h3 className="text-center text-3xl font-extrabold text-blue-900 mb-2">{content.subheadline}</h3>
         <p className="text-center text-gray-600 text-sm mb-4">{content.description}</p>
         {submitted ? (
-          <div className="text-center text-green-600 font-semibold py-8">Thank you! Your code is on its way.</div>
+          <div className="text-center text-green-600 font-semibold py-8">Thank you!</div>
         ) : (
           <form className="w-full flex flex-col gap-3" onSubmit={handleSubmit}>
             <input

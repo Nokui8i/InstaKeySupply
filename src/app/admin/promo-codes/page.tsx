@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy } from "firebase/firestore";
-import AdminLayout from "../layout";
+
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 interface PromoCode {
@@ -141,14 +141,14 @@ export default function PromoCodesPage() {
   };
 
   if (isLoading) {
-    return <AdminLayout><div className="text-center py-12 text-gray-500">Loading...</div></AdminLayout>;
+    return <div className="text-center py-12 text-gray-500">Loading...</div>;
   }
   if (!isAuthenticated) {
-    return <AdminLayout><div className="text-center py-12 text-red-600">Access denied. Admins only.</div></AdminLayout>;
+    return <div className="text-center py-12 text-red-600">Access denied. Admins only.</div>;
   }
 
   return (
-    <AdminLayout>
+    <>
       <h1 className="text-2xl font-bold mb-6 text-blue-900">Promo Codes</h1>
       <div className="max-w-4xl bg-white rounded-xl shadow border border-blue-100 p-6 flex flex-col gap-8 ml-72">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 shadow-sm">
@@ -329,6 +329,6 @@ export default function PromoCodesPage() {
           </table>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 } 

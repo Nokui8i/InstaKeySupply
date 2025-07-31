@@ -167,21 +167,28 @@ export default function SiteContentAdminPage() {
         hours: contactData.hours || '',
         socials: Array.isArray(contactData.socials) ? contactData.socials : [],
       });
+      
+      // Set the text content states with fetched data
+      setTerms(termsText);
+      setPrivacy(privacyText);
+      setShipping(shippingText);
+      
       setLoading(false);
     }
     fetchContent();
   }, []);
 
   useEffect(() => {
-    if (section !== 'messages') return;
-    setLoading(true);
-    async function fetchMessages() {
-      const q = query(collection(db, 'contactMessages'), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      setMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
+    if (section === 'messages') {
+      setLoading(true);
+      async function fetchMessages() {
+        const q = query(collection(db, 'contactMessages'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        setMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      }
+      fetchMessages();
     }
-    fetchMessages();
   }, [section]);
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,12 +251,6 @@ export default function SiteContentAdminPage() {
         {/* Sidebar */}
         <aside className="w-64 bg-blue-50 rounded-2xl shadow-xl border border-blue-100 p-6 flex flex-col gap-2 h-fit sticky top-8 ml-[-80px]">
           <h2 className="text-lg font-bold text-blue-900 mb-4">Site Content</h2>
-          <a
-            href="/admin/orders"
-            className="text-left px-4 py-2 rounded-lg font-medium transition-colors hover:bg-blue-100 text-blue-900 mb-2"
-          >
-            Orders
-          </a>
           <button
             className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'terms' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
             onClick={() => setSection('terms')}

@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { app } from '../../firebase';
 
 interface AuthContextType {
@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User | null>;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<User | null>;
+  resetPassword: (email: string) => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -48,6 +49,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(cred.user);
       const token = await cred.user.getIdTokenResult();
       setIsAdmin(!!token.claims.admin);
+      
+      // Add user to email marketing list since they agreed to terms
+      try {
+        if (email) {
+          console.log('Adding user to email marketing list:', email);
+          const response = await fetch('/api/collect-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              phone: null,
+              source: 'user_registration'
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Email marketing API error:', errorData);
+          } else {
+            const result = await response.json();
+            console.log('Successfully added to email marketing list:', result);
+          }
+        } else {
+          console.warn('User has no email address, skipping email marketing list');
+        }
+      } catch (error) {
+        console.error('Failed to add user to email marketing list:', error);
+        // Don't fail registration if email marketing fails
+      }
+      
       return cred.user;
     } catch (e) {
       setLoading(false);
@@ -88,6 +121,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(cred.user);
       const token = await cred.user.getIdTokenResult();
       setIsAdmin(!!token.claims.admin);
+      
+      // Add user to email marketing list since they agreed to terms
+      try {
+        if (cred.user.email) {
+          console.log('Adding Google user to email marketing list:', cred.user.email);
+          const response = await fetch('/api/collect-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: cred.user.email,
+              phone: null,
+              source: 'google_signin'
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Email marketing API error:', errorData);
+          } else {
+            const result = await response.json();
+            console.log('Successfully added Google user to email marketing list:', result);
+          }
+        } else {
+          console.warn('Google user has no email address, skipping email marketing list');
+        }
+      } catch (error) {
+        console.error('Failed to add user to email marketing list:', error);
+        // Don't fail sign-in if email marketing fails
+      }
+      
       return cred.user;
     } catch (e) {
       setLoading(false);
@@ -97,8 +162,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (e) {
+      throw e;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout, signInWithGoogle, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, register, login, logout, signInWithGoogle, resetPassword, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

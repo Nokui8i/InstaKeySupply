@@ -5,6 +5,7 @@ import ProductCarousel from "./components/ProductCarousel";
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import PromoModal from './components/PromoModal';
+import { useSearchParams } from 'next/navigation';
 
 const sampleProducts = [
   {
@@ -47,12 +48,24 @@ const sampleProducts = [
 ];
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [banners, setBanners] = useState<{ src: string; alt: string }[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPromo, setShowPromo] = useState(false);
+  
+  // NEW: Vehicle compatibility and filter state
+  const [activeFilters, setActiveFilters] = useState<{
+    make: string;
+    model: string;
+    yearRange: string;
+  } | null>(null);
+
+
 
   useEffect(() => {
     async function fetchData() {
@@ -88,6 +101,18 @@ export default function Home() {
         setProducts(fetchedProducts);
         setFilteredProducts(fetchedProducts);
         console.log('Products fetched:', fetchedProducts.length);
+
+        // Fetch categories
+        const categoriesQuery = query(collection(db, "categories"), orderBy("name"));
+        const categoriesSnap = await getDocs(categoriesQuery);
+        const fetchedCategories = categoriesSnap.docs.map((doc: any) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setCategories(fetchedCategories);
+        console.log('Categories fetched:', fetchedCategories.length);
+        
+
         
         // If no products from Firebase, use sample products for testing
         if (fetchedProducts.length === 0) {
@@ -258,8 +283,88 @@ export default function Home() {
     }
   }, []);
 
+  // Handle category filtering from URL parameter
+  useEffect(() => {
+    const categoryId = searchParams.get('category');
+    
+    if (categoryId && products.length > 0) {
+      // Filter products by categoryId
+      const filtered = products.filter(product => product.categoryId === categoryId);
+      setFilteredProducts(filtered);
+      console.log(`Filtered products for category ${categoryId}:`, filtered.length);
+    } else if (products.length > 0) {
+      // Show all products if no category filter
+      setFilteredProducts(products);
+    }
+  }, [searchParams, products]);
+
+  // NEW: Listen for filter events from navbar
+  useEffect(() => {
+    const handleNavbarVehicleFiltersChange = (event: CustomEvent) => {
+      handleVehicleFiltersChange(event.detail);
+    };
+
+    const handleNavbarClearVehicleFilters = () => {
+      setActiveFilters(null);
+      setFilteredProducts([...products]); // Use current products state
+    };
+
+    window.addEventListener('vehicle-filters-change', handleNavbarVehicleFiltersChange as EventListener);
+    window.addEventListener('clear-vehicle-filters', handleNavbarClearVehicleFilters);
+
+    return () => {
+      window.removeEventListener('vehicle-filters-change', handleNavbarVehicleFiltersChange as EventListener);
+      window.removeEventListener('clear-vehicle-filters', handleNavbarClearVehicleFilters);
+    };
+  }, [products]); // Add products to dependency array
+
   const handleFiltersChange = (filtered: any[]) => {
     setFilteredProducts(filtered);
+  };
+
+  // NEW: Vehicle compatibility filter logic
+  const handleVehicleFiltersChange = (filters: {
+    make: string;
+    model: string;
+    yearRange: string;
+  }) => {
+    setActiveFilters(filters);
+    
+    // Filter products based on vehicle compatibility
+    const filtered = products.filter(product => {
+      if (!product.compatibility || !Array.isArray(product.compatibility)) {
+        return false;
+      }
+      
+      return product.compatibility.some((compatibility: any) => {
+        // If only make is selected, show all products for that make
+        if (filters.make && !filters.model && !filters.yearRange) {
+          return compatibility.make === filters.make;
+        }
+        
+        // If make and model are selected, show all products for that make/model
+        if (filters.make && filters.model && !filters.yearRange) {
+          return compatibility.make === filters.make && 
+                 compatibility.model === filters.model;
+        }
+        
+        // If all three are selected, show specific products
+        if (filters.make && filters.model && filters.yearRange) {
+          return compatibility.make === filters.make &&
+                 compatibility.model === filters.model &&
+                 compatibility.yearRange === filters.yearRange;
+        }
+        
+        return false;
+      });
+    });
+    
+    setFilteredProducts(filtered);
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters(null);
+    setFilteredProducts([...products]); // Use spread operator to ensure we get a fresh copy
   };
 
   // Show loading state
@@ -298,6 +403,7 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
       <PromoModal open={showPromo} onClose={() => setShowPromo(false)} />
+      
       {/* Hero Section - Carousel Banner */}
       <section className="mb-12 sm:mb-16 mt-0">
         <CarouselBanner images={banners} />
@@ -308,20 +414,76 @@ export default function Home() {
         <section className="mb-12 sm:mb-16">
           <div className="relative mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-blue-600 drop-shadow text-center">All Products</h2>
+            
+            {/* Category Filter Display */}
+            {searchParams.get('category') && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-blue-600">Showing products in:</span>
+                    <span className="font-semibold text-blue-800">
+                      {categories.find(cat => cat.id === searchParams.get('category'))?.name || 'Unknown Category'}
+                    </span>
+                  </div>
+                  <a 
+                    href="/" 
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    View All Products
+                  </a>
+                </div>
+              </div>
+            )}
+
           </div>
-          {filteredProducts.length > 0 ? (
-            <ProductCarousel products={filteredProducts} />
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">No products match your current filters.</p>
-              <button
-                onClick={() => setFilteredProducts(products)}
-                className="mt-4 text-blue-400 hover:text-blue-300 underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
+          
+          {/* Products Display */}
+          <div className="w-full">
+            {activeFilters && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Filtered for:</strong> {activeFilters.make}
+                {activeFilters.model && ` ${activeFilters.model}`}
+                {activeFilters.yearRange && ` (${activeFilters.yearRange})`}
+                </p>
+                                  <p className="text-xs text-blue-600 mt-1">
+                    Showing {filteredProducts.length} compatible product{filteredProducts.length !== 1 ? 's' : ''}
+                    {activeFilters.make && !activeFilters.model && ' for all ' + activeFilters.make + ' models'}
+                    {activeFilters.make && activeFilters.model && !activeFilters.yearRange && ' for all ' + activeFilters.make + ' ' + activeFilters.model + ' years'}
+                    {activeFilters.make && activeFilters.model && activeFilters.yearRange && ' for ' + activeFilters.make + ' ' + activeFilters.model + ' ' + activeFilters.yearRange}
+                  </p>
+              </div>
+            )}
+            
+            {filteredProducts.length > 0 ? (
+              <ProductCarousel products={filteredProducts} />
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">
+                  {searchParams.get('category') 
+                    ? `No products found in "${categories.find(cat => cat.id === searchParams.get('category'))?.name || 'this category'}"`
+                    : activeFilters 
+                      ? `No products found for ${activeFilters.make}${activeFilters.model ? ` ${activeFilters.model}` : ''}${activeFilters.yearRange ? ` (${activeFilters.yearRange})` : ''}`
+                      : 'No products available.'
+                  }
+                </p>
+                {(activeFilters || searchParams.get('category')) && (
+                  <button
+                    onClick={() => {
+                      if (searchParams.get('category')) {
+                        window.location.href = '/';
+                      } else {
+                        handleClearFilters();
+                      }
+                    }}
+                    className="mt-4 text-blue-400 hover:text-blue-300 underline"
+                  >
+                    {searchParams.get('category') ? 'View All Products' : 'Clear filters'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </section>
       )}
 

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/firebase";
-import AdminLayout from "./layout";
 import { useAdminAuth } from "./context/AdminAuthContext";
 import AdminProvider from "./AdminProvider";
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -47,32 +46,27 @@ function DashboardContent() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </AdminLayout>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <AdminLayout>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">Admin Login</h2>
-            <p className="text-center text-gray-600 mb-4">Please log in to access the admin panel.</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">Admin Login</h2>
+          <p className="text-center text-gray-600 mb-4">Please log in to access the admin panel.</p>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Dashboard Header */}
         <div className="border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-2">Welcome to your admin panel</p>
@@ -200,7 +194,6 @@ function DashboardContent() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
 
