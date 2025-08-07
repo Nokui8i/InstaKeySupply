@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
 import { adminDb } from '../../../../firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   if (!stripe) {
@@ -64,7 +65,7 @@ async function handleCheckoutSessionCompleted(session: any) {
 
     // Create order in Firestore
     const orderData = {
-      createdAt: adminDb.Timestamp.now(),
+      createdAt: Timestamp.now(),
       stripeSessionId: session.id,
       stripePaymentIntentId: session.payment_intent,
       customer: {
@@ -117,7 +118,7 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       const orderDoc = orderSnapshot.docs[0];
       await orderDoc.ref.update({
         paymentStatus: 'completed',
-        updatedAt: adminDb.Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
     }
   } catch (error) {
@@ -136,7 +137,7 @@ async function handlePaymentFailed(paymentIntent: any) {
       await orderDoc.ref.update({
         paymentStatus: 'failed',
         orderStatus: 'cancelled',
-        updatedAt: adminDb.Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
     }
   } catch (error) {
