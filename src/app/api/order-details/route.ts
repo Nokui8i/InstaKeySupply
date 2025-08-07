@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe';
-import { adminDb } from '../../../firebase-admin';
+import { getAdminDb } from '../../../firebase-admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,12 +31,12 @@ export async function GET(request: NextRequest) {
 
     console.log('Session found, checking Firestore for order');
 
-    // Check if Firebase Admin SDK is initialized
+    // Get Firebase Admin SDK instance
+    const adminDb = getAdminDb();
     if (!adminDb) {
       console.error('Firebase Admin SDK not initialized');
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
-
     // Try to find order in Firestore
     const orderQuery = adminDb.collection('orders').where('stripeSessionId', '==', sessionId);
     const orderSnapshot = await orderQuery.get();

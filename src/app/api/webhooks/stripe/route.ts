@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
-import { adminDb } from '../../../../firebase-admin';
+import { getAdminDb } from '../../../../firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
@@ -50,7 +50,8 @@ async function handleCheckoutSessionCompleted(session: any) {
   try {
     console.log('Handling checkout session completed:', session.id);
     
-    // Check if Firebase Admin SDK is initialized
+    // Get Firebase Admin SDK instance
+    const adminDb = getAdminDb();
     if (!adminDb) {
       console.error('Firebase Admin SDK not initialized in webhook');
       throw new Error('Database not available');
@@ -123,6 +124,8 @@ async function handleCheckoutSessionCompleted(session: any) {
 
 async function handlePaymentSucceeded(paymentIntent: any) {
   try {
+    // Get Firebase Admin SDK instance
+    const adminDb = getAdminDb();
     // Update order status if needed
     const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
     const orderSnapshot = await orderQuery.get();
