@@ -1,75 +1,67 @@
 // Use Firebase client SDK for server-side operations
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
-import { ServiceAccount } from 'firebase-admin';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, doc, setDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
 
-let adminDb: any = null;
-let adminAuth: any = null;
-let isInitialized = false;
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDiPg91GBfcbVqkvty-wU9WwgEpaK5rsqY",
+  authDomain: "instakeysuply.firebaseapp.com",
+  projectId: "instakeysuply",
+  storageBucket: "instakeysuply.firebasestorage.app",
+  messagingSenderId: "560696702143",
+  appId: "1:560696702143:web:f345e7b0ba4453eda3020a",
+  measurementId: "G-1CDJTHTVXB"
+};
 
-function initializeFirebaseAdmin() {
-  if (isInitialized) {
-    return { adminDb, adminAuth };
-  }
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+console.log('Firebase client SDK initialized successfully');
+
+// Export Firestore instance
+export const adminDb = db;
+
+// Helper functions for Firestore operations
+export async function addOrder(orderData: any) {
   try {
-    // Get credentials from environment variables
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'instakeysuply';
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || '';
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
-    
-    // Process private key - handle \n characters
-    if (privateKey.includes('\\n')) {
-      privateKey = privateKey.replace(/\\n/g, '\n');
-    }
-
-    console.log('Using Firebase credentials from environment:');
-    console.log('Project ID:', projectId);
-    console.log('Client Email:', clientEmail);
-    console.log('Private Key Length:', privateKey.length);
-
-    // Service account configuration from environment
-    const serviceAccount: ServiceAccount = {
-      projectId: projectId,
-      privateKey: privateKey,
-      clientEmail: clientEmail,
-    };
-
-    if (!getApps().length) {
-      const app = initializeApp({
-        credential: cert(serviceAccount),
-        projectId: projectId,
-        storageBucket: 'instakeysuply.firebasestorage.app'
-      });
-      console.log('Firebase Admin SDK initialized successfully');
-      
-      adminDb = getFirestore(app);
-      adminAuth = getAuth(app);
-    } else {
-      adminDb = getFirestore();
-      adminAuth = getAuth();
-    }
-    
-    isInitialized = true;
+    const ordersRef = collection(db, 'orders');
+    const orderDoc = doc(ordersRef);
+    await setDoc(orderDoc, {
+      ...orderData,
+      id: orderDoc.id,
+      createdAt: new Date()
+    });
+    console.log('Order added successfully:', orderDoc.id);
+    return orderDoc.id;
   } catch (error) {
-    console.error('Firebase Admin SDK initialization error:', error);
+    console.error('Error adding order:', error);
+    throw error;
   }
-  
-  return { adminDb, adminAuth };
 }
 
-// Initialize immediately
-const { adminDb: db, adminAuth: auth } = initializeFirebaseAdmin();
-
-// Export the initialized instances
-export { db as adminDb, auth as adminAuth };
+export async function getOrderBySessionId(sessionId: string) {
+  try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('stripeSessionId', '==', sessionId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting order:', error);
+    throw error;
+  }
+}
 
 // For backward compatibility
 export async function getAdminDb() {
-  return adminDb;
+  return db;
 }
 
 export async function getAdminAuth() {
-  return adminAuth;
+  return null; // Not needed for client SDK
 }

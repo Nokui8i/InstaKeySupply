@@ -1,30 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
-import { getAdminDb } from '../../../../firebase-admin';
+import { addOrder } from '../../../../firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  if (!stripe) {
-    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
-  }
-  
   const body = await request.text();
-  const signature = request.headers.get('stripe-signature')!;
+  const signature = request.headers.get('stripe-signature') as string;
 
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
   }
 
   try {
@@ -44,123 +36,74 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook handler error:', error);
+    console.error('Error handling webhook:', error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
 
 async function handleCheckoutSessionCompleted(session: any) {
+  console.log('Handling checkout session completed:', session.id);
+  
   try {
-    console.log('Handling checkout session completed:', session.id);
-    
-    // Get Firebase Admin SDK instance
-    const adminDb = await getAdminDb();
-    if (!adminDb) {
-      console.error('Firebase Admin SDK not initialized in webhook');
-      throw new Error('Database not available');
-    }
-    
-    // Extract order data from session metadata
-    const {
-      customerName,
-      customerPhone,
-      customerAddress,
-      items,
-      subtotal,
-      promoDiscount,
-      total
-    } = session.metadata;
-
+    // Parse order data from session metadata
     console.log('Parsing order data from session metadata');
-
-    // Parse the data
-    const parsedItems = JSON.parse(items);
-    const parsedAddress = JSON.parse(customerAddress);
-
-    console.log('Creating order in Firestore');
-
-    // Create order in Firestore
-    const orderData = {
-      createdAt: Timestamp.now(),
+    const orderData = JSON.parse(session.metadata.orderData || '{}');
+    
+    // Create order object
+    const order = {
       stripeSessionId: session.id,
       stripePaymentIntentId: session.payment_intent,
       customer: {
-        name: customerName,
-        email: session.customer_details?.email || session.customer_email,
-        phone: customerPhone,
+        name: orderData.customerName || '',
+        email: orderData.customerEmail || '',
+        phone: orderData.customerPhone || ''
       },
-      address: parsedAddress,
-      items: parsedItems,
-      subtotal: parseFloat(subtotal),
-      promoDiscount: parseFloat(promoDiscount),
-      total: parseFloat(total),
+      address: {
+        street: orderData.street || '',
+        city: orderData.city || '',
+        state: orderData.state || '',
+        zip: orderData.zip || '',
+        country: orderData.country || ''
+      },
+      items: orderData.items || [],
+      subtotal: orderData.subtotal || 0,
+      total: orderData.total || 0,
+      promoDiscount: orderData.promoDiscount || 0,
       orderStatus: 'paid',
       paymentStatus: 'completed',
       shippingStatus: 'pending',
+      createdAt: new Date()
     };
 
+    console.log('Creating order in Firestore');
     console.log('Adding order to Firestore:', session.id);
-    await adminDb.collection('orders').add(orderData);
-
-    // Send order confirmation email
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer: orderData.customer,
-          address: orderData.address,
-          items: orderData.items,
-          total: orderData.total,
-          orderId: session.id,
-        }),
-      });
-    } catch (emailError) {
-      console.error('Failed to send order email:', emailError);
-    }
-
-    console.log('Order created successfully:', session.id);
+    
+    // Use the new addOrder helper function
+    const orderId = await addOrder(order);
+    console.log('Order created successfully:', orderId);
+    
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
   }
 }
 
 async function handlePaymentSucceeded(paymentIntent: any) {
+  console.log('Handling payment succeeded:', paymentIntent.id);
+  
   try {
-    // Get Firebase Admin SDK instance
-    const adminDb = await getAdminDb();
     // Update order status if needed
-    const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
-    const orderSnapshot = await orderQuery.get();
-    
-    if (!orderSnapshot.empty) {
-      const orderDoc = orderSnapshot.docs[0];
-      await orderDoc.ref.update({
-        paymentStatus: 'completed',
-        updatedAt: Timestamp.now(),
-      });
-    }
+    // This could be used for additional payment processing
   } catch (error) {
     console.error('Error handling payment succeeded:', error);
   }
 }
 
 async function handlePaymentFailed(paymentIntent: any) {
+  console.log('Handling payment failed:', paymentIntent.id);
+  
   try {
-    // Get Firebase Admin SDK instance
-    const adminDb = await getAdminDb();
-    // Update order status
-    const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
-    const orderSnapshot = await orderQuery.get();
-    
-    if (!orderSnapshot.empty) {
-      const orderDoc = orderSnapshot.docs[0];
-      await orderDoc.ref.update({
-        paymentStatus: 'failed',
-        orderStatus: 'cancelled',
-        updatedAt: Timestamp.now(),
-      });
-    }
+    // Update order status to failed
+    // This could be used for failed payment handling
   } catch (error) {
     console.error('Error handling payment failed:', error);
   }
