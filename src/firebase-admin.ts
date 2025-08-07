@@ -20,17 +20,25 @@ async function initializeFirebaseAdmin() {
     console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT SET');
     console.log('FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL ? 'SET' : 'NOT SET');
 
+    // Process private key - handle both \n and actual newlines
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY || "";
+    if (privateKey.includes('\\n')) {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+
     // Service account configuration from environment variables
     const serviceAccount = {
       projectId: process.env.FIREBASE_PROJECT_ID || "instakeysuply",
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') || "",
+      privateKey: privateKey,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
     };
 
     console.log('Service Account Config:', {
       projectId: serviceAccount.projectId,
       clientEmail: serviceAccount.clientEmail,
-      privateKeyLength: serviceAccount.privateKey.length
+      privateKeyLength: serviceAccount.privateKey.length,
+      privateKeyStarts: serviceAccount.privateKey.substring(0, 50),
+      privateKeyEnds: serviceAccount.privateKey.substring(serviceAccount.privateKey.length - 50)
     });
 
     if (!getApps().length) {
