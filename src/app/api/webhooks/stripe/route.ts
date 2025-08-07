@@ -3,6 +3,9 @@ import { stripe } from '../../../../lib/stripe';
 import { getAdminDb } from '../../../../firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   if (!stripe) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
