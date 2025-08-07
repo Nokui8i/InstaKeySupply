@@ -1,13 +1,16 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import * as path from 'path';
 
-const serviceAccount = require('../firebase-admin-setup/serviceAccountKey.json');
+// Get the absolute path to the service account key
+const serviceAccountPath = path.join(process.cwd(), 'firebase-admin-setup', 'serviceAccountKey.json');
+const serviceAccount = require(serviceAccountPath);
 
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
-    databaseURL: `https://instakeysuply.firebaseio.com`
+    projectId: 'instakeysuply'
   });
 }
 
