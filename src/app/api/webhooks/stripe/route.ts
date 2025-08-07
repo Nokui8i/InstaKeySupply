@@ -11,6 +11,12 @@ export async function POST(request: NextRequest) {
 
   let event;
 
+  // Check if stripe is initialized
+  if (!stripe) {
+    console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+  }
+
   try {
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
