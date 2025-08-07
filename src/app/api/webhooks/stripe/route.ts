@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
 import { addOrder } from '../../../../firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';

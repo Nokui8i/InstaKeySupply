@@ -1,43 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '../../../firebase-admin';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    console.log('=== FIREBASE CLIENT SDK TEST ===');
-    console.log('Testing Firebase client SDK connection...');
+    console.log('Testing Firebase Client SDK connection...');
     
     // Test basic Firestore connection
-    console.log('Firebase client SDK initialized, testing connection...');
+    const testDocRef = doc(adminDb, 'test', 'connection');
+    const testDocSnap = await getDoc(testDocRef);
+    console.log('Firebase Client SDK test successful');
     
-    // Try a simple operation
-    console.log('Attempting to list collections...');
-    const collections = await adminDb.listCollections();
-    console.log('Collections listed successfully:', collections.length, 'collections found');
-    
-    // Try to access a test document
-    const testDoc = await adminDb.collection('test').doc('connection').get();
-    
-    console.log('Firebase client SDK connection successful!');
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Firebase client SDK is working correctly',
+    return Response.json({
+      success: true,
+      message: 'Firebase Client SDK connection successful',
       timestamp: new Date().toISOString(),
-      docExists: testDoc.exists,
-      collectionsCount: collections.length
+      docExists: testDocSnap.exists()
     });
-    
-  } catch (error) {
-    console.error('=== FIREBASE CLIENT SDK ERROR ===');
-    console.error('Firebase client SDK test failed:', error);
-    
-    return NextResponse.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error',
-      errorDetails: error instanceof Error ? error.stack : 'No stack trace',
+  } catch (error: any) {
+    console.error('Firebase Client SDK test failed:', error);
+    return Response.json({
+      success: false,
+      error: error.message,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

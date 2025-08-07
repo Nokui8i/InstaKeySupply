@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import admin from 'firebase-admin';
-import serviceAccount from '../../../../firebase-admin-setup/serviceAccountKey.json';
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as any),
-  });
-}
-const firestore = admin.firestore();
+import { db } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
   const data = await req.json();
@@ -28,9 +21,10 @@ export async function POST(req: NextRequest) {
   let logoUrl = '';
   let emailTemplates = null;
   try {
-    const snap = await firestore.doc('siteContent/emailTemplates').get();
-    const data = snap.data();
-    if (snap.exists && data) {
+    const docRef = doc(db, 'siteContent', 'emailTemplates');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
       logoUrl = data.logoUrl || '';
       emailTemplates = data;
       console.log('Logo URL fetched:', logoUrl); // Debug log
