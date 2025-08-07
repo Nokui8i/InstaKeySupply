@@ -51,7 +51,7 @@ async function handleCheckoutSessionCompleted(session: any) {
     console.log('Handling checkout session completed:', session.id);
     
     // Get Firebase Admin SDK instance
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     if (!adminDb) {
       console.error('Firebase Admin SDK not initialized in webhook');
       throw new Error('Database not available');
@@ -125,7 +125,7 @@ async function handleCheckoutSessionCompleted(session: any) {
 async function handlePaymentSucceeded(paymentIntent: any) {
   try {
     // Get Firebase Admin SDK instance
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     // Update order status if needed
     const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
     const orderSnapshot = await orderQuery.get();
@@ -145,7 +145,7 @@ async function handlePaymentSucceeded(paymentIntent: any) {
 async function handlePaymentFailed(paymentIntent: any) {
   try {
     // Get Firebase Admin SDK instance
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     // Update order status
     const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
     const orderSnapshot = await orderQuery.get();

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     console.log('Session found, checking Firestore for order');
 
     // Get Firebase Admin SDK instance
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     if (!adminDb) {
       console.error('Firebase Admin SDK not initialized');
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });

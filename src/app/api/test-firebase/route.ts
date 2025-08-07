@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     console.log('Testing Firebase Admin SDK connection...');
     
     // Get Firebase Admin SDK instance
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     if (!adminDb) {
       throw new Error('Firebase Admin SDK not initialized');
     }
