@@ -112,14 +112,14 @@ async function handlePaymentSucceeded(paymentIntent: any) {
   try {
     // Update order status if needed
     const orderQuery = query(
-      collection(db, 'orders'),
+      collection(adminDb, 'orders'),
       where('stripePaymentIntentId', '==', paymentIntent.id)
     );
     const orderSnapshot = await getDocs(orderQuery);
     
     if (!orderSnapshot.empty) {
       const orderDoc = orderSnapshot.docs[0];
-      await updateDoc(doc(db, 'orders', orderDoc.id), {
+      await updateDoc(doc(adminDb, 'orders', orderDoc.id), {
         paymentStatus: 'completed',
         updatedAt: Timestamp.now(),
       });
@@ -133,14 +133,14 @@ async function handlePaymentFailed(paymentIntent: any) {
   try {
     // Update order status
     const orderQuery = query(
-      collection(db, 'orders'),
+      collection(adminDb, 'orders'),
       where('stripePaymentIntentId', '==', paymentIntent.id)
     );
     const orderSnapshot = await getDocs(orderQuery);
     
     if (!orderSnapshot.empty) {
       const orderDoc = orderSnapshot.docs[0];
-      await updateDoc(doc(db, 'orders', orderDoc.id), {
+      await updateDoc(doc(adminDb, 'orders', orderDoc.id), {
         paymentStatus: 'failed',
         orderStatus: 'cancelled',
         updatedAt: Timestamp.now(),
