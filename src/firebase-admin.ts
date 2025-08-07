@@ -1,8 +1,8 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Import service account credentials
-const serviceAccount = {
+const serviceAccount: ServiceAccount = {
   type: "service_account",
   project_id: "instakeysuply",
   private_key_id: "75482fa80da4dd388edcdea152c8bc1f011061a",
