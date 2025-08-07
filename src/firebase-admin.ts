@@ -20,7 +20,8 @@ const serviceAccount = {
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
-    projectId: 'instakeysuply'
+    projectId: 'instakeysuply',
+    storageBucket: 'instakeysuply.firebasestorage.app'
   });
 }
 
