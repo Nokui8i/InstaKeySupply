@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe';
-import { db } from '../../../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '../../../firebase-admin';
+import { collection, query, where, getDocs } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Try to find order in Firestore
     const orderQuery = query(
-      collection(db, 'orders'),
+      collection(adminDb, 'orders'),
       where('stripeSessionId', '==', sessionId)
     );
     const orderSnapshot = await getDocs(orderQuery);

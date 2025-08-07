@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
-import { db } from '../../../../firebase';
-import { collection, addDoc, updateDoc, doc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { adminDb } from '../../../../firebase-admin';
+import { collection, addDoc, updateDoc, doc, query, where, getDocs, Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   if (!stripe) {
@@ -83,7 +83,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       shippingStatus: 'pending',
     };
 
-    await addDoc(collection(db, 'orders'), orderData);
+    await addDoc(collection(adminDb, 'orders'), orderData);
 
     // Send order confirmation email
     try {
