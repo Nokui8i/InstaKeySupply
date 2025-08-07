@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
 import { adminDb } from '../../../../firebase-admin';
-import { collection, addDoc, updateDoc, doc, query, where, getDocs, Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   if (!stripe) {
@@ -65,7 +64,7 @@ async function handleCheckoutSessionCompleted(session: any) {
 
     // Create order in Firestore
     const orderData = {
-      createdAt: Timestamp.now(),
+      createdAt: adminDb.Timestamp.now(),
       stripeSessionId: session.id,
       stripePaymentIntentId: session.payment_intent,
       customer: {
@@ -83,7 +82,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       shippingStatus: 'pending',
     };
 
-    await addDoc(collection(adminDb, 'orders'), orderData);
+    await adminDb.collection('orders').add(orderData);
 
     // Send order confirmation email
     try {
@@ -111,17 +110,14 @@ async function handleCheckoutSessionCompleted(session: any) {
 async function handlePaymentSucceeded(paymentIntent: any) {
   try {
     // Update order status if needed
-    const orderQuery = query(
-      collection(adminDb, 'orders'),
-      where('stripePaymentIntentId', '==', paymentIntent.id)
-    );
-    const orderSnapshot = await getDocs(orderQuery);
+    const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
+    const orderSnapshot = await orderQuery.get();
     
     if (!orderSnapshot.empty) {
       const orderDoc = orderSnapshot.docs[0];
-      await updateDoc(doc(adminDb, 'orders', orderDoc.id), {
+      await orderDoc.ref.update({
         paymentStatus: 'completed',
-        updatedAt: Timestamp.now(),
+        updatedAt: adminDb.Timestamp.now(),
       });
     }
   } catch (error) {
@@ -132,18 +128,15 @@ async function handlePaymentSucceeded(paymentIntent: any) {
 async function handlePaymentFailed(paymentIntent: any) {
   try {
     // Update order status
-    const orderQuery = query(
-      collection(adminDb, 'orders'),
-      where('stripePaymentIntentId', '==', paymentIntent.id)
-    );
-    const orderSnapshot = await getDocs(orderQuery);
+    const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
+    const orderSnapshot = await orderQuery.get();
     
     if (!orderSnapshot.empty) {
       const orderDoc = orderSnapshot.docs[0];
-      await updateDoc(doc(adminDb, 'orders', orderDoc.id), {
+      await orderDoc.ref.update({
         paymentStatus: 'failed',
         orderStatus: 'cancelled',
-        updatedAt: Timestamp.now(),
+        updatedAt: adminDb.Timestamp.now(),
       });
     }
   } catch (error) {
