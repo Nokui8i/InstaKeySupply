@@ -17,12 +17,17 @@ const serviceAccount = {
   universe_domain: "googleapis.com"
 };
 
-if (!getApps().length) {
-  initializeApp({
-    credential: cert(serviceAccount),
-    projectId: 'instakeysuply',
-    storageBucket: 'instakeysuply.firebasestorage.app'
-  });
+try {
+  if (!getApps().length) {
+    initializeApp({
+      credential: cert(serviceAccount),
+      projectId: 'instakeysuply',
+      storageBucket: 'instakeysuply.firebasestorage.app'
+    });
+    console.log('Firebase Admin SDK initialized successfully');
+  }
+} catch (error) {
+  console.error('Firebase Admin SDK initialization error:', error);
 }
 
 export const adminDb = getFirestore();
