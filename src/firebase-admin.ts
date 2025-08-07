@@ -1,9 +1,8 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { ServiceAccount } from 'firebase-admin';
 
 // Service account configuration from environment variables
-const serviceAccount: ServiceAccount = {
+const serviceAccount = {
   type: 'service_account',
   project_id: process.env.FIREBASE_PROJECT_ID || 'instakeysuply',
   private_key_id: 'your-private-key-id',
@@ -19,7 +18,7 @@ const serviceAccount: ServiceAccount = {
 // Initialize Firebase Admin SDK
 if (!getApps().length) {
   const app = initializeApp({
-    credential: cert(serviceAccount),
+    credential: cert(serviceAccount as any),
     projectId: 'instakeysuply',
     storageBucket: 'instakeysuply.firebasestorage.app'
   });
@@ -27,6 +26,9 @@ if (!getApps().length) {
 }
 
 const adminDb = getFirestore();
+
+// Export Firestore instance
+export { adminDb };
 
 // Helper functions for Firestore operations
 export async function addOrder(orderData: any) {
