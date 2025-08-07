@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import AdminLayout from "../layout";
 
 interface VehicleData {
   [make: string]: {
@@ -7,7 +8,7 @@ interface VehicleData {
   };
 }
 
-export default function VehicleCompatibilityAdmin() {
+function VehicleCompatibilityContent() {
   const [data, setData] = useState<VehicleData>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -226,273 +227,307 @@ export default function VehicleCompatibilityAdmin() {
     fetchData();
   };
 
-  // Responsive sidebar toggle
-  const handleSidebarToggle = () => setShowSidebar(v => !v);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading vehicle data...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto p-2 md:p-6 min-h-[80vh]">
-      <h1 className="text-2xl font-bold mb-6 text-blue-800 text-center md:text-left">Vehicle Compatibility Management</h1>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-      
-      <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full">
-        {/* Mobile sidebar toggle */}
-        <button
-          className="md:hidden fixed top-20 left-2 z-30 bg-blue-600 text-white rounded-full p-2 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onClick={handleSidebarToggle}
-          aria-label="Show Makes Sidebar"
-        >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        
-        {/* Sidebar: Makes */}
-        <div className={`fixed md:static z-20 top-0 left-0 h-full md:h-auto w-64 min-w-[200px] bg-white rounded-xl shadow-lg border border-blue-200 p-4 transition-transform duration-300 md:translate-x-0 ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:block`}
-          style={{ maxHeight: '90vh', overflowY: 'auto' }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-blue-700">Makes</h2>
-            <button className="md:hidden text-gray-500 hover:text-blue-700" onClick={handleSidebarToggle} aria-label="Close Sidebar">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div className="flex gap-2 mb-4">
-            <input
-              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-              placeholder="Add new make..."
-              value={newMake}
-              onChange={e => setNewMake(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddMake()}
-            />
-            <button
-              className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700"
-              onClick={handleAddMake}
-            >Add</button>
-          </div>
-          <div className="flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '420px' }}>
-            {Object.keys(data).sort().map(make => (
-              <div key={make} className={`px-3 py-2 rounded-lg border ${selectedMake === make ? 'bg-blue-100 border-blue-400 font-bold shadow' : 'bg-gray-100 border-gray-300'} flex items-center gap-2 cursor-pointer transition-all duration-150`} onClick={() => { setSelectedMake(make); setSelectedModel(''); if (window.innerWidth < 768) setShowSidebar(false); }}>
-                <span className="truncate text-base md:text-sm">{make}</span>
-                <button className="ml-auto text-red-500 hover:text-red-700" onClick={e => { e.stopPropagation(); handleRemoveMake(make); }} aria-label={`Remove ${make}`}>
-                  ×
-                </button>
-              </div>
-            ))}
+    <div className="max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+          <div>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-medium sm:font-semibold text-gray-900">Vehicle Compatibility</h1>
+            <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-0.5 sm:mt-1">
+              Manage vehicle makes, models, and year ranges
+            </p>
           </div>
         </div>
-        
-        {/* Overlay for mobile sidebar */}
-        {showSidebar && <div className="fixed inset-0 bg-black/30 z-10 md:hidden" onClick={handleSidebarToggle}></div>}
-        
-        {/* Models Panel */}
-        <div className="w-64 min-w-[200px] md:w-64 md:min-w-[200px] flex-shrink-0">
-          {selectedMake && (
-            <div className="bg-white rounded-xl shadow-lg border border-blue-200 p-4 mb-6 animate-in fade-in duration-200 w-full">
-              <h2 className="text-lg font-semibold mb-2 text-blue-700">Models for {selectedMake}</h2>
-              <div className="flex flex-col md:flex-row gap-2 mb-4 w-full">
-                <input
-                  className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1 min-w-[120px] w-full md:w-auto"
-                  placeholder="Add new model..."
-                  value={newModel}
-                  onChange={e => setNewModel(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddModel()}
-                />
-                <button
-                  className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 w-full md:w-auto"
-                  onClick={handleAddModel}
-                >Add</button>
-              </div>
-              <ul className="divide-y divide-blue-100 overflow-y-auto" style={{ maxHeight: '420px' }}>
-                {Object.keys(data[selectedMake] || {}).sort().map(model => (
-                  <li key={model} className={`flex items-center justify-between py-2 px-2 rounded hover:bg-blue-50 transition-all duration-150 ${selectedModel === model ? 'bg-blue-100 border-l-4 border-blue-400 font-bold shadow' : ''}`}
-                    onClick={() => setSelectedModel(model)}
-                    style={{ cursor: 'pointer' }}
+      </div>
+
+      {/* Content */}
+      <div className="p-3 sm:p-6">
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+                 {/* Mobile Layout */}
+         <div className="lg:hidden space-y-4">
+           {/* Makes Section */}
+           <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4">
+             <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Vehicle Makes</h2>
+             <div className="flex gap-2 mb-3">
+               <input
+                 className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="Add new make..."
+                 value={newMake}
+                 onChange={e => setNewMake(e.target.value)}
+                 onKeyDown={e => e.key === 'Enter' && handleAddMake()}
+               />
+               <button
+                 className="px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                 onClick={handleAddMake}
+               >
+                 Add
+               </button>
+             </div>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {Object.keys(data).sort().map(make => (
+                <div key={make} className={`p-2 rounded border ${selectedMake === make ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'} flex items-center justify-between`}>
+                  <button
+                    className={`text-left flex-1 ${selectedMake === make ? 'font-medium text-blue-900' : 'text-gray-700'}`}
+                    onClick={() => setSelectedMake(make)}
                   >
-                    {editingModel === model ? (
-                      <div 
-                        className="flex items-center gap-2 w-full" 
-                        onClick={(e) => e.stopPropagation()}
+                    {make}
+                  </button>
+                  <button
+                    className="text-red-500 hover:text-red-700 p-1"
+                    onClick={() => handleRemoveMake(make)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Models Section */}
+          {selectedMake && (
+            <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Models for {selectedMake}</h2>
+                                            <div className="flex gap-2 mb-3">
+                 <input
+                   className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Add new model..."
+                   value={newModel}
+                   onChange={e => setNewModel(e.target.value)}
+                   onKeyDown={e => e.key === 'Enter' && handleAddModel()}
+                 />
+                 <button
+                   className="px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                   onClick={handleAddModel}
+                 >
+                   Add
+                 </button>
+               </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {Object.keys(data[selectedMake] || {}).sort().map(model => (
+                  <div key={model} className={`p-2 rounded border ${selectedModel === model ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'} flex items-center justify-between`}>
+                    <button
+                      className={`text-left flex-1 ${selectedModel === model ? 'font-medium text-blue-900' : 'text-gray-700'}`}
+                      onClick={() => setSelectedModel(model)}
+                    >
+                      {model}
+                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                        onClick={() => startEditModel(model)}
                       >
-                        <input
-                          type="text"
-                          value={editingModelValue}
-                          onChange={(e) => setEditingModelValue(e.target.value)}
-                          className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              saveEditModel();
-                            }
-                            if (e.key === 'Escape') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              cancelEditModel();
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            saveEditModel(); 
-                          }}
-                          className="text-green-600 hover:text-green-800 px-2 py-1 rounded"
-                          title="Save"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            cancelEditModel(); 
-                          }}
-                          className="text-gray-600 hover:text-gray-800 px-2 py-1 rounded"
-                          title="Cancel"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="truncate text-base md:text-sm">{model}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              startEditModel(model); 
-                            }}
-                            className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded"
-                            title="Edit"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              handleRemoveModel(selectedMake, model); 
-                            }}
-                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
-                            title="Remove"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
+                        ✏️
+                      </button>
+                      <button
+                        className="text-red-500 hover:text-red-700 p-1"
+                        onClick={() => handleRemoveModel(selectedMake, model)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Year Ranges Section */}
+          {selectedMake && selectedModel && (
+            <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Year Ranges for {selectedModel}</h2>
+              <p className="text-xs text-gray-600 mb-3">Format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)</p>
+                                            <div className="flex gap-2 mb-3">
+                 <input
+                   className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Add new year range..."
+                   value={newYearRange}
+                   onChange={e => setNewYearRange(e.target.value)}
+                   onKeyDown={e => e.key === 'Enter' && handleAddYearRange()}
+                 />
+                 <button
+                   className="px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                   onClick={handleAddYearRange}
+                 >
+                   Add
+                 </button>
+               </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
+                  <div key={yearRange} className="p-2 rounded border bg-gray-50 border-gray-200 flex items-center justify-between">
+                    <span className="text-gray-700">{yearRange}</span>
+                    <div className="flex gap-1">
+                      <button
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                        onClick={() => startEditYearRange(yearRange)}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="text-red-500 hover:text-red-700 p-1"
+                        onClick={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-        
-        {/* Year Ranges Panel */}
-        {selectedMake && selectedModel && (
-          <div className="w-64 min-w-[200px] md:w-64 md:min-w-[200px] flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-lg border border-blue-200 p-4 mb-6 animate-in fade-in duration-200 w-full">
-              <h2 className="text-lg font-semibold mb-2 text-blue-700">Year Ranges for {selectedModel}</h2>
-              <div className="text-xs text-gray-600 mb-3">Format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)</div>
-              <div className="flex flex-col md:flex-row gap-2 mb-4 w-full">
-                <input
-                  className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1 min-w-[120px] w-full md:w-auto"
-                  placeholder="Add new year range..."
-                  value={newYearRange}
-                  onChange={e => setNewYearRange(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddYearRange()}
-                />
-                <button
-                  className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 w-full md:w-auto"
-                  onClick={handleAddYearRange}
-                >Add</button>
-              </div>
-              <ul className="divide-y divide-blue-100 overflow-y-auto" style={{ maxHeight: '420px' }}>
-                {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
-                  <li key={yearRange} className="flex items-center justify-between py-2 px-2 rounded hover:bg-blue-50 transition-all duration-150">
-                    {editingYearRange === yearRange ? (
-                      <div 
-                        className="flex items-center gap-2 w-full" 
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          type="text"
-                          value={editingYearRangeValue}
-                          onChange={(e) => setEditingYearRangeValue(e.target.value)}
-                          className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              saveEditYearRange();
-                            }
-                            if (e.key === 'Escape') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              cancelEditYearRange();
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            saveEditYearRange(); 
-                          }}
-                          className="text-green-600 hover:text-green-800 px-2 py-1 rounded"
-                          title="Save"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            cancelEditYearRange(); 
-                          }}
-                          className="text-gray-600 hover:text-gray-800 px-2 py-1 rounded"
-                          title="Cancel"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="truncate text-base md:text-sm">{yearRange}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              startEditYearRange(yearRange); 
-                            }}
-                            className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded"
-                            title="Edit"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              handleRemoveYearRange(selectedMake, selectedModel, yearRange); 
-                            }}
-                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
-                            title="Remove"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
+
+                 {/* Desktop Layout */}
+         <div className="hidden lg:flex gap-6">
+           {/* Makes Panel */}
+           <div className="w-64 flex-shrink-0">
+             <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
+               <h2 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Makes</h2>
+                               <div className="flex gap-1 mb-4">
+                  <input
+                    className="flex-1 border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Add new make..."
+                    value={newMake}
+                    onChange={e => setNewMake(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddMake()}
+                  />
+                  <button
+                    className="px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                    onClick={handleAddMake}
+                  >
+                    Add
+                  </button>
+                </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {Object.keys(data).sort().map(make => (
+                  <div key={make} className={`p-3 rounded border cursor-pointer transition-colors ${selectedMake === make ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`} onClick={() => setSelectedMake(make)}>
+                    <span className={`${selectedMake === make ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{make}</span>
+                    <button
+                      className="text-red-500 hover:text-red-700 p-1"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveMake(make); }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
-        )}
-        
-        {loading && <div className="text-gray-500">Loading...</div>}
+
+                     {/* Models Panel */}
+           {selectedMake && (
+             <div className="w-64 flex-shrink-0">
+               <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
+                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Models for {selectedMake}</h2>
+                                   <div className="flex gap-1 mb-4">
+                    <input
+                      className="flex-1 border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add new model..."
+                      value={newModel}
+                      onChange={e => setNewModel(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddModel()}
+                    />
+                    <button
+                      className="px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                      onClick={handleAddModel}
+                    >
+                      Add
+                    </button>
+                  </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {Object.keys(data[selectedMake] || {}).sort().map(model => (
+                    <div key={model} className={`p-3 rounded border cursor-pointer transition-colors ${selectedModel === model ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`} onClick={() => setSelectedModel(model)}>
+                      <span className={`${selectedModel === model ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{model}</span>
+                      <div className="flex gap-1">
+                        <button
+                          className="text-blue-600 hover:text-blue-800 p-1"
+                          onClick={(e) => { e.stopPropagation(); startEditModel(model); }}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 p-1"
+                          onClick={(e) => { e.stopPropagation(); handleRemoveModel(selectedMake, model); }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+                     {/* Year Ranges Panel */}
+           {selectedMake && selectedModel && (
+             <div className="w-64 flex-shrink-0">
+               <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
+                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Year Ranges for {selectedModel}</h2>
+                 <p className="text-sm text-gray-600 mb-4">Format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)</p>
+                                   <div className="flex gap-1 mb-4">
+                    <input
+                      className="flex-1 border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add new year range..."
+                      value={newYearRange}
+                      onChange={e => setNewYearRange(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddYearRange()}
+                    />
+                    <button
+                      className="px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition flex-shrink-0 whitespace-nowrap"
+                      onClick={handleAddYearRange}
+                    >
+                      Add
+                    </button>
+                  </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
+                    <div key={yearRange} className="p-3 rounded border bg-gray-50 border-gray-200 flex items-center justify-between">
+                      <span className="text-gray-700">{yearRange}</span>
+                      <div className="flex gap-1">
+                        <button
+                          className="text-blue-600 hover:text-blue-800 p-1"
+                          onClick={() => startEditYearRange(yearRange)}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 p-1"
+                          onClick={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function VehicleCompatibilityAdmin() {
+  return (
+    <AdminLayout>
+      <VehicleCompatibilityContent />
+    </AdminLayout>
   );
 }

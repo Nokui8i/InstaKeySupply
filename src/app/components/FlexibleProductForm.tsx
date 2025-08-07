@@ -206,10 +206,10 @@ function ImageEditor({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Edit Image</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg p-3 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-semibold">Edit Image</h3>
           <button
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700"
@@ -219,47 +219,47 @@ function ImageEditor({
         </div>
 
         {/* Tools */}
-        <div className="flex flex-wrap gap-4 mb-4 p-3 bg-gray-100 rounded-lg">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Tool:</label>
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-3 sm:mb-4 p-2 sm:p-3 bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <label className="text-xs sm:text-sm font-medium">Tool:</label>
             <select
               value={tool}
               onChange={(e) => setTool(e.target.value as 'brush' | 'eraser')}
-              className="px-2 py-1 border rounded text-sm"
+              className="px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
             >
               <option value="brush">Brush</option>
               <option value="eraser">Eraser</option>
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Brush Size:</label>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <label className="text-xs sm:text-sm font-medium">Size:</label>
             <input
               type="range"
               min="5"
               max="50"
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="w-20"
+              className="w-16 sm:w-20"
             />
-            <span className="text-sm">{brushSize}px</span>
+            <span className="text-xs sm:text-sm">{brushSize}px</span>
           </div>
 
           {tool === 'brush' && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Color:</label>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <label className="text-xs sm:text-sm font-medium">Color:</label>
               <input
                 type="color"
                 value={brushColor}
                 onChange={(e) => setBrushColor(e.target.value)}
-                className="w-8 h-8 border rounded cursor-pointer"
+                className="w-6 h-6 sm:w-8 sm:h-8 border rounded cursor-pointer"
               />
             </div>
           )}
 
           <button
             onClick={clearCanvas}
-            className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+            className="px-2 sm:px-3 py-1 bg-gray-500 text-white rounded text-xs sm:text-sm hover:bg-gray-600"
           >
             Reset
           </button>
@@ -280,16 +280,16 @@ function ImageEditor({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 text-xs sm:text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs sm:text-sm"
           >
             Save Changes
           </button>
@@ -813,56 +813,56 @@ export default function FlexibleProductForm({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-4xl mx-auto">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
+    <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 max-w-4xl mx-auto">
+      <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-6">
         {isEditing ? 'Edit Product' : 'Add New Product (Flexible)'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Basic Product Information */}
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Title *</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Product Title *</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Part Number</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Part Number</label>
               <input
                 type="text"
                 value={formData.partNumber}
                 onChange={(e) => setFormData({...formData, partNumber: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                 placeholder="Enter product part number"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
               <input
                 type="text"
                 value={formData.manufacturer}
                 onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Main Category * ({categories.filter(cat => !cat.parentId).length} available)
               </label>
               <select
                 value={selectedMainCategory}
                 onChange={(e) => handleMainCategoryChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                 required
               >
                 <option value="">Select a main category</option>
@@ -877,21 +877,21 @@ export default function FlexibleProductForm({
 
           {/* Subcategory Selection */}
           {selectedMainCategory && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center mb-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-blue-800">Subcategory Selection</span>
+                <span className="text-xs sm:text-sm font-medium text-blue-800">Subcategory Selection</span>
               </div>
               
               {subcategories.length > 0 ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Subcategory * ({subcategories.length} available)
                   </label>
                   <select
                     value={formData.categoryId || ''}
                     onChange={(e) => handleSubcategoryChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                     required
                   >
                     <option value="">Select a subcategory</option>
@@ -929,17 +929,17 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Product Images */}
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Images *</h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Images *</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {/* Display uploaded images */}
               {formData.images?.map((image, index) => (
                 <div key={index} className="relative">
                   <img 
                     src={image} 
                     alt={`Product ${index + 1}`} 
-                    className="w-full h-24 object-cover rounded-lg border"
+                    className="w-full h-20 sm:h-24 object-cover rounded border"
                   />
                   <div className="absolute top-1 right-1 flex gap-1">
                     <button
@@ -948,7 +948,7 @@ export default function FlexibleProductForm({
                         setEditingImageIndex(index);
                         setEditingImageSrc(image);
                       }}
-                      className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-blue-600 z-10"
+                      className="bg-blue-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs hover:bg-blue-600 z-10"
                       title="Edit Image"
                     >
                       ✏️
@@ -960,7 +960,7 @@ export default function FlexibleProductForm({
                         const newImages = currentImages.filter((_, i) => i !== index);
                         setFormData({...formData, images: newImages});
                       }}
-                      className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 z-10"
+                      className="bg-red-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs hover:bg-red-600 z-10"
                       title="Delete Image"
                     >
                       ×
@@ -971,7 +971,7 @@ export default function FlexibleProductForm({
               
               {/* Upload slot */}
               {(!formData.images || formData.images.length < 4) && (
-                <div className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center relative">
+                <div className="w-full h-20 sm:h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center relative">
                   <input
                     type="file"
                     accept="image/*"
@@ -990,7 +990,7 @@ export default function FlexibleProductForm({
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div className="text-center">
-                    <div className="text-gray-400 text-2xl mb-1">+</div>
+                    <div className="text-gray-400 text-xl sm:text-2xl mb-1">+</div>
                     <div className="text-gray-400 text-xs">Add Image</div>
                   </div>
                 </div>
@@ -1004,16 +1004,16 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Pricing */}
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h3>
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Pricing</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Price *</label>
             <input
               type="number"
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({...formData, price: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
               placeholder="Enter price (e.g., 189.99)"
               required
             />
@@ -1021,23 +1021,23 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Custom Fields - Dynamic Description */}
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Product Details (Custom Fields)</h3>
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Product Details (Custom Fields)</h3>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={detectVehicleCompatibility}
                 disabled={formData.customFields.length === 0 || compatLoading}
-                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-3 py-1 bg-green-600 text-white rounded text-xs sm:text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Scan custom fields for vehicle compatibility and auto-add to Vehicle Compatibility section"
               >
-                🚗 Auto-Detect Vehicles
+                🚗 Auto-Detect
               </button>
               <button
                 type="button"
                 onClick={addCustomField}
-                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded text-xs sm:text-sm hover:bg-blue-700"
               >
                 + Add Field
               </button>
@@ -1045,38 +1045,38 @@ export default function FlexibleProductForm({
           </div>
 
           {/* Paste Specification Table Feature */}
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">📋 Paste Specification Table</h4>
-            <p className="text-sm text-blue-800 mb-3">
+          <div className="mb-3 sm:mb-4 p-3 bg-blue-50 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2 text-sm sm:text-base">📋 Paste Specification Table</h4>
+            <p className="text-xs sm:text-sm text-blue-800 mb-3">
               Copy a complete product specification table and paste it here to automatically create all fields:
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <textarea
                 placeholder="Paste your specification table here...&#10;Example:&#10;WORKS ON THE FOLLOWING MODELS:&#10;BMW 3-Series 2000-2007*&#10;BMW 5-Series 2000-2007*&#10;BUTTONS:&#10;Lock&#10;Unlock&#10;Trunk&#10;FREQUENCY: 315 MHz&#10;BATTERY: CR2032"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-vertical"
-                rows={6}
+                className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm resize-vertical"
+                rows={4}
                 id="specTablePaste"
               />
               <button
                 type="button"
                 onClick={parseSpecificationTable}
-                className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 whitespace-nowrap"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm hover:bg-blue-700 whitespace-nowrap"
               >
-                Parse & Create Fields
+                Parse & Create
               </button>
             </div>
           </div>
           
           <div className="space-y-3">
             {formData.customFields.map((field) => (
-              <div key={field.id} className="flex gap-2 items-start">
+              <div key={field.id} className="flex flex-col sm:flex-row gap-2 items-start">
                 <div className="flex-1">
                   <input
                     type="text"
                     value={field.label}
                     onChange={(e) => updateCustomField(field.id, 'label', e.target.value)}
                     placeholder="Field name (e.g., Material, Size, Color)"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                   />
                 </div>
                 <div className="flex-1">
@@ -1084,14 +1084,14 @@ export default function FlexibleProductForm({
                     value={field.value}
                     onChange={(e) => updateCustomField(field.id, 'value', e.target.value)}
                     placeholder="Enter each item on a separate line&#10;Example:&#10;BMW 3-Series 2000-2007&#10;BMW X3 2004-2010&#10;Or:&#10;Lock&#10;Unlock&#10;Trunk"
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-vertical"
+                    rows={3}
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm resize-vertical"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => removeCustomField(field.id)}
-                  className="px-2 py-2 text-red-600 hover:text-red-800"
+                  className="px-2 py-1.5 sm:py-2 text-red-600 hover:text-red-800 text-sm"
                   title="Remove field"
                 >
                   ×
@@ -1100,17 +1100,17 @@ export default function FlexibleProductForm({
             ))}
             
             {formData.customFields.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No custom fields added yet.</p>
-                <p className="text-sm">Click "Add Field" to create custom product details.</p>
-                <p className="text-sm">These will appear in the product description.</p>
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <p className="text-xs sm:text-sm">No custom fields added yet.</p>
+                <p className="text-xs sm:text-sm">Click "Add Field" to create custom product details.</p>
+                <p className="text-xs sm:text-sm">These will appear in the product description.</p>
               </div>
             )}
           </div>
           
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Preview:</h4>
-            <div className="text-sm text-blue-800">
+          <div className="mt-3 sm:mt-4 p-3 bg-blue-50 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2 text-sm sm:text-base">Preview:</h4>
+            <div className="text-xs sm:text-sm text-blue-800">
               {formData.customFields.length > 0 ? (
                 <div className="space-y-1">
                   {formData.customFields.map((field, index) => (
@@ -1131,14 +1131,14 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Vehicle Compatibility */}
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Vehicle Compatibility (Optional)</h3>
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Vehicle Compatibility (Optional)</h3>
             <button
               type="button"
               onClick={addVehicleCompatibility}
               disabled={!compatSelectedMake || !compatSelectedModel || !compatSelectedYear}
-              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 sm:px-3 py-1 bg-green-600 text-white rounded text-xs sm:text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Add Vehicle
             </button>
@@ -1151,13 +1151,13 @@ export default function FlexibleProductForm({
           ) : (
             <>
               {/* Vehicle Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Make</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Make</label>
                   <select
                     value={compatSelectedMake}
                     onChange={(e) => setCompatSelectedMake(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                   >
                     <option value="">Select Make</option>
                     {Object.keys(compatData).sort().map((make: string) => (
@@ -1167,11 +1167,11 @@ export default function FlexibleProductForm({
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Model</label>
                   <select
                     value={compatSelectedModel}
                     onChange={(e) => setCompatSelectedModel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                     disabled={!compatSelectedMake}
                   >
                     <option value="">Select Model</option>
@@ -1182,11 +1182,11 @@ export default function FlexibleProductForm({
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Year Range</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Year Range</label>
                   <select
                     value={compatSelectedYear}
                     onChange={(e) => setCompatSelectedYear(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                     disabled={!compatSelectedModel}
                   >
                     <option value="">Select Year Range</option>
@@ -1200,14 +1200,14 @@ export default function FlexibleProductForm({
               {/* Display added vehicles */}
               <div className="space-y-2">
                 {compatibility.map((vehicle, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-white rounded-lg border">
-                    <span className="text-sm font-medium">
+                  <div key={index} className="flex justify-between items-center p-2 sm:p-3 bg-white rounded border">
+                    <span className="text-xs sm:text-sm font-medium">
                       {vehicle.make} {vehicle.model} ({vehicle.yearRange})
                     </span>
                     <button
                       type="button"
                       onClick={() => removeVehicleCompatibility(index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
                     >
                       Remove
                     </button>
@@ -1215,9 +1215,9 @@ export default function FlexibleProductForm({
                 ))}
                 
                 {compatibility.length === 0 && (
-                  <div className="text-center py-4 text-gray-500">
-                    <p>No vehicle compatibility added yet.</p>
-                    <p className="text-sm">Select make, model, and year range above to add compatibility.</p>
+                  <div className="text-center py-3 sm:py-4 text-gray-500">
+                    <p className="text-xs sm:text-sm">No vehicle compatibility added yet.</p>
+                    <p className="text-xs sm:text-sm">Select make, model, and year range above to add compatibility.</p>
                   </div>
                 )}
               </div>
@@ -1226,18 +1226,18 @@ export default function FlexibleProductForm({
         </div>
                                     
         {/* Form Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 sm:px-6 py-1.5 sm:py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors text-xs sm:text-sm"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={uploading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-xs sm:text-sm"
           >
             {uploading ? 'Saving...' : (isEditing ? 'Update Product' : 'Add Product')}
           </button>

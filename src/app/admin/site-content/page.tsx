@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../../../firebase";
 import { doc, getDoc, setDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
+import AdminLayout from '../layout';
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 function ShippingModal({ open, onClose, value, onChange, onSave, saving }: {
@@ -56,7 +57,7 @@ const SOCIAL_TYPES = [
   { type: 'tiktok', label: 'TikTok' },
 ];
 
-export default function SiteContentAdminPage() {
+function SiteContentContent() {
   const { user, isAuthenticated } = useAdminAuth();
   const [terms, setTerms] = useState("");
   const [privacy, setPrivacy] = useState("");
@@ -242,56 +243,87 @@ export default function SiteContentAdminPage() {
   };
 
   if (!user || !isAuthenticated) {
-    return <div className="max-w-xl mx-auto mt-16 p-8 bg-white rounded-xl shadow text-center text-lg text-red-600">Access denied. Admins only.</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center text-red-600 text-lg">Access denied. Admins only.</div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex justify-center w-full">
-      <div className="max-w-5xl w-full mt-12 flex gap-8 mx-auto">
-        {/* Sidebar */}
-        <aside className="w-64 bg-blue-50 rounded-2xl shadow-xl border border-blue-100 p-6 flex flex-col gap-2 h-fit sticky top-8 ml-[-80px]">
-          <h2 className="text-lg font-bold text-blue-900 mb-4">Site Content</h2>
-          <button
-            className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'terms' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
-            onClick={() => setSection('terms')}
-          >
-            Terms & Conditions
-          </button>
-          <button
-            className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'privacy' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
-            onClick={() => setSection('privacy')}
-          >
-            Privacy Policy
-          </button>
-          <button
-            className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'shipping' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
-            onClick={() => setSection('shipping')}
-          >
-            Shipping, Returns & Payments
-          </button>
-          <button
-            className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'contact' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
-            onClick={() => setSection('contact')}
-          >
-            Contact Us
-          </button>
-          <button
-            className={`text-left px-4 py-2 rounded-lg font-medium transition-colors ${section === 'promo' ? 'bg-blue-600 text-white shadow' : 'hover:bg-blue-100 text-blue-900'}`}
-            onClick={() => setSection('promo')}
-          >
-            Promo Popup
-          </button>
-        </aside>
-        {/* Main Content */}
-        <main className="flex-1 bg-white rounded-2xl shadow-xl border border-blue-100 p-8 min-h-[400px]">
-          <h1 className="text-2xl font-bold mb-8 text-blue-900">
-            {section === 'terms' ? 'Edit Terms & Conditions' :
-              section === 'privacy' ? 'Edit Privacy Policy' :
-              section === 'shipping' ? 'Edit Shipping, Returns & Payments' :
-              section === 'contact' ? 'Edit Contact Us' :
-              section === 'promo' ? 'Edit Promo Popup' :
-              'Contact Messages'}
-          </h1>
+    <div className="max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-medium sm:font-semibold text-gray-900">Site Content Management</h1>
+          <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-1 sm:mt-2">
+            Manage website content including terms, privacy policy, shipping info, contact details, and promo popup settings
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 sm:p-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* Mobile Navigation */}
+          <div className="lg:hidden">
+            <select
+              value={section}
+              onChange={(e) => setSection(e.target.value as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="terms">Terms & Conditions</option>
+              <option value="privacy">Privacy Policy</option>
+              <option value="shipping">Shipping, Returns & Payments</option>
+              <option value="contact">Contact Us</option>
+              <option value="promo">Promo Popup</option>
+            </select>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block w-64 bg-gray-50 rounded-lg shadow-sm border p-4 flex flex-col gap-2 h-fit sticky top-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Site Content</h2>
+            <button
+              className={`text-left px-3 py-2 rounded text-sm font-medium transition-colors ${section === 'terms' ? 'bg-blue-600 text-white shadow' : 'hover:bg-gray-100 text-gray-900'}`}
+              onClick={() => setSection('terms')}
+            >
+              Terms & Conditions
+            </button>
+            <button
+              className={`text-left px-3 py-2 rounded text-sm font-medium transition-colors ${section === 'privacy' ? 'bg-blue-600 text-white shadow' : 'hover:bg-gray-100 text-gray-900'}`}
+              onClick={() => setSection('privacy')}
+            >
+              Privacy Policy
+            </button>
+            <button
+              className={`text-left px-3 py-2 rounded text-sm font-medium transition-colors ${section === 'shipping' ? 'bg-blue-600 text-white shadow' : 'hover:bg-gray-100 text-gray-900'}`}
+              onClick={() => setSection('shipping')}
+            >
+              Shipping, Returns & Payments
+            </button>
+            <button
+              className={`text-left px-3 py-2 rounded text-sm font-medium transition-colors ${section === 'contact' ? 'bg-blue-600 text-white shadow' : 'hover:bg-gray-100 text-gray-900'}`}
+              onClick={() => setSection('contact')}
+            >
+              Contact Us
+            </button>
+            <button
+              className={`text-left px-3 py-2 rounded text-sm font-medium transition-colors ${section === 'promo' ? 'bg-blue-600 text-white shadow' : 'hover:bg-gray-100 text-gray-900'}`}
+              onClick={() => setSection('promo')}
+            >
+              Promo Popup
+            </button>
+          </aside>
+          {/* Main Content */}
+          <main className="flex-1 bg-white rounded-lg shadow-sm border p-3 sm:p-6 min-h-[400px]">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-gray-900">
+              {section === 'terms' ? 'Edit Terms & Conditions' :
+                section === 'privacy' ? 'Edit Privacy Policy' :
+                section === 'shipping' ? 'Edit Shipping, Returns & Payments' :
+                section === 'contact' ? 'Edit Contact Us' :
+                section === 'promo' ? 'Edit Promo Popup' :
+                'Contact Messages'}
+            </h2>
           {msg && <div className="mb-4 text-green-600 font-semibold text-center">{msg}</div>}
           {loading ? (
             <div className="text-center text-gray-500">Loading...</div>
@@ -299,14 +331,14 @@ export default function SiteContentAdminPage() {
             <div className="flex flex-col">
               <textarea
                 id="terms"
-                className="w-full min-h-[300px] border rounded-lg p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-base resize-vertical mb-4"
+                className="w-full min-h-[200px] sm:min-h-[300px] border border-gray-300 rounded p-3 sm:p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base resize-vertical mb-4"
                 value={terms}
                 onChange={e => setTerms(e.target.value)}
                 disabled={saving.terms}
                 placeholder="Enter Terms & Conditions..."
               />
               <button
-                className="self-end px-8 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
+                className="self-end px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded text-sm sm:text-base font-medium shadow hover:bg-blue-700 transition disabled:opacity-60"
                 onClick={() => handleSave("terms")}
                 disabled={saving.terms}
               >
@@ -317,14 +349,14 @@ export default function SiteContentAdminPage() {
             <div className="flex flex-col">
               <textarea
                 id="privacy"
-                className="w-full min-h-[300px] border rounded-lg p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-base resize-vertical mb-4"
+                className="w-full min-h-[200px] sm:min-h-[300px] border border-gray-300 rounded p-3 sm:p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base resize-vertical mb-4"
                 value={privacy}
                 onChange={e => setPrivacy(e.target.value)}
                 disabled={saving.privacy}
                 placeholder="Enter Privacy Policy..."
               />
               <button
-                className="self-end px-8 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
+                className="self-end px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded text-sm sm:text-base font-medium shadow hover:bg-blue-700 transition disabled:opacity-60"
                 onClick={() => handleSave("privacy")}
                 disabled={saving.privacy}
               >
@@ -335,14 +367,14 @@ export default function SiteContentAdminPage() {
             <div className="flex flex-col">
               <textarea
                 id="shipping"
-                className="w-full min-h-[300px] border rounded-lg p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-base resize-vertical mb-4"
+                className="w-full min-h-[200px] sm:min-h-[300px] border border-gray-300 rounded p-3 sm:p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base resize-vertical mb-4"
                 value={shipping}
                 onChange={e => setShipping(e.target.value)}
                 disabled={saving.shipping}
                 placeholder="Enter Shipping, Returns & Payments info..."
               />
               <button
-                className="self-end px-8 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
+                className="self-end px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded text-sm sm:text-base font-medium shadow hover:bg-blue-700 transition disabled:opacity-60"
                 onClick={() => handleSave("shipping")}
                 disabled={saving.shipping}
               >
@@ -351,25 +383,25 @@ export default function SiteContentAdminPage() {
             </div>
           ) : section === 'contact' ? (
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1">Email</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
                   <input
                     type="email"
                     name="email"
-                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     value={contactObj.email}
                     onChange={handleContactChange}
                     disabled={saving.contact}
                     placeholder="support@instakeysuply.com"
                   />
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold mb-1">Business Hours</label>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Business Hours</label>
                   <input
                     type="text"
                     name="hours"
-                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     value={contactObj.hours}
                     onChange={handleContactChange}
                     disabled={saving.contact}
@@ -378,13 +410,13 @@ export default function SiteContentAdminPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-2">Phone Numbers</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Phone Numbers</label>
                 <div className="flex flex-col gap-2">
                   {contactObj.phones.map((p, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
+                    <div key={idx} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <input
                         type="text"
-                        className="flex-1 border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="flex-1 border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         value={p.number}
                         onChange={e => setContactObj(obj => ({
                           ...obj,
@@ -395,7 +427,7 @@ export default function SiteContentAdminPage() {
                       />
                       <input
                         type="text"
-                        className="flex-1 border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="flex-1 border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         value={p.label}
                         onChange={e => setContactObj(obj => ({
                           ...obj,
@@ -406,7 +438,7 @@ export default function SiteContentAdminPage() {
                       />
                       <button
                         type="button"
-                        className="text-red-500 hover:text-red-700 text-lg font-bold px-2"
+                        className="text-red-500 hover:text-red-700 text-lg font-bold px-2 self-center"
                         onClick={() => setContactObj(obj => ({
                           ...obj,
                           phones: obj.phones.filter((_, i) => i !== idx)
@@ -417,20 +449,20 @@ export default function SiteContentAdminPage() {
                   ))}
                   <button
                     type="button"
-                    className="mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold w-fit"
+                    className="mt-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 w-fit"
                     onClick={() => setContactObj(obj => ({ ...obj, phones: [...obj.phones, { number: '', label: '' }] }))}
                     disabled={saving.contact}
                   >+ Add Phone Number</button>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-2">Address</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Address</label>
                 <div className="flex flex-col gap-2">
                   {contactObj.address.map((line, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
                       <input
                         type="text"
-                        className="flex-1 border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="flex-1 border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         value={line}
                         onChange={e => setContactObj(obj => ({
                           ...obj,
@@ -452,19 +484,19 @@ export default function SiteContentAdminPage() {
                   ))}
                   <button
                     type="button"
-                    className="mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold w-fit"
+                    className="mt-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 w-fit"
                     onClick={() => setContactObj(obj => ({ ...obj, address: [...obj.address, ''] }))}
                     disabled={saving.contact}
                   >+ Add Address Line</button>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-2">Social Media Links</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Social Media Links</label>
                 <div className="flex flex-col gap-2">
                   {contactObj.socials.map((s, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
+                    <div key={idx} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <select
-                        className="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         value={s.type}
                         onChange={e => handleSocialChange(idx, 'type', e.target.value)}
                         disabled={saving.contact}
@@ -476,7 +508,7 @@ export default function SiteContentAdminPage() {
                       </select>
                       <input
                         type="url"
-                        className="flex-1 border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="flex-1 border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         value={s.url}
                         onChange={e => handleSocialChange(idx, 'url', e.target.value)}
                         disabled={saving.contact}
@@ -484,7 +516,7 @@ export default function SiteContentAdminPage() {
                       />
                       <button
                         type="button"
-                        className="text-red-500 hover:text-red-700 text-lg font-bold px-2"
+                        className="text-red-500 hover:text-red-700 text-lg font-bold px-2 self-center"
                         onClick={() => handleRemoveSocial(idx)}
                         disabled={saving.contact}
                       >×</button>
@@ -492,14 +524,14 @@ export default function SiteContentAdminPage() {
                   ))}
                   <button
                     type="button"
-                    className="mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold w-fit"
+                    className="mt-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 w-fit"
                     onClick={handleAddSocial}
                     disabled={saving.contact}
                   >+ Add Social Link</button>
                 </div>
               </div>
               <button
-                className="self-end px-8 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
+                className="self-end px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded text-sm sm:text-base font-medium shadow hover:bg-blue-700 transition disabled:opacity-60"
                 onClick={() => handleSave("contact")}
                 disabled={saving.contact}
               >
@@ -508,86 +540,88 @@ export default function SiteContentAdminPage() {
             </div>
           ) : section === 'promo' ? (
             <div className="flex flex-col gap-4 max-w-xl mx-auto">
-              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg border">
-                <input
-                  type="checkbox"
-                  id="enable-promo-popup"
-                  checked={promoModal.enabled}
-                  onChange={e => setPromoModal(p => ({ ...p, enabled: e.target.checked }))}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                />
-                <label htmlFor="enable-promo-popup" className="text-sm font-semibold text-gray-700 cursor-pointer">
-                  Enable Promo Popup
-                </label>
-                <span className="text-xs text-gray-500 ml-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="enable-promo-popup"
+                    checked={promoModal.enabled}
+                    onChange={e => setPromoModal(p => ({ ...p, enabled: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="enable-promo-popup" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Enable Promo Popup
+                  </label>
+                </div>
+                <span className="text-xs text-gray-500">
                   {promoModal.enabled ? "Popup will show to visitors" : "Popup is disabled"}
                 </span>
                 {promoModal.enabled ? (
                   <button
                     onClick={() => setPromoModal(p => ({ ...p, enabled: false }))}
-                    className="ml-auto px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full transition-colors"
+                    className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full transition-colors"
                   >
                     Disable Now
                   </button>
                 ) : (
                   <button
                     onClick={() => setPromoModal(p => ({ ...p, enabled: true }))}
-                    className="ml-auto px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-full transition-colors"
+                    className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-full transition-colors"
                   >
                     Enable Now
                   </button>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Headline</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Headline</label>
                 <input
                   type="text"
-                  className="w-full border rounded-lg p-2 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  className="w-full border border-gray-300 rounded p-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   value={promoModal.headline}
                   onChange={e => setPromoModal(p => ({ ...p, headline: e.target.value }))}
                   placeholder="UNLOCK"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Subheadline</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Subheadline</label>
                 <input
                   type="text"
-                  className="w-full border rounded-lg p-2 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  className="w-full border border-gray-300 rounded p-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   value={promoModal.subheadline}
                   onChange={e => setPromoModal(p => ({ ...p, subheadline: e.target.value }))}
                   placeholder="10% OFF"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Description</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
                 <textarea
-                  className="w-full border rounded-lg p-2 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none min-h-[80px]"
+                  className="w-full border border-gray-300 rounded p-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-400 focus:outline-none min-h-[80px]"
                   value={promoModal.description}
                   onChange={e => setPromoModal(p => ({ ...p, description: e.target.value }))}
                   placeholder="Get 10% OFF your next order..."
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Button Text</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Button Text</label>
                 <input
                   type="text"
-                  className="w-full border rounded-lg p-2 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  className="w-full border border-gray-300 rounded p-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   value={promoModal.buttonText}
                   onChange={e => setPromoModal(p => ({ ...p, buttonText: e.target.value }))}
                   placeholder="CONTINUE"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Disclaimer</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Disclaimer</label>
                 <textarea
-                  className="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none min-h-[40px]"
+                  className="w-full border border-gray-300 rounded p-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none min-h-[40px]"
                   value={promoModal.disclaimer}
                   onChange={e => setPromoModal(p => ({ ...p, disclaimer: e.target.value }))}
                   placeholder="Unsubscribing is as easy as texting..."
                 />
               </div>
               <button
-                className="self-end px-8 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
+                className="self-end px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded text-sm sm:text-base font-medium shadow hover:bg-blue-700 transition disabled:opacity-60"
                 onClick={handleSavePromo}
                 disabled={savingPromo}
               >
@@ -596,24 +630,24 @@ export default function SiteContentAdminPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full border text-xs md:text-sm">
-                <thead className="bg-blue-50">
+              <table className="min-w-full border border-gray-200 text-xs sm:text-sm">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-2 border">Name</th>
-                    <th className="px-3 py-2 border">Email</th>
-                    <th className="px-3 py-2 border">Message</th>
-                    <th className="px-3 py-2 border">Date</th>
+                    <th className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 text-left">Name</th>
+                    <th className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 text-left">Email</th>
+                    <th className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 text-left">Message</th>
+                    <th className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 text-left">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {messages.length === 0 ? (
                     <tr><td colSpan={4} className="text-center py-6 text-gray-400">No messages found.</td></tr>
                   ) : messages.map(msg => (
-                    <tr key={msg.id} className="border-t">
-                      <td className="px-3 py-2 border font-medium text-gray-900">{msg.name}</td>
-                      <td className="px-3 py-2 border"><a href={`mailto:${msg.email}`} className="text-blue-600 hover:underline">{msg.email}</a></td>
-                      <td className="px-3 py-2 border whitespace-pre-wrap break-words max-w-xs">{msg.message}</td>
-                      <td className="px-3 py-2 border text-gray-500">{msg.createdAt && msg.createdAt.toDate ? msg.createdAt.toDate().toLocaleString() : ''}</td>
+                    <tr key={msg.id} className="border-t border-gray-200">
+                      <td className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 font-medium text-gray-900">{msg.name}</td>
+                      <td className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200"><a href={`mailto:${msg.email}`} className="text-blue-600 hover:underline">{msg.email}</a></td>
+                      <td className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 whitespace-pre-wrap break-words max-w-xs">{msg.message}</td>
+                      <td className="px-2 py-2 sm:px-3 sm:py-2 border border-gray-200 text-gray-500">{msg.createdAt && msg.createdAt.toDate ? msg.createdAt.toDate().toLocaleString() : ''}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -621,7 +655,16 @@ export default function SiteContentAdminPage() {
             </div>
           )}
         </main>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function SiteContentAdminPage() {
+  return (
+    <AdminLayout>
+      <SiteContentContent />
+    </AdminLayout>
   );
 } 

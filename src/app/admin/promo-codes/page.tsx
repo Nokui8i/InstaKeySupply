@@ -4,6 +4,7 @@ import { db } from "@/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy } from "firebase/firestore";
 
 import { useAdminAuth } from "../context/AdminAuthContext";
+import AdminLayout from "../layout";
 
 interface PromoCode {
   id?: string;
@@ -28,8 +29,7 @@ const DEFAULT_NEW: PromoCode = {
   allowedEmail: "",
 };
 
-export default function PromoCodesPage() {
-  const { isAuthenticated, isLoading } = useAdminAuth();
+function PromoCodesContent() {
   const [codes, setCodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +39,6 @@ export default function PromoCodesPage() {
   const [formError, setFormError] = useState<string>("");
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     setLoading(true);
     async function fetchCodes() {
       const q = query(collection(db, "promoCodes"), orderBy("code"));
@@ -48,7 +47,7 @@ export default function PromoCodesPage() {
       setLoading(false);
     }
     fetchCodes();
-  }, [isAuthenticated]);
+  }, []);
 
   const handleSave = async () => {
     setFormError("");
@@ -140,195 +139,293 @@ export default function PromoCodesPage() {
     setTimeout(() => setMsg(""), 2000);
   };
 
-  if (isLoading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
-  }
-  if (!isAuthenticated) {
-    return <div className="text-center py-12 text-red-600">Access denied. Admins only.</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading promo codes...</span>
+      </div>
+    );
   }
 
   return (
-    <>
-      <h1 className="text-2xl font-bold mb-6 text-blue-900">Promo Codes</h1>
-      <div className="max-w-4xl bg-white rounded-xl shadow border border-blue-100 p-6 flex flex-col gap-8 ml-72">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 shadow-sm">
-          <h2 className="text-lg font-semibold mb-2 text-blue-700 flex items-center gap-2">
-            {editingId ? "Edit Promo Code" : "Add Promo Code"}
-            {newCode.active ? (
-              <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full ml-2">Active</span>
-            ) : (
-              <span className="inline-flex items-center bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full ml-2">Inactive</span>
-            )}
-          </h2>
-          <div className="flex flex-col gap-4">
-            {/* Required Fields - Promo Code Basics */}
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <h3 className="text-sm font-bold text-blue-800 mb-3">Promo Code Details</h3>
-              <div className="flex gap-3 items-end">
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Code <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g. SUMMER20"
-                    value={newCode.code}
-                    onChange={e => setNewCode(c => ({ ...c, code: e.target.value.toUpperCase() }))}
-                    maxLength={20}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Type <span className="text-red-500">*</span></label>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newCode.type}
-                    onChange={e => setNewCode(c => ({ ...c, type: e.target.value as "percent" | "fixed" }))}
-                  >
-                    <option value="percent">% Off</option>
-                    <option value="fixed">$ Off</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Value <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newCode.value}
-                    min={1}
-                    onChange={e => setNewCode(c => ({ ...c, value: Number(e.target.value) }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Optional Fields - Restrictions & Settings */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h3 className="text-sm font-bold text-gray-700 mb-3">Optional Settings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Expiration Date</label>
-                  <input
-                    type="date"
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={newCode.expiresAt ? new Date(newCode.expiresAt.seconds * 1000).toISOString().slice(0, 10) : ""}
-                    onChange={e => setNewCode(c => ({ ...c, expiresAt: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : null }))}
-                  />
-                  <div className="text-xs text-gray-500 mt-1">Leave blank for no expiration</div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Usage Limit</label>
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g. 100"
-                    value={newCode.usageLimit || ""}
-                    min={1}
-                    onChange={e => setNewCode(c => ({ ...c, usageLimit: e.target.value ? Number(e.target.value) : undefined }))}
-                  />
-                  <div className="text-xs text-gray-500 mt-1">Max total uses for this code</div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold mb-1 text-gray-700">Restrict to Email</label>
-                  <input
-                    type="email"
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="customer@example.com (optional)"
-                    value={newCode.allowedEmail || ""}
-                    onChange={e => setNewCode(c => ({ ...c, allowedEmail: e.target.value }))}
-                    maxLength={100}
-                  />
-                  <div className="text-xs text-gray-500 mt-1">Restrict code to a specific customer email</div>
-                </div>
-              </div>
-            </div>
-
-
-            {formError && <div className="text-red-600 text-xs mt-1">{formError}</div>}
-            <div className="flex gap-2 justify-end mt-2">
-              {editingId && (
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full font-bold shadow transition"
-                  onClick={() => { setNewCode({ ...DEFAULT_NEW }); setEditingId(null); setFormError(""); }}
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
-                onClick={handleSave}
-                disabled={saving || !newCode.code || !newCode.value}
-              >
-                {saving ? 'Saving...' : (editingId ? 'Update Promo Code' : 'Add Promo Code')}
-              </button>
-            </div>
-            {msg && <div className="text-center text-green-700 font-semibold text-sm mt-2">{msg}</div>}
+    <div className="max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+          <div>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-medium sm:font-semibold text-gray-900">Promo Codes</h1>
+            <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-0.5 sm:mt-1">
+              Total: {codes.length} codes
+            </p>
           </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">All Promo Codes</h2>
-          <table className="w-full border text-xs md:text-sm">
-            <thead className="bg-blue-50">
-              <tr>
-                <th className="px-2 py-1 border">Code</th>
-                <th className="px-2 py-1 border">Type</th>
-                <th className="px-2 py-1 border">Value</th>
-                <th className="px-2 py-1 border">Expires</th>
-                <th className="px-2 py-1 border">Usage</th>
-                <th className="px-2 py-1 border">Status</th>
-                <th className="px-2 py-1 border">Active</th>
-                <th className="px-2 py-1 border">Allowed Email</th>
-                <th className="px-2 py-1 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {codes.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-6 text-gray-400">No promo codes found.</td></tr>
-              ) : codes.map(code => (
-                <tr key={code.id} className="border-t">
-                  <td className="px-2 py-1 border font-bold">{code.code}</td>
-                  <td className="px-2 py-1 border">{code.type === "percent" ? "% Off" : "$ Off"}</td>
-                  <td className="px-2 py-1 border">{code.type === "percent" ? `${code.value}%` : `$${code.value}`}</td>
-                  <td className="px-2 py-1 border">{code.expiresAt ? new Date(code.expiresAt.seconds * 1000).toLocaleDateString() : "-"}</td>
-                  <td className="px-2 py-1 border">
-                    {code.usageLimit ? (
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{code.usedCount || 0} / {code.usageLimit}</span>
-                      </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 sm:p-6">
+        {/* Add/Edit Form */}
+        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+              {editingId ? "Edit Promo Code" : "Add Promo Code"}
+              {newCode.active ? (
+                <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">Active</span>
+              ) : (
+                <span className="inline-flex items-center bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">Inactive</span>
+              )}
+            </h2>
+          </div>
+          
+          <div className="flex flex-col gap-3 sm:gap-4">
+              {/* Required Fields - Promo Code Basics */}
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Promo Code Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-1">
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Code <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. SUMMER20"
+                      value={newCode.code}
+                      onChange={e => setNewCode(c => ({ ...c, code: e.target.value.toUpperCase() }))}
+                      maxLength={20}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Type <span className="text-red-500">*</span></label>
+                    <select
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newCode.type}
+                      onChange={e => setNewCode(c => ({ ...c, type: e.target.value as "percent" | "fixed" }))}
+                    >
+                      <option value="percent">% Off</option>
+                      <option value="fixed">$ Off</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Value <span className="text-red-500">*</span></label>
+                    <input
+                      type="number"
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newCode.value}
+                      min={1}
+                      onChange={e => setNewCode(c => ({ ...c, value: Number(e.target.value) }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Fields - Restrictions & Settings */}
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Optional Settings</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Expiration Date</label>
+                    <input
+                      type="date"
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newCode.expiresAt ? new Date(newCode.expiresAt.seconds * 1000).toISOString().slice(0, 10) : ""}
+                      onChange={e => setNewCode(c => ({ ...c, expiresAt: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : null }))}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Leave blank for no expiration</div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Usage Limit</label>
+                    <input
+                      type="number"
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. 100"
+                      value={newCode.usageLimit || ""}
+                      min={1}
+                      onChange={e => setNewCode(c => ({ ...c, usageLimit: e.target.value ? Number(e.target.value) : undefined }))}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Max total uses for this code</div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium mb-1 text-gray-700">Restrict to Email</label>
+                    <input
+                      type="email"
+                      className="border border-gray-300 rounded px-2 py-1.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="customer@example.com (optional)"
+                      value={newCode.allowedEmail || ""}
+                      onChange={e => setNewCode(c => ({ ...c, allowedEmail: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Restrict code to a specific customer email</div>
+                  </div>
+                </div>
+              </div>
+
+
+              {formError && <div className="text-red-600 text-xs mt-2">{formError}</div>}
+              <div className="flex flex-col sm:flex-row gap-2 justify-end mt-3">
+                {editingId && (
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-medium transition"
+                    onClick={() => { setNewCode({ ...DEFAULT_NEW }); setEditingId(null); setFormError(""); }}
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition disabled:opacity-60"
+                  onClick={handleSave}
+                  disabled={saving || !newCode.code || !newCode.value}
+                >
+                  {saving ? 'Saving...' : (editingId ? 'Update' : 'Add Code')}
+                </button>
+              </div>
+              {msg && <div className="text-center text-green-700 font-medium text-xs mt-2">{msg}</div>}
+          </div>
+        </div>
+        {/* Promo Codes List */}
+        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">All Promo Codes</h2>
+          
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-3">
+            {codes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">No promo codes found.</p>
+                <p className="text-xs text-gray-400 mt-1">Add your first promo code above.</p>
+              </div>
+            ) : codes.map(code => (
+              <div key={code.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-gray-900">{code.code}</span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                      {code.type === "percent" ? `${code.value}%` : `$${code.value}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {code.active ? (
+                      <span className="text-green-700 text-xs font-medium">Active</span>
                     ) : (
-                      <div className="flex flex-col">
-                        <span>{code.usedCount || 0} uses</span>
-                      </div>
+                      <span className="text-red-600 text-xs font-medium">Inactive</span>
                     )}
-                  </td>
-                  <td className="px-2 py-1 border">
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                  <div>
+                    <span className="font-medium">Type:</span> {code.type === "percent" ? "% Off" : "$ Off"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Expires:</span> {code.expiresAt ? new Date(code.expiresAt.seconds * 1000).toLocaleDateString() : "Never"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Usage:</span> {code.usageLimit ? `${code.usedCount || 0}/${code.usageLimit}` : `${code.usedCount || 0} uses`}
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span> 
                     {code.usedCount && code.usedCount > 0 ? (
-                      <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">USED</span>
+                      <span className="text-green-700 ml-1">Used</span>
                     ) : (
-                      <span className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">UNUSED</span>
+                      <span className="text-gray-600 ml-1">Unused</span>
                     )}
-                  </td>
-                  <td className="px-2 py-1 border">{code.active ? <span className="text-green-700 font-bold">Yes</span> : <span className="text-red-600 font-bold">No</span>}</td>
-                  <td className="px-2 py-1 border">{code.allowedEmail || "-"}</td>
-                  <td className="px-2 py-1 border">
-                    <button
-                      className="px-2 py-1 bg-blue-200 hover:bg-blue-300 text-blue-900 text-xs font-semibold rounded transition mr-1"
-                      onClick={() => handleEdit(code)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-2 py-1 bg-red-200 hover:bg-red-300 text-red-900 text-xs font-semibold rounded transition"
-                      onClick={() => handleDelete(code.id!)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  </div>
+                </div>
+                
+                {code.allowedEmail && (
+                  <div className="text-xs text-gray-600 mb-3">
+                    <span className="font-medium">Restricted to:</span> {code.allowedEmail}
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition"
+                    onClick={() => handleEdit(code)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="flex-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition"
+                    onClick={() => handleDelete(code.id!)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full border text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Code</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Type</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Value</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Expires</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Usage</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Status</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Active</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Allowed Email</th>
+                  <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {codes.length === 0 ? (
+                  <tr><td colSpan={9} className="text-center py-8 text-gray-400">No promo codes found.</td></tr>
+                ) : codes.map(code => (
+                  <tr key={code.id} className="border-t hover:bg-gray-50">
+                    <td className="px-3 py-2 border font-medium">{code.code}</td>
+                    <td className="px-3 py-2 border">{code.type === "percent" ? "% Off" : "$ Off"}</td>
+                    <td className="px-3 py-2 border">{code.type === "percent" ? `${code.value}%` : `$${code.value}`}</td>
+                    <td className="px-3 py-2 border">{code.expiresAt ? new Date(code.expiresAt.seconds * 1000).toLocaleDateString() : "-"}</td>
+                    <td className="px-3 py-2 border">
+                      {code.usageLimit ? (
+                        <span className="font-medium">{code.usedCount || 0} / {code.usageLimit}</span>
+                      ) : (
+                        <span>{code.usedCount || 0} uses</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 border">
+                      {code.usedCount && code.usedCount > 0 ? (
+                        <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">Used</span>
+                      ) : (
+                        <span className="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded-full">Unused</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 border">{code.active ? <span className="text-green-700 font-medium">Yes</span> : <span className="text-red-600 font-medium">No</span>}</td>
+                    <td className="px-3 py-2 border">{code.allowedEmail || "-"}</td>
+                    <td className="px-3 py-2 border">
+                      <div className="flex gap-1">
+                        <button
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition"
+                          onClick={() => handleEdit(code)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition"
+                          onClick={() => handleDelete(code.id!)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+export default function PromoCodesPage() {
+  return (
+    <AdminLayout>
+      <PromoCodesContent />
+    </AdminLayout>
   );
 } 

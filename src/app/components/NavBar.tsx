@@ -196,7 +196,11 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Admin menu"
             >
-              <Cog6ToothIcon className="w-5 h-5 text-white" />
+              {adminSidebarOpenState ? (
+                <XMarkIcon className="w-5 h-5 text-white" />
+              ) : (
+                <Cog6ToothIcon className="w-5 h-5 text-white" />
+              )}
             </button>
           )}
           

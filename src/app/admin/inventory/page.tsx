@@ -124,6 +124,7 @@ function AdminInventoryContent() {
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFlexibleUploadModal, setShowFlexibleUploadModal] = useState(false);
+  const [showSampleConfirmation, setShowSampleConfirmation] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -1200,345 +1201,353 @@ function AdminInventoryContent() {
       )}
       
       {isAuthenticated ? (
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8 bg-white/90 rounded-2xl shadow-2xl border border-blue-100 mt-4 mb-24">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-blue-900 tracking-tight">Inventory Management</h2>
-              <p className="text-gray-600 mt-1">
-                Total: {filteredProducts.length} products
-                {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-              <button 
-                onClick={addSampleProducts}
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg px-3 py-2 shadow-sm hover:from-blue-700 hover:to-blue-600 hover:shadow-md transition-all duration-150 disabled:opacity-50 text-sm"
-              >
-                {loading ? "Adding..." : "Add Sample Products"}
-              </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowFlexibleUploadModal(true)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg px-3 py-2 shadow-sm hover:from-blue-700 hover:to-blue-600 hover:shadow-md transition-all duration-150 text-sm"
-                >
-                  Add Any Product
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="bg-white rounded-xl shadow border border-gray-200 p-4 mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search products..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Categories</option>
-                  {availableCategories.map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="out-of-stock">Out of Stock</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory("");
-                    setSelectedStatus("");
-                  }}
-                  className="w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedProducts.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <span className="text-yellow-800 font-medium text-sm">
-                  {selectedProducts.length} product(s) selected
-                </span>
-                <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
-                  <button
-                    onClick={handleBulkDelete}
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                <div>
+                  <h1 className="text-lg sm:text-2xl lg:text-3xl font-medium sm:font-semibold text-gray-900">Inventory Management</h1>
+                  <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-0.5 sm:mt-1">
+                    Total: {filteredProducts.length} products
+                    {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setShowSampleConfirmation(true)}
                     disabled={loading}
-                    className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded transition disabled:opacity-50 text-xs"
+                    className="w-full sm:w-auto bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded text-xs disabled:opacity-50 flex items-center justify-center gap-1"
                   >
-                    {loading ? "Deleting..." : "Delete Selected"}
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    {loading ? "Adding..." : "Add Sample"}
                   </button>
                   <button
-                    onClick={clearSelection}
-                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded transition text-xs"
+                    onClick={() => setShowFlexibleUploadModal(true)}
+                    className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded flex items-center justify-center gap-1 text-xs font-medium"
                   >
-                    Clear Selection
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Product
                   </button>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Product Table - Desktop */}
-          <div className="hidden lg:block bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p.id))}
-                        disabled={currentProducts.length === 0}
-                        onChange={() => {}}
-                        onClick={toggleSelectAll}
-                        className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
-                        style={{ pointerEvents: 'auto', zIndex: 1000 }}
-                      />
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Image</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Product</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">SKU</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Price</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Stock</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {currentProducts.map(product => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.includes(product.id)}
-                          onChange={() => {}}
-                          onClick={() => toggleProductSelection(product.id)}
-                          className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
-                          style={{ pointerEvents: 'auto', zIndex: 1000 }}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <img 
-                          src={product.imageUrl} 
-                          alt={product.title}
-                          className="w-12 h-12 object-cover rounded-lg border"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="font-medium text-gray-900">{product.title}</div>
-                          <div className="text-sm text-gray-500">{product.model}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{product.sku || "-"}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {getCategoryName(product.categoryId || "")}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="font-medium text-green-600">{product.price}</div>
-                          {product.oldPrice && (
-                            <div className="text-sm text-gray-400 line-through">{product.oldPrice}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{product.stock || 0}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.status === 'active' ? 'bg-green-100 text-green-800' :
-                          product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {product.status || 'active'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(product)}
-                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id, product.imageUrl)}
-                            disabled={loading}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                {loading ? "Loading products..." : "No products found"}
-              </div>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2 mt-6">
-              <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-gray-700 text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
-
-          {/* Product Cards - Mobile/Tablet */}
-          <div className="lg:hidden space-y-4">
-            {currentProducts.map(product => (
-              <div key={product.id} className="bg-white rounded-xl shadow border border-gray-200 p-4">
-                <div className="flex items-start gap-4">
-                  {/* Checkbox */}
-                  <div className="pt-1">
-                      <input
-                      type="checkbox"
-                      checked={selectedProducts.includes(product.id)}
-                      onChange={() => {}}
-                      onClick={() => toggleProductSelection(product.id)}
-                      className="rounded border-gray-300"
-                      />
-                    </div>
-                  
-                  {/* Product Image */}
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.title}
-                    className="w-16 h-16 object-cover rounded-lg border flex-shrink-0"
+            {/* Filters and Search */}
+            <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Search</label>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                   />
-                  
-                  {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{product.title}</h3>
-                        <p className="text-sm text-gray-500">{product.model}</p>
-                        <p className="text-xs text-gray-400 mt-1">SKU: {product.sku || "-"}</p>
-                            </div>
-                      
-                      {/* Price */}
-                      <div className="text-right">
-                        <div className="font-medium text-green-600 text-sm sm:text-base">{product.price}</div>
-                        {product.oldPrice && (
-                          <div className="text-xs text-gray-400 line-through">{product.oldPrice}</div>
-                        )}
-                    </div>
-                    </div>
-                    
-                    {/* Status and Stock */}
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.status === 'active' ? 'bg-green-100 text-green-800' :
-                          product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {product.status || 'active'}
-                          </span>
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {getCategoryName(product.categoryId || "")}
-                        </span>
-                        <span className="text-xs text-gray-500">Stock: {product.stock || 0}</span>
-                        </div>
-                      </div>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                  >
+                    <option value="">All Categories</option>
+                    {availableCategories.map(category => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                  >
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedCategory("");
+                      setSelectedStatus("");
+                    }}
+                    className="w-full px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded text-xs transition"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2 mt-3">
-                    <button 
-                        onClick={() => handleEdit(product)}
-                        className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition"
-                      >
-                        Edit
+            {/* Bulk Actions */}
+            {selectedProducts.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 p-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <span className="text-yellow-800 font-medium text-xs sm:text-sm">
+                    {selectedProducts.length} product(s) selected
+                  </span>
+                  <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={loading}
+                      className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded transition disabled:opacity-50 text-xs"
+                    >
+                      {loading ? "Deleting..." : "Delete Selected"}
                     </button>
-                    <button 
-                        onClick={() => handleDelete(product.id, product.imageUrl)}
-                        disabled={loading}
-                        className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
-                      >
-                        Delete
+                    <button
+                      onClick={clearSelection}
+                      className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded transition text-xs"
+                    >
+                      Clear Selection
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-            ))}
-            
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-8 text-gray-500 bg-white rounded-xl shadow border border-gray-200">
-                {loading ? "Loading products..." : "No products found"}
-              </div>
             )}
 
-            {/* Pagination for Mobile */}
+            {/* Product Table - Desktop */}
+            <div className="hidden lg:block bg-white border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left">
+                        <input
+                          type="checkbox"
+                          checked={currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p.id))}
+                          disabled={currentProducts.length === 0}
+                          onChange={() => {}}
+                          onClick={toggleSelectAll}
+                          className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
+                          style={{ pointerEvents: 'auto', zIndex: 1000 }}
+                        />
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Image</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Product</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">SKU</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Category</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Price</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Stock</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Status</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {currentProducts.map(product => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(product.id)}
+                            onChange={() => {}}
+                            onClick={() => toggleProductSelection(product.id)}
+                            className="rounded border-gray-300 pointer-events-auto z-10 cursor-pointer focus:ring-blue-500"
+                            style={{ pointerEvents: 'auto', zIndex: 1000 }}
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <img 
+                            src={product.imageUrl} 
+                            alt={product.title}
+                            className="w-8 h-8 object-cover rounded border"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <div>
+                            <div className="font-medium text-gray-900 text-xs">{product.title}</div>
+                            <div className="text-xs text-gray-500">{product.model}</div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-900">{product.sku || "-"}</td>
+                        <td className="px-3 py-2">
+                          <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {getCategoryName(product.categoryId || "")}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div>
+                            <div className="font-medium text-green-600 text-xs">{product.price}</div>
+                            {product.oldPrice && (
+                              <div className="text-xs text-gray-400 line-through">{product.oldPrice}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-900">{product.stock || 0}</td>
+                        <td className="px-3 py-2">
+                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+                            product.status === 'active' ? 'bg-green-100 text-green-800' :
+                            product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {product.status || 'active'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id, product.imageUrl)}
+                              disabled={loading}
+                              className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-6 text-gray-500 text-sm">
+                  {loading ? "Loading products..." : "No products found"}
+                </div>
+              )}
+            </div>
+
+                      {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2 mt-6">
+              <div className="flex justify-center items-center space-x-2 mt-4">
                 <button
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded transition disabled:opacity-50 text-xs"
                 >
                   Previous
                 </button>
-                <span className="text-gray-700 text-sm">
+                <span className="text-gray-700 text-xs">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition disabled:opacity-50"
+                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded transition disabled:opacity-50 text-xs"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+
+            {/* Product Cards - Mobile/Tablet */}
+            <div className="lg:hidden space-y-2">
+              {currentProducts.map(product => (
+                <div key={product.id} className="bg-white border border-gray-200 p-2">
+                  <div className="flex items-start gap-2">
+                    {/* Checkbox */}
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.includes(product.id)}
+                        onChange={() => {}}
+                        onClick={() => toggleProductSelection(product.id)}
+                        className="rounded border-gray-300"
+                      />
+                    </div>
+                    
+                    {/* Product Image */}
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.title}
+                      className="w-12 h-12 object-cover rounded border flex-shrink-0"
+                    />
+                    
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 text-xs truncate">{product.title}</h3>
+                          <p className="text-xs text-gray-500">{product.model}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">SKU: {product.sku || "-"}</p>
+                        </div>
+                        
+                        {/* Price */}
+                        <div className="text-right">
+                          <div className="font-medium text-green-600 text-xs">{product.price}</div>
+                          {product.oldPrice && (
+                            <div className="text-xs text-gray-400 line-through">{product.oldPrice}</div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Status and Stock */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-1">
+                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+                            product.status === 'active' ? 'bg-green-100 text-green-800' :
+                            product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {product.status || 'active'}
+                          </span>
+                          <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {getCategoryName(product.categoryId || "")}
+                          </span>
+                          <span className="text-xs text-gray-500">Stock: {product.stock || 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-1 mt-2">
+                        <button 
+                          onClick={() => handleEdit(product)}
+                          className="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(product.id, product.imageUrl)}
+                          disabled={loading}
+                          className="flex-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-4 text-gray-500 bg-white border border-gray-200 text-sm">
+                  {loading ? "Loading products..." : "No products found"}
+                </div>
+              )}
+
+            {/* Pagination for Mobile */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-4">
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded transition disabled:opacity-50 text-xs"
+                >
+                  Previous
+                </button>
+                <span className="text-gray-700 text-xs">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded transition disabled:opacity-50 text-xs"
                 >
                   Next
                 </button>
@@ -1574,9 +1583,42 @@ function AdminInventoryContent() {
             </div>
           )}
 
+          {/* Sample Products Confirmation Modal */}
+          {showSampleConfirmation && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setShowSampleConfirmation(false)} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6" onClick={e => e.stopPropagation()}>
+                <div className="text-center">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Add Sample Products?</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-6">
+                    This will add 6 sample products to your inventory for testing purposes. Are you sure you want to continue?
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
+                    <button
+                      onClick={() => setShowSampleConfirmation(false)}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded text-sm transition-colors"
+                    >
+                      No, Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSampleConfirmation(false);
+                        addSampleProducts();
+                      }}
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded text-sm transition-colors disabled:opacity-50"
+                    >
+                      {loading ? "Adding..." : "Yes, Add Samples"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          </div>
         </div>
       ) : (
-        <div>        </div>
+        <div></div>
       )}
     </>
   );

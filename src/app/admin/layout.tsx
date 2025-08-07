@@ -77,7 +77,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/20 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -87,10 +87,10 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         fixed top-0 left-0 z-50 w-56 h-full bg-gradient-to-b from-blue-50 to-blue-100 text-blue-900 flex flex-col py-4 px-3 space-y-3 transform transition-transform duration-300 ease-in-out border-r border-blue-200 shadow-lg
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Close Button */}
+        {/* Close Button - Only show on mobile */}
         <button 
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-3 right-3 text-blue-700 hover:text-blue-900 p-1 rounded-lg hover:bg-blue-200 transition-colors"
+          className="absolute top-3 right-3 text-blue-700 hover:text-blue-900 p-1 rounded-lg hover:bg-blue-200 transition-colors lg:hidden"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -169,9 +169,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content - Separate from sidebar */}
-      <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-56' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : 'lg:ml-0'}`}>
         {/* Content Area */}
-        <main className="p-4 sm:p-8">
+        <main className="p-4 sm:p-8 lg:pt-8 pt-16">
           {children}
         </main>
       </div>
