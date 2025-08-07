@@ -17,18 +17,36 @@ const serviceAccount = {
   universe_domain: "googleapis.com"
 };
 
+// Initialize Firebase Admin SDK
+let adminDb: any;
+let adminAuth: any;
+
 try {
   if (!getApps().length) {
-    initializeApp({
+    const app = initializeApp({
       credential: cert(serviceAccount),
       projectId: 'instakeysuply',
       storageBucket: 'instakeysuply.firebasestorage.app'
     });
     console.log('Firebase Admin SDK initialized successfully');
+    
+    // Initialize services after app initialization
+    adminDb = getFirestore(app);
+    adminAuth = getAuth(app);
+  } else {
+    // Use existing app
+    adminDb = getFirestore();
+    adminAuth = getAuth();
   }
 } catch (error) {
   console.error('Firebase Admin SDK initialization error:', error);
+  // Fallback initialization
+  try {
+    adminDb = getFirestore();
+    adminAuth = getAuth();
+  } catch (fallbackError) {
+    console.error('Firebase Admin SDK fallback initialization failed:', fallbackError);
+  }
 }
 
-export const adminDb = getFirestore();
-export const adminAuth = getAuth();
+export { adminDb, adminAuth };

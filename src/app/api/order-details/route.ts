@@ -4,7 +4,10 @@ import { adminDb } from '../../../firebase-admin';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Order details API called');
+    
     if (!stripe) {
+      console.error('Stripe not configured');
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
     }
     
@@ -12,14 +15,26 @@ export async function GET(request: NextRequest) {
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
+      console.error('Session ID is required');
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
+
+    console.log('Fetching session from Stripe:', sessionId);
 
     // Fetch session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (!session) {
+      console.error('Session not found');
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    console.log('Session found, checking Firestore for order');
+
+    // Check if Firebase Admin SDK is initialized
+    if (!adminDb) {
+      console.error('Firebase Admin SDK not initialized');
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
     // Try to find order in Firestore

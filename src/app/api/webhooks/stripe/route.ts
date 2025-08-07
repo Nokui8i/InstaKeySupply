@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutSessionCompleted(session: any) {
   try {
+    console.log('Handling checkout session completed:', session.id);
+    
+    // Check if Firebase Admin SDK is initialized
+    if (!adminDb) {
+      console.error('Firebase Admin SDK not initialized in webhook');
+      throw new Error('Database not available');
+    }
+    
     // Extract order data from session metadata
     const {
       customerName,
@@ -59,9 +67,13 @@ async function handleCheckoutSessionCompleted(session: any) {
       total
     } = session.metadata;
 
+    console.log('Parsing order data from session metadata');
+
     // Parse the data
     const parsedItems = JSON.parse(items);
     const parsedAddress = JSON.parse(customerAddress);
+
+    console.log('Creating order in Firestore');
 
     // Create order in Firestore
     const orderData = {
@@ -83,6 +95,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       shippingStatus: 'pending',
     };
 
+    console.log('Adding order to Firestore:', session.id);
     await adminDb.collection('orders').add(orderData);
 
     // Send order confirmation email
