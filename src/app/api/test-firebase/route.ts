@@ -6,28 +6,34 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     console.log('Starting Firebase Admin SDK test...');
-    console.log('adminDb instance:', !!adminDb);
     
-    // Test basic Firestore connection using 'orders' collection
-    console.log('Attempting to access orders collection...');
-    const ordersRef = adminDb.collection('orders');
-    console.log('Orders collection reference created');
+    // Create a test document in orders collection
+    const testOrderRef = adminDb.collection('orders').doc('test-' + Date.now());
+    await testOrderRef.set({
+      test: true,
+      createdAt: new Date(),
+      message: 'Test order document'
+    });
+    console.log('Test document created successfully');
     
-    const ordersSnapshot = await ordersRef.get();
-    console.log('Successfully retrieved orders snapshot');
+    // Read the test document back
+    const testDoc = await testOrderRef.get();
+    console.log('Test document read successfully');
+    
+    // Delete the test document
+    await testOrderRef.delete();
+    console.log('Test document deleted successfully');
     
     return Response.json({
       success: true,
-      message: 'Firebase Admin SDK connection successful',
+      message: 'Firebase Admin SDK connection successful - Write/Read/Delete test passed',
       timestamp: new Date().toISOString(),
-      ordersCount: ordersSnapshot.size,
-      hasAdminDb: !!adminDb,
+      testData: testDoc.data(),
+      hasAdminDb: true,
       isFirestoreConnected: true
     });
   } catch (error: any) {
     console.error('Firebase Admin SDK test failed:', error);
-    console.error('Error stack:', error.stack);
-    console.error('adminDb instance exists:', !!adminDb);
     
     return Response.json({
       success: false,
