@@ -144,6 +144,8 @@ async function handlePaymentSucceeded(paymentIntent: any) {
 
 async function handlePaymentFailed(paymentIntent: any) {
   try {
+    // Get Firebase Admin SDK instance
+    const adminDb = getAdminDb();
     // Update order status
     const orderQuery = adminDb.collection('orders').where('stripePaymentIntentId', '==', paymentIntent.id);
     const orderSnapshot = await orderQuery.get();
