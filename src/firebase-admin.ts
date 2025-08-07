@@ -1,45 +1,25 @@
-// Dynamic import to prevent build-time initialization
+// Use Firebase client SDK for server-side operations
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import { ServiceAccount } from 'firebase-admin';
+
 let adminDb: any = null;
 let adminAuth: any = null;
 let isInitialized = false;
 
-async function initializeFirebaseAdmin() {
+function initializeFirebaseAdmin() {
   if (isInitialized) {
     return { adminDb, adminAuth };
   }
 
   try {
-    // Dynamic imports to prevent build-time execution
-    const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const { getAuth } = await import('firebase-admin/auth');
-
-    // Debug environment variables
-    console.log('Firebase Admin SDK Environment Check:');
-    console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID ? 'SET' : 'NOT SET');
-    console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT SET');
-    console.log('FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL ? 'SET' : 'NOT SET');
-
-    // Process private key - handle both \n and actual newlines
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY || "";
-    if (privateKey.includes('\\n')) {
-      privateKey = privateKey.replace(/\\n/g, '\n');
-    }
-
-    // Service account configuration from environment variables
-    const serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID || "instakeysuply",
-      privateKey: privateKey,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
+    // Service account configuration
+    const serviceAccount: ServiceAccount = {
+      projectId: 'instakeysuply',
+      privateKey: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCq9/jxTUGjt7Kw\nFr4tfLEMea/Cq8YAhLOIJ6hNZ5VpOPM0CY08D7QJZJ//6AWjbOLUKapdp/roQOdJ\ndMkWFwyycxUJBQd2eo4aoDTQ9peAmehbBtl7JFsyShMF4n7DFDUTRG6mv5l3U3J4\nFyosWxc0FE9VkwUBAmy63EF0zT+GqBKqXNYtA/jhCO1Z0o+7e/skSwgJc1tfIOQ2\nU4H+UTFDPN+WCCCuUbIaTRLCUH7APQOwnXM8SAmYmt9cOLpNtrTSwavCvBx4vUGB\nSnNcn7nJZeBJYGGuJJB2Z9eZB3ryr5UJHal2PoOtTJvES8UqaNP3SeP+1bmGQsGR\nnfKQUJkHAgMBAAECggEACfF1CXegRyjCXCpech/L3jlfhvddgx80n8kKqUHKdz2o\nK1EY5TLWmis/gO8aENie0o7/yQWheot3yBZiMYYyp1g5E3a26eWTySmjGLoWspSA\n5nZeBKLnKOQU+iUjkS3mLlIvC0SeZMm2IRTbz4uWrGE4AfaUdmwRLcbsiaH8PVUF\ntx4Tlo6SGQO05S3w0+UqWBS+PYzysnhhaD2XX+R9MJEx7U41UIrLxfusmHg8eXfe\nD4GDLHjLpXM3NJ449L3uiHzVJGQbCrdlfVzNuTPemnlTFVZu4U46OtzJEVwaaP0v\nxOOx+CtHTWRK7+KzUolwlO0lTtFK1uBZ5VDtjNV9DQKBgQDSb+wi4v8OJ1uLGi2U\nHbgs+gqVMUjRrT99oqDGBljp2TnOGQyfYHDPUOWjc4XpXbeZRdlF7boFeAlI/U5P\nZ6FisstnLYsWU1gjhxnSlaOYJSeKHKRGwmzVwbhgHpU69EnrMoONCn1H2XoIJkep\nrbwkSCsyXZtQBPKuU8z5QbM9OwKBgQDP/GTDxOu4Nh0nFXEys+VwYsyIlhAgFUeZ\nyEFI2UA9q+AKxYuZkU4KqgICl1/lOwFMxathh2DoIu3C2GOC6aaMBtFRfz7UuXb4\nHMKjqjthZE6ezY+GxaC5DeE1Cs5qgMqyMfuLJtw8a6SdE1gmjaZUyPaUne4rTIIY\nTRu0PmRGpQKBgGOeymnljhr0NNkQJn2U6CiaokHol/FzE7h1MaktPhBOXpgbsacN\nb7olMOEFAmLsk8sCjw4UsVh/b93W1KiwhW0E+Ve57rs97166SVYwssaG6EXwszAw\nQHedApy2Pa0wEoI+Ypp1WcOWx7dt78T60zNV2uU3/RuPjBdM4p8pJCIbAoGBAKVY\njK8KLS9cbd61cDGTzNKE6P+o9Rbcc/iwuB33ANhGfK1zkOC8IKPftgtjVkxBlW34\nM6AsZQEHS6e8KZhYshveC6hTlZq9+vOSwbYlTmHFwa8D0pedI4Iao7Bsb99BlmMF\n02kzsqCiHtL1Hv4/XD1JKqbJyx9HCqHRIzYu5781AoGAH+CxvyBjTpZtQh9Te+8v\nWxX2/hSeOF4JHyEGrI1otzceLtE04uGXIy709qMiG58jYaa2nmoDkeaYNoGxFgKt\nJlTaPpZMENHMjqnbly+mqACxoieP5Zq/Q+Hmen+n9Cpm9JDDlC+Nehhx++9THtdT\nGUuti7ZNCklFnhweLFxb/1U=\n-----END PRIVATE KEY-----\n',
+      clientEmail: 'firebase-adminsdk-fbsvc@instakeysuply.iam.gserviceaccount.com',
     };
-
-    console.log('Service Account Config:', {
-      projectId: serviceAccount.projectId,
-      clientEmail: serviceAccount.clientEmail,
-      privateKeyLength: serviceAccount.privateKey.length,
-      privateKeyStarts: serviceAccount.privateKey.substring(0, 50),
-      privateKeyEnds: serviceAccount.privateKey.substring(serviceAccount.privateKey.length - 50)
-    });
 
     if (!getApps().length) {
       const app = initializeApp({
@@ -64,20 +44,17 @@ async function initializeFirebaseAdmin() {
   return { adminDb, adminAuth };
 }
 
-// Export async functions that ensure initialization
+// Initialize immediately
+const { adminDb: db, adminAuth: auth } = initializeFirebaseAdmin();
+
+// Export the initialized instances
+export { db as adminDb, auth as adminAuth };
+
+// For backward compatibility
 export async function getAdminDb() {
-  if (!adminDb) {
-    await initializeFirebaseAdmin();
-  }
   return adminDb;
 }
 
 export async function getAdminAuth() {
-  if (!adminAuth) {
-    await initializeFirebaseAdmin();
-  }
   return adminAuth;
 }
-
-// For backward compatibility (will be null until initialized)
-export { adminDb, adminAuth };
