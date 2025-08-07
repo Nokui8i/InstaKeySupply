@@ -154,12 +154,16 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
   const handleSearchClick = () => {
     console.log('Search button clicked!'); // Debug log
-    setSearchOpen(true);
-    // Focus on search input when modal opens
-    setTimeout(() => {
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) searchInput.focus();
-    }, 100);
+    // Apply vehicle filters instead of opening search
+    if (selectedMake || selectedModel || selectedYear) {
+      if (onVehicleFiltersChange) {
+        onVehicleFiltersChange({
+          make: selectedMake,
+          model: selectedModel,
+          yearRange: selectedYear
+        });
+      }
+    }
   };
 
   const handleResultClick = (productId: string) => {
@@ -172,9 +176,9 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
   return (
     <>
-      {/* Mobile Navigation Bar */}
-      <nav className="md:hidden sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/95 via-[#181f2b]/95 to-[#232a36]/95 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl">
-        <div className="flex items-center justify-between px-3 py-2">
+              {/* Mobile Navigation Bar */}
+        <nav className="md:hidden sticky top-0 z-40 w-full bg-gradient-to-br from-[#101624]/95 via-[#181f2b]/95 to-[#232a36]/95 backdrop-blur-2xl border-b border-blue-900/40 shadow-2xl">
+          <div className="flex items-center justify-between px-3 py-0.5">
           {/* Left: Menu Button */}
           {!pathname.startsWith('/admin') && (
             <button
@@ -197,8 +201,8 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           )}
           
           {/* Center: Logo */}
-          <a href="/" className="flex items-center justify-center flex-1 ml-4">
-            <Image src="/Untitled design.png" alt="InstaKey Logo" width={56} height={56} className="object-contain" priority />
+          <a href="/" className="flex items-center justify-center flex-1 ml-6">
+            <Image src="/Untitled design.png" alt="InstaKey Logo" width={80} height={80} className="object-contain" priority />
           </a>
           
           {/* Right: Cart & User */}
@@ -212,33 +216,39 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               )}
             </Link>
             
-            <button
-              ref={userIconRef}
-              onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              aria-label="User menu"
-            >
-              <UserIcon className="w-5 h-5 text-white" />
-            </button>
+            <div className="relative">
+              <button
+                ref={userIconRef}
+                onClick={() => {
+                  console.log('User button clicked, current state:', authDropdownOpen);
+                  setAuthDropdownOpen(!authDropdownOpen);
+                }}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="User menu"
+              >
+                <UserIcon className="w-5 h-5 text-white" />
+              </button>
+              <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+            </div>
           </div>
         </div>
         
         {/* Mobile Search Bar */}
-        <div className="px-3 pb-2">
+        <div className="px-3 pb-1">
           <div className="relative">
             <input 
               type="search" 
               placeholder="Search products..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-blue-900/30 bg-white/90 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm font-medium" 
+              className="w-full rounded-full border border-blue-900/30 bg-white/90 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 transition-all duration-200 shadow-inner placeholder-gray-500 text-sm font-medium" 
             />
             <button
               onClick={() => setFilterOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200"
               aria-label="Filters"
             >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
             </button>

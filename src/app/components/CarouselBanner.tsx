@@ -115,8 +115,8 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
         >
           {'>'}
         </button>
-        {/* Dots - Mobile optimized */}
-        <div className="absolute bottom-1 sm:bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2 md:gap-3 z-40">
+                 {/* Dots - Hidden on mobile, visible on desktop */}
+         <div className="hidden md:flex absolute bottom-1 sm:bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 gap-1 sm:gap-2 md:gap-3 z-40">
           {images.map((_, i) => (
             <button
               key={i}

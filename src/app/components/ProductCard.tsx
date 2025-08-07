@@ -39,17 +39,17 @@ export default function ProductCard({
   return (
     <div 
       onClick={handleCardClick}
-      className="group bg-white/90 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-200 p-1 sm:p-2 md:p-3 lg:p-4 max-w-[150px] sm:max-w-xs w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-2xl relative overflow-hidden cursor-pointer"
+      className="group bg-white rounded-lg shadow-md border border-gray-200 p-2 sm:p-3 md:p-4 max-w-[180px] sm:max-w-xs w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-lg relative overflow-hidden cursor-pointer"
     >
       {/* Badges */}
       {/* Product Image */}
-      <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center mb-1 sm:mb-2 md:mb-3 lg:mb-4 border border-gray-100">
-        <Image src={image} alt={title} width={160} height={160} className="object-contain" />
+      <div className="w-full aspect-square rounded-md overflow-hidden bg-gray-50 flex items-center justify-center mb-2 sm:mb-3 border border-gray-100">
+        <Image src={image} alt={title} width={160} height={160} className="object-contain p-2" />
       </div>
       
       {/* Product Details */}
       <div className="w-full text-center flex-1 flex flex-col justify-between">
-        <h3 className="product__title text-gray-900 text-xs sm:text-sm leading-tight mb-1 hover:text-blue-500 transition-colors cursor-pointer h-12 sm:h-16 md:h-20 overflow-hidden">
+        <h3 className="product__title text-gray-900 text-xs sm:text-sm leading-tight mb-1 hover:text-blue-500 transition-colors cursor-pointer h-10 sm:h-16 md:h-20 overflow-hidden font-medium">
           {title}
         </h3>
         <div className="product__model text-gray-500 text-xs sm:text-sm mb-1 sm:mb-2">{model}</div>
@@ -73,18 +73,18 @@ export default function ProductCard({
           </div>
         )}
         
-        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1.5 sm:mb-2 md:mb-3">
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3">
           {oldPrice && (
             <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">{oldPrice}</span>
           )}
-          <span className="product__price bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold text-xs sm:text-sm md:text-base px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
+          <span className="product__price text-blue-600 font-bold text-sm sm:text-base md:text-lg">
             {price}
           </span>
         </div>
       </div>
       
       {/* Add to Cart Button - Mobile optimized */}
-      <button className="absolute left-0 bottom-0 w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white font-semibold rounded-b-xl sm:rounded-b-2xl py-1.5 sm:py-2 px-2 text-xs sm:text-sm shadow hover:brightness-110 transition-all duration-300 opacity-0 group-hover:opacity-100 group-active:opacity-100 pointer-events-none group-hover:pointer-events-auto group-active:pointer-events-auto min-h-[40px] sm:min-h-[44px] touch-manipulation">
+      <button className="w-full bg-blue-600 text-white font-medium rounded-md py-2 px-3 text-xs sm:text-sm shadow hover:bg-blue-700 transition-all duration-300 mt-2">
         Add to Cart
       </button>
     </div>

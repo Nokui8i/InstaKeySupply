@@ -114,20 +114,20 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
 
   if (!open || loading || !content.enabled) return null;
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center pt-20 md:pt-0">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-in overflow-y-auto max-h-[90vh] flex flex-col items-center">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm md:max-w-md p-4 md:p-6 animate-scale-in overflow-y-auto max-h-[85vh] md:max-h-[90vh] flex flex-col items-center">
         <button onClick={handleClose} className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-xl font-bold rounded-full w-8 h-8 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200">×</button>
-        <h2 className="text-center text-blue-700 font-extrabold text-2xl mb-1 tracking-wide">{content.headline}</h2>
-        <h3 className="text-center text-3xl font-extrabold text-blue-900 mb-2">{content.subheadline}</h3>
-        <p className="text-center text-gray-600 text-sm mb-4">{content.description}</p>
+        <h2 className="text-center text-blue-700 font-extrabold text-xl md:text-2xl mb-1 tracking-wide">{content.headline}</h2>
+        <h3 className="text-center text-2xl md:text-3xl font-extrabold text-blue-900 mb-2">{content.subheadline}</h3>
+        <p className="text-center text-gray-600 text-xs md:text-sm mb-3 md:mb-4">{content.description}</p>
         {submitted ? (
           <div className="text-center text-green-600 font-semibold py-8">Thank you!</div>
         ) : (
           <form className="w-full flex flex-col gap-3" onSubmit={handleSubmit}>
             <input
               type="email"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+              className="border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base"
               placeholder="Email Address"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -135,7 +135,7 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
             />
             <input
               type="tel"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+              className="border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base"
               placeholder="Cell Phone"
               value={phone}
               onChange={e => setPhone(e.target.value)}
@@ -144,7 +144,7 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
             {error && <div className="text-red-500 text-xs text-center">{error}</div>}
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-2 rounded-lg transition-all duration-200 shadow-md mt-2"
+              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-2 md:py-2 rounded-lg transition-all duration-200 shadow-md mt-2 text-sm md:text-base"
             >
               {content.buttonText}
             </button>
@@ -160,9 +160,9 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
             </div>
           </form>
         )}
-        <p className="text-[11px] text-gray-400 text-center mt-4">{content.disclaimer}</p>
-        <div className="flex justify-center mt-4">
-          <img src="/Untitled design.png" alt="InstaKey Logo" className="h-24 object-contain" />
+        <p className="text-[10px] md:text-[11px] text-gray-400 text-center mt-3 md:mt-4">{content.disclaimer}</p>
+        <div className="flex justify-center mt-3 md:mt-4">
+          <img src="/Untitled design.png" alt="InstaKey Logo" className="h-16 md:h-24 object-contain" />
         </div>
       </div>
       <style jsx global>{`
