@@ -10,7 +10,7 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 
-# Stripe Configuration
+# Stripe Configuration (SANDBOX/TEST KEYS)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51RqD0vRtWNv42dU4sfJKLqTyhBznGiSmfGTpBKl6atFU8n4qfF6zWjnTXoN1ZY8KrBBsrprm9P3Jx8Q19UuUhFc7005vF6CLjW
 STRIPE_SECRET_KEY=sk_test_51RqD0vRtWNv42dU4OOQD01MznncZj3vxpk3AEStfYto9vG6ZDNYQpuq85m0Fwwsqp0GUODilR1dBeSeyjmbnO37U0094yg9rsa
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
@@ -22,6 +22,9 @@ OWNER_EMAIL_PASS=siqc xtot tdtd ffbr
 # Base URL (REPLACE WITH YOUR ACTUAL DOMAIN)
 NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 
+# Google Maps API Key (for address autocomplete)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+
 # 🔍 WHERE TO GET FIREBASE KEYS:
 # 1. Go to https://console.firebase.google.com
 # 2. Select your project
@@ -29,10 +32,46 @@ NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 # 4. Scroll down to "Your apps"
 # 5. Copy the config values
 
+# 🔍 WHERE TO GET STRIPE KEYS:
+# 1. Go to https://dashboard.stripe.com/apikeys
+# 2. Make sure you're in TEST MODE (toggle in top right)
+# 3. Copy the "Publishable key" (starts with pk_test_)
+# 4. Copy the "Secret key" (starts with sk_test_)
+
 # 🔍 WHERE TO GET STRIPE WEBHOOK SECRET:
 # 1. Go to https://dashboard.stripe.com/webhooks
-# 2. Create or edit your webhook
-# 3. Set endpoint to: https://yourdomain.com/api/webhooks/stripe
-# 4. Copy the "Signing secret" (starts with whsec_)
+# 2. Click "Add endpoint"
+# 3. Set endpoint URL to: https://yourdomain.com/api/webhooks/stripe
+# 4. Select these events:
+#    - checkout.session.completed
+#    - payment_intent.succeeded
+#    - payment_intent.payment_failed
+# 5. Click "Add endpoint"
+# 6. Copy the "Signing secret" (starts with whsec_)
+# 7. Replace "whsec_your_webhook_secret_here" with the actual secret
 
-# ⚠️ IMPORTANT: Replace "yourdomain.com" with your actual domain name! 
+# 🧪 STRIPE SANDBOX TESTING:
+# Test Card Numbers (for sandbox mode):
+# ✅ Successful Payments:
+#   - 4242424242424242 (Visa)
+#   - 5555555555554444 (Mastercard)
+#   - 2223003122003222 (Mastercard)
+# ❌ Failed Payments:
+#   - 4000000000000002 (Visa - declined)
+#   - 4000000000009995 (Visa - insufficient funds)
+# Test Details:
+#   - Expiry: 12/34
+#   - CVC: 123
+#   - ZIP: 12345
+
+# 🧪 TESTING YOUR STRIPE INTEGRATION:
+# 1. Visit: https://yourdomain.com/test-stripe
+# 2. Check if all configuration is correct
+# 3. Use the "Create Test Order" button to test the full payment flow
+# 4. Use the test card numbers above in Stripe Checkout
+
+# ⚠️ IMPORTANT: 
+# - Replace "yourdomain.com" with your actual domain name!
+# - These are TEST/SANDBOX keys - never use them in production
+# - For production, get LIVE keys from Stripe Dashboard (toggle to "Live mode")
+# - Always test thoroughly in sandbox before going live 

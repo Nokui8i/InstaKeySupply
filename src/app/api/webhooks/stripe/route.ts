@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '../../../../lib/stripe';
+import { stripe, validateStripeConfig } from '../../../../lib/stripe';
 import { db } from '../../../../firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
+  // Validate Stripe configuration
+  const configValidation = validateStripeConfig();
+  if (!configValidation.isValid) {
+    console.error('Stripe webhook: Configuration missing:', configValidation.missing);
+    return NextResponse.json({ error: 'Stripe not properly configured' }, { status: 500 });
+  }
+
   if (!stripe) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
   }
@@ -24,6 +31,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  console.log('Stripe webhook received:', {
+    type: event.type,
+    id: event.id,
+    created: new Date(event.created * 1000).toISOString(),
+  });
+
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -34,6 +47,12 @@ export async function POST(request: NextRequest) {
         break;
       case 'payment_intent.payment_failed':
         await handlePaymentFailed(event.data.object);
+        break;
+      case 'invoice.payment_succeeded':
+        console.log('Invoice payment succeeded:', event.data.object.id);
+        break;
+      case 'customer.subscription.created':
+        console.log('Customer subscription created:', event.data.object.id);
         break;
       default:
         console.log(`Unhandled event type: ${event.type}`);
@@ -48,6 +67,8 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutSessionCompleted(session: any) {
   try {
+    console.log('Processing completed checkout session:', session.id);
+
     // Extract order data from session metadata
     const {
       customerName,
@@ -56,7 +77,8 @@ async function handleCheckoutSessionCompleted(session: any) {
       items,
       subtotal,
       promoDiscount,
-      total
+      total,
+      environment
     } = session.metadata;
 
     // Parse the data
@@ -81,13 +103,17 @@ async function handleCheckoutSessionCompleted(session: any) {
       orderStatus: 'paid',
       paymentStatus: 'completed',
       shippingStatus: 'pending',
+      environment: environment || 'production',
+      stripeCustomerId: session.customer,
+      paymentMethod: session.payment_method_types?.[0] || 'card',
     };
 
-    await addDoc(collection(db, 'orders'), orderData);
+    const orderRef = await addDoc(collection(db, 'orders'), orderData);
+    console.log('Order created in Firestore:', orderRef.id);
 
     // Send order confirmation email
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
+      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,20 +122,37 @@ async function handleCheckoutSessionCompleted(session: any) {
           items: orderData.items,
           total: orderData.total,
           orderId: session.id,
+          firestoreOrderId: orderRef.id,
         }),
       });
+
+      if (!emailResponse.ok) {
+        console.error('Failed to send order email:', await emailResponse.text());
+      } else {
+        console.log('Order confirmation email sent successfully');
+      }
     } catch (emailError) {
       console.error('Failed to send order email:', emailError);
     }
 
-    console.log('Order created successfully:', session.id);
+    // Log successful order processing
+    console.log('Order processing completed successfully:', {
+      sessionId: session.id,
+      orderId: orderRef.id,
+      customerEmail: orderData.customer.email,
+      total: orderData.total,
+    });
+
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
+    throw error; // Re-throw to trigger webhook failure
   }
 }
 
 async function handlePaymentSucceeded(paymentIntent: any) {
   try {
+    console.log('Processing successful payment:', paymentIntent.id);
+
     // Update order status if needed
     const orderQuery = query(
       collection(db, 'orders'),
@@ -122,15 +165,23 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       await updateDoc(doc(db, 'orders', orderDoc.id), {
         paymentStatus: 'completed',
         updatedAt: Timestamp.now(),
+        paymentMethod: paymentIntent.payment_method_types?.[0] || 'card',
+        lastPaymentError: null,
       });
+      console.log('Order payment status updated:', orderDoc.id);
+    } else {
+      console.log('No order found for payment intent:', paymentIntent.id);
     }
   } catch (error) {
     console.error('Error handling payment succeeded:', error);
+    throw error;
   }
 }
 
 async function handlePaymentFailed(paymentIntent: any) {
   try {
+    console.log('Processing failed payment:', paymentIntent.id);
+
     // Update order status
     const orderQuery = query(
       collection(db, 'orders'),
@@ -144,9 +195,14 @@ async function handlePaymentFailed(paymentIntent: any) {
         paymentStatus: 'failed',
         orderStatus: 'cancelled',
         updatedAt: Timestamp.now(),
+        lastPaymentError: paymentIntent.last_payment_error?.message || 'Payment failed',
       });
+      console.log('Order payment status updated to failed:', orderDoc.id);
+    } else {
+      console.log('No order found for failed payment intent:', paymentIntent.id);
     }
   } catch (error) {
     console.error('Error handling payment failed:', error);
+    throw error;
   }
 } 
