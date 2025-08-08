@@ -1,51 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../lib/stripe';
-import { getOrderBySessionId } from '../../../firebase-admin';
-
-// Force dynamic rendering to prevent build-time execution
-export const dynamic = 'force-dynamic';
+import { db } from '../../../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export async function GET(request: NextRequest) {
-  console.log('Order details API called');
-  
   try {
     if (!stripe) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
     }
-
+    
     const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get('sessionId');
+    const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    console.log('Fetching session from Stripe:', sessionId);
-    
     // Fetch session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    console.log('Session found, checking Firestore for order');
-    
-    // Get order from Firestore using the new helper function
-    const order = await getOrderBySessionId(sessionId);
-    
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    // Try to find order in Firestore
+    const orderQuery = query(
+      collection(db, 'orders'),
+      where('stripeSessionId', '==', sessionId)
+    );
+    const orderSnapshot = await getDocs(orderQuery);
+
+    if (!orderSnapshot.empty) {
+      const orderDoc = orderSnapshot.docs[0];
+      const orderData = orderDoc.data();
+      
+      return NextResponse.json({
+        id: orderDoc.id,
+        ...orderData,
+        stripeSession: {
+          id: session.id,
+          payment_status: session.payment_status,
+          customer_email: session.customer_email,
+        }
+      });
     }
 
+    // If order not found in Firestore, return session data
     return NextResponse.json({
-      success: true,
-      order: order,
-      session: {
-        id: session.id,
-        payment_status: session.payment_status,
-        customer_details: session.customer_details
-      }
+      id: session.id,
+      customer: {
+        email: session.customer_email,
+        name: session.metadata?.customerName,
+        phone: session.metadata?.customerPhone,
+      },
+      address: session.metadata?.customerAddress ? JSON.parse(session.metadata.customerAddress) : null,
+      items: session.metadata?.items ? JSON.parse(session.metadata.items) : [],
+      total: session.metadata?.total ? parseFloat(session.metadata.total) : 0,
+      subtotal: session.metadata?.subtotal ? parseFloat(session.metadata.subtotal) : 0,
+      promoDiscount: session.metadata?.promoDiscount ? parseFloat(session.metadata.promoDiscount) : 0,
+      payment_status: session.payment_status,
+      stripeSessionId: session.id,
     });
 
   } catch (error) {

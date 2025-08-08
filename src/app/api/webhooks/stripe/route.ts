@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
-import { addOrder } from '../../../../firebase-admin';
-
-// Force dynamic rendering to prevent build-time execution
-export const dynamic = 'force-dynamic';
+import { db } from '../../../../firebase';
+import { collection, addDoc, updateDoc, doc, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
+  if (!stripe) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+  }
+  
   const body = await request.text();
-  const signature = request.headers.get('stripe-signature') as string;
+  const signature = request.headers.get('stripe-signature')!;
 
   let event;
 
-  // Check if stripe is initialized
-  if (!stripe) {
-    console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
-    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
-  }
-
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
-    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
   try {
@@ -41,74 +41,111 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error handling webhook:', error);
+    console.error('Webhook handler error:', error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
 
 async function handleCheckoutSessionCompleted(session: any) {
-  console.log('Handling checkout session completed:', session.id);
-  
   try {
-    // Parse order data from session metadata
-    console.log('Parsing order data from session metadata');
-    const orderData = JSON.parse(session.metadata.orderData || '{}');
-    
-    // Create order object
-    const order = {
+    // Extract order data from session metadata
+    const {
+      customerName,
+      customerPhone,
+      customerAddress,
+      items,
+      subtotal,
+      promoDiscount,
+      total
+    } = session.metadata;
+
+    // Parse the data
+    const parsedItems = JSON.parse(items);
+    const parsedAddress = JSON.parse(customerAddress);
+
+    // Create order in Firestore
+    const orderData = {
+      createdAt: Timestamp.now(),
       stripeSessionId: session.id,
       stripePaymentIntentId: session.payment_intent,
       customer: {
-        name: orderData.customerName || '',
-        email: orderData.customerEmail || '',
-        phone: orderData.customerPhone || ''
+        name: customerName,
+        email: session.customer_details?.email || session.customer_email,
+        phone: customerPhone,
       },
-      address: {
-        street: orderData.street || '',
-        city: orderData.city || '',
-        state: orderData.state || '',
-        zip: orderData.zip || '',
-        country: orderData.country || ''
-      },
-      items: orderData.items || [],
-      subtotal: orderData.subtotal || 0,
-      total: orderData.total || 0,
-      promoDiscount: orderData.promoDiscount || 0,
+      address: parsedAddress,
+      items: parsedItems,
+      subtotal: parseFloat(subtotal),
+      promoDiscount: parseFloat(promoDiscount),
+      total: parseFloat(total),
       orderStatus: 'paid',
       paymentStatus: 'completed',
       shippingStatus: 'pending',
-      createdAt: new Date()
     };
 
-    console.log('Creating order in Firestore');
-    console.log('Adding order to Firestore:', session.id);
-    
-    // Use the new addOrder helper function
-    const orderId = await addOrder(order);
-    console.log('Order created successfully:', orderId);
-    
+    await addDoc(collection(db, 'orders'), orderData);
+
+    // Send order confirmation email
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: orderData.customer,
+          address: orderData.address,
+          items: orderData.items,
+          total: orderData.total,
+          orderId: session.id,
+        }),
+      });
+    } catch (emailError) {
+      console.error('Failed to send order email:', emailError);
+    }
+
+    console.log('Order created successfully:', session.id);
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
   }
 }
 
 async function handlePaymentSucceeded(paymentIntent: any) {
-  console.log('Handling payment succeeded:', paymentIntent.id);
-  
   try {
     // Update order status if needed
-    // This could be used for additional payment processing
+    const orderQuery = query(
+      collection(db, 'orders'),
+      where('stripePaymentIntentId', '==', paymentIntent.id)
+    );
+    const orderSnapshot = await getDocs(orderQuery);
+    
+    if (!orderSnapshot.empty) {
+      const orderDoc = orderSnapshot.docs[0];
+      await updateDoc(doc(db, 'orders', orderDoc.id), {
+        paymentStatus: 'completed',
+        updatedAt: Timestamp.now(),
+      });
+    }
   } catch (error) {
     console.error('Error handling payment succeeded:', error);
   }
 }
 
 async function handlePaymentFailed(paymentIntent: any) {
-  console.log('Handling payment failed:', paymentIntent.id);
-  
   try {
-    // Update order status to failed
-    // This could be used for failed payment handling
+    // Update order status
+    const orderQuery = query(
+      collection(db, 'orders'),
+      where('stripePaymentIntentId', '==', paymentIntent.id)
+    );
+    const orderSnapshot = await getDocs(orderQuery);
+    
+    if (!orderSnapshot.empty) {
+      const orderDoc = orderSnapshot.docs[0];
+      await updateDoc(doc(db, 'orders', orderDoc.id), {
+        paymentStatus: 'failed',
+        orderStatus: 'cancelled',
+        updatedAt: Timestamp.now(),
+      });
+    }
   } catch (error) {
     console.error('Error handling payment failed:', error);
   }
