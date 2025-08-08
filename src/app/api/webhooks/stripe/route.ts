@@ -113,10 +113,20 @@ async function handleCheckoutSessionCompleted(session: any, request: NextRequest
 
     // Send order confirmation email
     try {
-      // Get the base URL from the request or environment
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                     `https://${request.headers.get('host')}` || 
-                     'https://instakeysupply.com';
+      // Get the base URL from environment or construct from request
+      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      
+      if (!baseUrl) {
+        // Try to get from request headers
+        const host = request.headers.get('host');
+        const protocol = request.headers.get('x-forwarded-proto') || 'https';
+        baseUrl = host ? `${protocol}://${host}` : 'https://instakeysupply.com';
+      }
+      
+      // Ensure we have a valid base URL
+      if (!baseUrl.startsWith('http')) {
+        baseUrl = `https://${baseUrl}`;
+      }
       
       console.log('Sending email using base URL:', baseUrl);
       
