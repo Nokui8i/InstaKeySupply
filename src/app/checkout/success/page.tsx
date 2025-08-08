@@ -18,17 +18,19 @@ function CheckoutSuccessContent() {
       // Clear cart immediately
       clearCart();
       
-      // Redirect to main page after 3 seconds
+      // Redirect to main page after 3 seconds using window.location
       const timer = setTimeout(() => {
-        router.push('/');
+        console.log('Redirecting to main page...');
+        window.location.href = '/';
       }, 3000);
 
       return () => clearTimeout(timer);
     } else {
       // No session ID, redirect immediately
-      router.push('/');
+      console.log('No session ID, redirecting immediately...');
+      window.location.href = '/';
     }
-  }, [searchParams, clearCart, router]);
+  }, [searchParams, clearCart]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4">
@@ -46,7 +48,7 @@ function CheckoutSuccessContent() {
 
         {/* Manual Redirect Button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => window.location.href = '/'}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
         >
           <FaShoppingCart className="mr-2" />
