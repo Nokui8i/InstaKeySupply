@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object);
+        await handleCheckoutSessionCompleted(event.data.object, request);
         break;
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object);
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutSessionCompleted(session: any) {
+async function handleCheckoutSessionCompleted(session: any, request: NextRequest) {
   try {
     console.log('Processing completed checkout session:', session.id);
 
