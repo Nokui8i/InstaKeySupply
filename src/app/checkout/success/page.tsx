@@ -38,10 +38,19 @@ function CheckoutSuccessContent() {
 
   const sendOrderEmail = async (sessionId: string) => {
     try {
+      console.log('Attempting to send order email for session:', sessionId);
+      
       // Get order details first
       const orderResponse = await fetch(`/api/order-details?session_id=${sessionId}`);
+      console.log('Order details response status:', orderResponse.status);
+      
       if (orderResponse.ok) {
         const orderData = await orderResponse.json();
+        console.log('Order data received:', { 
+          customerEmail: orderData.customer?.email, 
+          orderId: orderData.id,
+          total: orderData.total 
+        });
         
         // Send email
         const emailResponse = await fetch('/api/send-order-email', {
@@ -57,12 +66,20 @@ function CheckoutSuccessContent() {
           }),
         });
 
+        console.log('Email API response status:', emailResponse.status);
+        
         if (emailResponse.ok) {
-          console.log('Order email sent successfully from success page');
+          const emailResult = await emailResponse.json();
+          console.log('Order email sent successfully from success page:', emailResult);
           setEmailSent(true);
         } else {
-          console.error('Failed to send order email from success page');
+          const errorText = await emailResponse.text();
+          console.error('Failed to send order email from success page. Status:', emailResponse.status, 'Error:', errorText);
         }
+      } else {
+        console.error('Failed to get order details. Status:', orderResponse.status);
+        const errorText = await orderResponse.text();
+        console.error('Order details error:', errorText);
       }
     } catch (error) {
       console.error('Error sending order email from success page:', error);
