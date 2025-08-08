@@ -11,7 +11,6 @@ function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
-  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -19,19 +18,12 @@ function CheckoutSuccessContent() {
       // Clear cart immediately
       clearCart();
       
-      // Start countdown to redirect
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            router.push('/');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // Redirect to main page after 3 seconds
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 3000);
 
-      return () => clearInterval(timer);
+      return () => clearTimeout(timer);
     } else {
       // No session ID, redirect immediately
       router.push('/');
@@ -48,17 +40,9 @@ function CheckoutSuccessContent() {
 
         {/* Success Message */}
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="text-lg text-gray-600 mb-8">
           Thank you for your purchase. Your order has been confirmed and you'll receive a confirmation email shortly.
         </p>
-
-        {/* Redirect Message */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <p className="text-gray-700 mb-2">
-            Redirecting you back to the main page in:
-          </p>
-          <p className="text-2xl font-bold text-blue-600">{countdown} seconds</p>
-        </div>
 
         {/* Manual Redirect Button */}
         <button
