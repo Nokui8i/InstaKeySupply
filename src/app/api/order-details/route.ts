@@ -9,12 +9,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
     }
     
-    const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get('session_id');
+    // Get session ID from URL parameters
+    const url = new URL(request.url);
+    const sessionId = url.searchParams.get('session_id');
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
+
+    console.log('Fetching order details for session:', sessionId);
 
     // Fetch session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -22,6 +25,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
+    console.log('Stripe session found:', session.id, 'Payment status:', session.payment_status);
 
     // Try to find order in Firestore
     const orderQuery = query(
@@ -34,6 +39,8 @@ export async function GET(request: NextRequest) {
       const orderDoc = orderSnapshot.docs[0];
       const orderData = orderDoc.data();
       
+      console.log('Order found in Firestore:', orderDoc.id);
+      
       return NextResponse.json({
         id: orderDoc.id,
         ...orderData,
@@ -44,6 +51,8 @@ export async function GET(request: NextRequest) {
         }
       });
     }
+
+    console.log('Order not found in Firestore, returning session data');
 
     // If order not found in Firestore, return session data
     return NextResponse.json({
