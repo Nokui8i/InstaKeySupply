@@ -93,10 +93,10 @@ export async function POST(request: NextRequest) {
       },
       // Add billing address collection for better fraud prevention
       billing_address_collection: 'required',
-      // Enable automatic tax calculation (if available)
-      automatic_tax: {
-        enabled: true,
-      },
+      // Removed automatic tax calculation to avoid configuration issues
+      // automatic_tax: {
+      //   enabled: true,
+      // },
       // Add payment intent data for better tracking
       payment_intent_data: {
         metadata: {
