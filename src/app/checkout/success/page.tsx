@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '../../components/CartContext';
 import { FaCheckCircle, FaExclamationTriangle, FaShoppingCart, FaList } from 'react-icons/fa';
 
+// Force dynamic rendering to avoid build issues
+export const dynamic = 'force-dynamic';
+
 interface OrderDetails {
   id: string;
   customer: {
