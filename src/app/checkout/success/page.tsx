@@ -42,6 +42,7 @@ function CheckoutSuccessContent() {
   const [loading, setLoading] = useState(true);
   const [orderDetailsError, setOrderDetailsError] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailAttempted, setEmailAttempted] = useState(false);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -49,8 +50,6 @@ function CheckoutSuccessContent() {
       // Clear cart immediately
       clearCart();
       fetchOrderDetails(sessionId);
-      // Send email as fallback
-      sendOrderEmail(sessionId);
     } else {
       setLoading(false);
     }
@@ -62,6 +61,12 @@ function CheckoutSuccessContent() {
       if (response.ok) {
         const data = await response.json();
         setOrderDetails(data);
+        
+        // Send email only once after we get order details
+        if (!emailAttempted) {
+          setEmailAttempted(true);
+          sendOrderEmail(data);
+        }
       } else {
         console.error('Error fetching order details:', response.status);
         setOrderDetailsError(true);
@@ -74,33 +79,27 @@ function CheckoutSuccessContent() {
     }
   };
 
-  const sendOrderEmail = async (sessionId: string) => {
+  const sendOrderEmail = async (orderData: OrderDetails) => {
     try {
-      // First try to get order details to send email
-      const orderResponse = await fetch(`/api/order-details?session_id=${sessionId}`);
-      if (orderResponse.ok) {
-        const orderData = await orderResponse.json();
-        
-        // Send email
-        const emailResponse = await fetch('/api/send-order-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customer: orderData.customer,
-            address: orderData.address,
-            items: orderData.items,
-            total: orderData.total,
-            orderId: sessionId,
-            firestoreOrderId: orderData.id,
-          }),
-        });
+      // Send email using the order data we already have
+      const emailResponse = await fetch('/api/send-order-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: orderData.customer,
+          address: orderData.address,
+          items: orderData.items,
+          total: orderData.total,
+          orderId: orderData.stripeSessionId,
+          firestoreOrderId: orderData.id,
+        }),
+      });
 
-        if (emailResponse.ok) {
-          console.log('Order email sent successfully from success page');
-          setEmailSent(true);
-        } else {
-          console.error('Failed to send order email from success page');
-        }
+      if (emailResponse.ok) {
+        console.log('Order email sent successfully from success page');
+        setEmailSent(true);
+      } else {
+        console.error('Failed to send order email from success page');
       }
     } catch (error) {
       console.error('Error sending order email from success page:', error);
