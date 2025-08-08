@@ -5,7 +5,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 export const dynamic = 'force-dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '../../components/CartContext';
-import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 
 function CheckoutSuccessContent() {
   const router = useRouter();
@@ -14,6 +14,7 @@ function CheckoutSuccessContent() {
   const [loading, setLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [orderDetailsError, setOrderDetailsError] = useState(false);
 
   const sessionId = searchParams.get('session_id');
 
@@ -37,10 +38,12 @@ function CheckoutSuccessContent() {
         const data = await response.json();
         setOrderDetails(data);
       } else {
-        setError('Failed to fetch order details');
+        console.log('Order details not available, but payment was successful');
+        setOrderDetailsError(true);
       }
     } catch (err) {
-      setError('Failed to fetch order details');
+      console.log('Failed to fetch order details, but payment was successful');
+      setOrderDetailsError(true);
     } finally {
       setLoading(false);
     }
@@ -88,7 +91,7 @@ function CheckoutSuccessContent() {
         </div>
 
         {/* Order Summary */}
-        {orderDetails && (
+        {orderDetails && !orderDetailsError ? (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
             
@@ -142,6 +145,22 @@ function CheckoutSuccessContent() {
                   <span className="text-green-600">${orderDetails.total?.toFixed(2)}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center mb-4">
+              <FaExclamationTriangle className="text-yellow-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">Order Details</h2>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Your payment was successful and your order has been created! 
+              Order details are being processed and will be available shortly.
+            </p>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Session ID:</strong> {sessionId}
+              </p>
             </div>
           </div>
         )}

@@ -113,9 +113,19 @@ async function handleCheckoutSessionCompleted(session: any) {
 
     // Send order confirmation email
     try {
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
+      // Get the base URL from the request or environment
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                     `https://${request.headers.get('host')}` || 
+                     'https://instakeysupply.com';
+      
+      console.log('Sending email using base URL:', baseUrl);
+      
+      const emailResponse = await fetch(`${baseUrl}/api/send-order-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Stripe-Webhook/1.0'
+        },
         body: JSON.stringify({
           customer: orderData.customer,
           address: orderData.address,
@@ -126,10 +136,14 @@ async function handleCheckoutSessionCompleted(session: any) {
         }),
       });
 
+      console.log('Email API response status:', emailResponse.status);
+      
       if (!emailResponse.ok) {
-        console.error('Failed to send order email:', await emailResponse.text());
+        const errorText = await emailResponse.text();
+        console.error('Failed to send order email. Status:', emailResponse.status, 'Error:', errorText);
       } else {
-        console.log('Order confirmation email sent successfully');
+        const emailResult = await emailResponse.json();
+        console.log('Order confirmation email sent successfully:', emailResult);
       }
     } catch (emailError) {
       console.error('Failed to send order email:', emailError);
