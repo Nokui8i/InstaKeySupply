@@ -42,6 +42,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       <div className={`
         fixed top-0 left-0 h-full w-72 md:w-80 bg-white shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        border-2 border-red-500
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -51,6 +52,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </div>
             <div>
               <h2 className="font-bold text-gray-900">Admin Panel</h2>
+              <p className="text-xs text-red-500 font-bold">MOBILE DEBUG</p>
               {user ? (
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">Signed in</p>
