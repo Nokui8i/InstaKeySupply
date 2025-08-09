@@ -489,9 +489,17 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
                 </div>
               ) : (
-                <Link href="/login" className="relative group focus:outline-none">
-                  <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
-                </Link>
+                <>
+                  {/* Mobile: Link to login page */}
+                  <Link href="/login" className="relative group focus:outline-none md:hidden">
+                    <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+                  </Link>
+                  {/* Desktop: Show modal */}
+                  <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none hidden md:block">
+                    <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+                  </button>
+                  <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+                </>
               )}
             </div>
             {/* Wishlist icon (only if logged in) */}
