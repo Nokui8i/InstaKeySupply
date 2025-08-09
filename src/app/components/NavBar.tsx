@@ -490,11 +490,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 </div>
               ) : (
                 <>
-                  {/* Mobile: Link to login page */}
-                  <Link href="/login" className="relative group focus:outline-none md:hidden flex items-center gap-2 bg-blue-600 px-3 py-2 rounded-lg" onClick={() => console.log('Mobile login clicked')}>
-                    <UserIcon className="w-5 h-5 text-white" />
-                    <span className="text-white text-sm font-medium">Login</span>
-                  </Link>
+
                   {/* Desktop: Show modal */}
                   <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none hidden md:block">
                     <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
