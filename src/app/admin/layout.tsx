@@ -35,7 +35,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }, [sidebarOpen]);
 
   // Allow login page to render without layout/auth checks
-  if (pathname === '/admin/login') {
+  if (typeof window !== 'undefined' && window.location.pathname === '/admin/login') {
     return <>{children}</>;
   }
 
