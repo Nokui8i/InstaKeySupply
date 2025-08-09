@@ -28,22 +28,22 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
       {/* Mobile: Clean, simple modal */}
       <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
         <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs">
             {/* Mobile Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Sign In</h2>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">Sign In</h2>
               <button
                 onClick={onClose}
-                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Mobile Content */}
-            <div className="p-6">
+            <div className="p-4">
               <MobileAuthContent />
             </div>
           </div>
@@ -88,11 +88,11 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
   function MobileAuthContent() {
     if (!user) {
       return (
-        <div className="space-y-6">
-          {/* Google Sign-In - Clean Design */}
+        <div className="space-y-4">
+          {/* Google Sign-In - Smaller Design */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl py-4 px-6 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 rounded-lg py-3 px-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             onClick={async () => {
               console.log('Mobile Google sign-in button clicked');
               setError(null);
@@ -116,7 +116,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             }}
             disabled={loading}
           >
-            <svg className="w-5 h-5" viewBox="0 0 48 48">
+            <svg className="w-4 h-4" viewBox="0 0 48 48">
               <g>
                 <path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.6l6.85-6.85C35.64 2.7 30.3 0 24 0 14.82 0 6.88 5.48 2.69 13.44l7.98 6.2C12.13 13.09 17.62 9.5 24 9.5z"/>
                 <path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.04h12.4c-.54 2.9-2.18 5.36-4.65 7.04l7.18 5.59C43.98 37.13 46.1 31.36 46.1 24.55z"/>
@@ -131,15 +131,15 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
           {/* Divider */}
           <div className="flex items-center">
             <div className="flex-1 border-t border-gray-200"></div>
-            <span className="px-4 text-gray-500 text-sm font-medium">or</span>
+            <span className="px-3 text-gray-500 text-xs font-medium">or</span>
             <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          {/* Tabs - Clean Design */}
-          <div className="flex bg-gray-100 rounded-xl p-1">
+          {/* Tabs - Smaller Design */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               type="button"
-              className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-200 ${
                 tab === 'login' 
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-800'
@@ -151,7 +151,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             </button>
             <button
               type="button"
-              className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-200 ${
                 tab === 'register' 
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-800'
@@ -163,7 +163,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             </button>
           </div>
 
-          {/* Form - Clean and Stable */}
+          {/* Form - Fixed and Smaller */}
           <form onSubmit={async (e) => {
             e.preventDefault();
             console.log('Mobile form submitted:', { tab, email, password });
@@ -204,12 +204,12 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               }
             }
           }} 
-          className="space-y-4">
+          className="space-y-3">
             <div>
-              <label className="block text-gray-700 font-medium mb-2 text-sm">Email</label>
+              <label className="block text-gray-700 font-medium mb-1 text-xs">Email</label>
               <input 
                 type="email" 
-                className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base" 
+                className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
                 placeholder="Enter your email"
@@ -218,10 +218,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-2 text-sm">Password</label>
+              <label className="block text-gray-700 font-medium mb-1 text-xs">Password</label>
               <input 
                 type="password" 
-                className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base" 
+                className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 placeholder="Enter your password"
@@ -231,20 +231,20 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 <button
                   type="button"
                   onClick={() => setShowPasswordReset(true)}
-                  className="text-blue-600 hover:text-blue-700 text-sm transition-colors mt-2"
+                  className="text-blue-600 hover:text-blue-700 text-xs transition-colors mt-1"
                 >
                   Forgot password?
                 </button>
               )}
             </div>
             {tab === 'register' && (
-              <div className="flex items-start gap-3 text-gray-600 text-sm">
+              <div className="flex items-start gap-2 text-gray-600 text-xs">
                 <input
                   type="checkbox"
                   id="accept-terms-mobile"
                   checked={acceptedTerms}
                   onChange={e => setAcceptedTerms(e.target.checked)}
-                  className="rounded border-gray-300 focus:ring-blue-500 mt-1"
+                  className="rounded border-gray-300 focus:ring-blue-500 mt-0.5"
                   required
                 />
                 <label htmlFor="accept-terms-mobile" className="select-none">
@@ -256,18 +256,18 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               </div>
             )}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 font-medium text-center text-sm p-4 rounded-xl">
+              <div className="bg-red-50 border border-red-200 text-red-700 font-medium text-center text-xs p-3 rounded-lg">
                 {error}
               </div>
             )}
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 font-medium text-center text-sm p-4 rounded-xl">
+              <div className="bg-green-50 border border-green-200 text-green-700 font-medium text-center text-xs p-3 rounded-lg">
                 {success}
               </div>
             )}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || (tab === 'register' && !acceptedTerms)}
             >
               {loading ? (tab === 'login' ? 'Signing In...' : 'Creating Account...') : (tab === 'login' ? 'Sign In' : 'Create Account')}
@@ -277,16 +277,16 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
       );
     } else {
       return (
-        <div className="w-full text-center space-y-4">
-          <div className="text-gray-900 font-medium break-all text-lg">{user.email}</div>
+        <div className="w-full text-center space-y-3">
+          <div className="text-gray-900 font-medium break-all text-sm">{user.email}</div>
           {isAdmin && (
-            <a href="/admin" className="block w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-blue-700 font-medium hover:bg-blue-100 transition">
+            <a href="/admin" className="block w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-blue-700 font-medium hover:bg-blue-100 transition text-sm">
               Admin Panel
             </a>
           )}
           <button 
             onClick={logout} 
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Sign Out
           </button>

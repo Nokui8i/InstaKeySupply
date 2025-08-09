@@ -3,9 +3,32 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, connectAuthEmulator, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
+// Determine the correct auth domain based on environment
+const getAuthDomain = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    console.log('Current hostname:', hostname);
+    
+    // For localhost development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'instakeysuply.firebaseapp.com';
+    }
+    
+    // For production domain
+    if (hostname === 'instakeysupply.com' || hostname.includes('instakeysupply')) {
+      return 'instakeysupply.com';
+    }
+    
+    // Fallback to the environment variable or default
+    return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'instakeysupply.com';
+  }
+  
+  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'instakeysupply.com';
+};
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDiPg91GBfcbVqkvty-wU9WwgEpaK5rsqY",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "instakeysupply.com",
+  authDomain: getAuthDomain(),
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "instakeysuply",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "instakeysuply.firebasestorage.app",
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "560696702143",
@@ -28,4 +51,9 @@ if (typeof window !== 'undefined') {
   // Log auth domain for debugging
   console.log('Firebase Auth Domain:', firebaseConfig.authDomain);
   console.log('Current Domain:', window.location.hostname);
+  console.log('User Agent:', navigator.userAgent);
+  
+  // Check if mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  console.log('Is Mobile:', isMobile);
 } 
