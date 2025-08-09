@@ -949,12 +949,30 @@ export default function FlexibleProductForm({
                   };
                   reader.readAsDataURL(file);
                 });
+
+                // Handle dropped URLs or data from websites
+                rejectedFiles.forEach(file => {
+                  console.log('Dropped content:', file);
+                });
+              }}
+              onDropAccepted={(files) => {
+                files.forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    const currentImages = formData.images || [];
+                    const newImages = [...currentImages, e.target?.result as string];
+                    setFormData({...formData, images: newImages});
+                  };
+                  reader.readAsDataURL(file);
+                });
               }}
               accept={{
                 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
               }}
               maxFiles={4 - (formData.images?.length || 0)}
               disabled={formData.images?.length >= 4}
+              noClick={false}
+              noDragEventsBubbling={false}
             >
               {({getRootProps, getInputProps, isDragActive, isDragReject}) => (
                 <div
@@ -966,6 +984,47 @@ export default function FlexibleProductForm({
                         ? 'border-red-500 bg-red-50' 
                         : 'border-gray-300 hover:border-gray-400'
                   }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Handle dropped items
+                    const items = e.dataTransfer.items;
+                    if (items) {
+                      for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        
+                        // Handle files
+                        if (item.kind === 'file') {
+                          const file = item.getAsFile();
+                          if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const currentImages = formData.images || [];
+                              const newImages = [...currentImages, e.target?.result as string];
+                              setFormData({...formData, images: newImages});
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }
+                        
+                        // Handle URLs
+                        if (item.kind === 'string' && item.type === 'text/uri-list') {
+                          item.getAsString((url) => {
+                            if (url && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                              const currentImages = formData.images || [];
+                              const newImages = [...currentImages, url];
+                              setFormData({...formData, images: newImages});
+                            }
+                          });
+                        }
+                      }
+                    }
+                  }}
                 >
                   <input {...getInputProps()} />
                   <div className="text-center">
