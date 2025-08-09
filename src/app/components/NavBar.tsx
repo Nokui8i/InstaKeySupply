@@ -498,7 +498,10 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none hidden md:block">
                     <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
                   </button>
-                  <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+                  {/* Only show modal on desktop */}
+                  <div className="hidden md:block">
+                    <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+                  </div>
                 </>
               )}
             </div>
