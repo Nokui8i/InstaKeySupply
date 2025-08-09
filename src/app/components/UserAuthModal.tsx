@@ -25,11 +25,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   return (
     <>
-      {/* Mobile: Optimized for mobile keyboard */}
-      <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
+      {/* Mobile: Optimized for mobile keyboard - DISABLED FOR NAVBAR */}
+      {/* <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
         <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs" style={{ transform: 'translateZ(0)' }}>
-            {/* Mobile Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">Sign In</h2>
               <button
@@ -41,14 +40,12 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 </svg>
               </button>
             </div>
-
-            {/* Mobile Content */}
             <div className="p-4">
               <MobileAuthContent />
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Desktop: Dropdown */}
       <div className="hidden md:block absolute top-full right-0 mt-2 z-50">
