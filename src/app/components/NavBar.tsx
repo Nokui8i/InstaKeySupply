@@ -220,20 +220,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               )}
             </Link>
             
-            <div className="relative">
-              <button
-                ref={userIconRef}
-                onClick={() => {
-                  console.log('User button clicked, current state:', authDropdownOpen);
-                  setAuthDropdownOpen(!authDropdownOpen);
-                }}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                aria-label="User menu"
-              >
-                <UserIcon className="w-5 h-5 text-white" />
-              </button>
-              <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
-            </div>
+
           </div>
         </div>
         
