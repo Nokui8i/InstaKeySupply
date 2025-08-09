@@ -73,21 +73,20 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <>
-      {/* Mobile Overlay */}
+    <div className="flex h-screen bg-gray-50">
+      {/* Backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999998 }}
         />
       )}
 
-      {/* Collapsible Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+      {/* Sidebar */}
+      <div className={`
+        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999999 }}>
+      `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -133,56 +132,56 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
               Management
             </h3>
             <nav className="space-y-1">
-                      <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <HomeIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Dashboard</span>
-            </Link>
+              <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <HomeIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Dashboard</span>
+              </Link>
 
-            <Link href="/admin/categories" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/categories' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <FolderIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Categories</span>
-            </Link>
-            <Link href="/admin/inventory" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/inventory' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <ArchiveBoxIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Inventory</span>
-            </Link>
-            <Link href="/admin/orders" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/orders' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <ShoppingCartIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Orders</span>
-            </Link>
-            <Link href="/admin/banners" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/banners' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <PhotoIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Banners</span>
-            </Link>
-            <Link href="/admin/promo-codes" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/promo-codes' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <TagIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Promo Codes</span>
-            </Link>
-            <Link href="/admin/vehicle-compatibility" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/vehicle-compatibility' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <TruckIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Vehicle Compatibility</span>
-            </Link>
-            <Link href="/admin/email-subscribers" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-subscribers' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <EnvelopeIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Email Subscribers</span>
-            </Link>
-            <Link href="/admin/email-campaigns" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-campaigns' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <MegaphoneIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Email Campaigns</span>
-            </Link>
-            <Link href="/admin/email-templates" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-templates' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <DocumentTextIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Email Templates</span>
-            </Link>
-            <Link href="/admin/site-content" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/site-content' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <ChatBubbleLeftRightIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Site Content</span>
-            </Link>
-            <Link href="/admin/contact-messages" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/contact-messages' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
-              <InboxIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">Contact Messages</span>
-            </Link>
-                    </nav>
+              <Link href="/admin/categories" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/categories' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <FolderIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Categories</span>
+              </Link>
+              <Link href="/admin/inventory" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/inventory' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <ArchiveBoxIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Inventory</span>
+              </Link>
+              <Link href="/admin/orders" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/orders' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <ShoppingCartIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Orders</span>
+              </Link>
+              <Link href="/admin/banners" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/banners' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <PhotoIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Banners</span>
+              </Link>
+              <Link href="/admin/promo-codes" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/promo-codes' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <TagIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Promo Codes</span>
+              </Link>
+              <Link href="/admin/vehicle-compatibility" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/vehicle-compatibility' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <TruckIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Vehicle Compatibility</span>
+              </Link>
+              <Link href="/admin/email-subscribers" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-subscribers' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <EnvelopeIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Email Subscribers</span>
+              </Link>
+              <Link href="/admin/email-campaigns" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-campaigns' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <MegaphoneIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Email Campaigns</span>
+              </Link>
+              <Link href="/admin/email-templates" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/email-templates' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <DocumentTextIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Email Templates</span>
+              </Link>
+              <Link href="/admin/site-content" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/site-content' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Site Content</span>
+              </Link>
+              <Link href="/admin/contact-messages" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/contact-messages' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <InboxIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Contact Messages</span>
+              </Link>
+            </nav>
           </div>
           
           {/* Logout Section */}
@@ -198,22 +197,18 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
             </button>
           </div>
         </div>
-      </aside>
+      </div>
 
-      {/* Main Content Container */}
-      <div className="min-h-screen bg-gray-50">
-        {/* Main Content - Separate from sidebar */}
-        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : 'lg:ml-0'}`}>
-          {/* Content Area */}
-          <main className="p-4 sm:p-8 lg:pt-8 pt-16">
-            {children}
-          </main>
-        </div>
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : ''}`}>
+        <main className="flex-1 overflow-auto pt-2 sm:pt-6 transition-all duration-500">
+          {children}
+        </main>
         
         {/* Session Timeout Warning */}
         <SessionTimeoutWarning />
       </div>
-    </>
+    </div>
   );
 }
 
