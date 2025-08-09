@@ -1,0 +1,86 @@
+[33m319f016[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: commit: Completely remove ImageProtection component and restore website to original state
+[33me50b032[m HEAD@{1}: commit: Undo all protection features that broke the UI - Removed ImageProtection component, security headers, and image protection CSS to restore proper website functionality
+[33m8bc3bc4[m HEAD@{2}: commit: Fix desktop layout - Restore proper CSS for desktop layout, mobile optimizations, and responsive design that was accidentally removed
+[33mf5a25e3[m HEAD@{3}: commit: Fix TypeScript error and add favicon support - Fixed ImageProtection component TypeScript error, added favicon links and manifest for browser tab logo display
+[33mb83d3e1[m HEAD@{4}: commit: Add comprehensive image protection and F12 prevention - Added security headers, CSS protection, JavaScript protection against F12/Ctrl+Shift+I, right-click prevention, and image drag protection while maintaining drag-and-drop functionality
+[33me436f83[m HEAD@{5}: commit: Enhance drag-and-drop to better handle images from external websites - Added custom drop handling for URLs and improved cross-origin support
+[33m216fa1e[m HEAD@{6}: commit: Simplify image upload to direct drag-and-drop from websites - Removed instructions and URL input, keeping only simple drag-and-drop functionality
+[33m723c319[m HEAD@{7}: commit: Add drag-and-drop image upload from websites to FlexibleProductForm - Enhanced image upload with URL input, drag-and-drop from websites, paste functionality, and better validation
+[33m68a0478[m HEAD@{8}: commit: Improve email sending with better logging and error handling
+[33md7459ca[m HEAD@{9}: commit: Fix redirect and add back email sending - use full URL and 2 second timeout
+[33m176d8fd[m HEAD@{10}: commit: Fix auto redirect using window.location.href instead of router.push
+[33ma132ac5[m HEAD@{11}: commit: Fix auto redirect - remove countdown message and use setTimeout
+[33m8374497[m HEAD@{12}: commit: Simplify success page - auto redirect to main page with countdown
+[33madb36a0[m HEAD@{13}: commit: Fix infinite loop in success page - prevent duplicate API calls
+[33mdc1818c[m HEAD@{14}: commit: Fix success page Suspense boundary and build errors
+[33m431f1c4[m HEAD@{15}: commit: Fix success page build error - add dynamic export configuration
+[33mbc8ff7f[m HEAD@{16}: commit: Add automatic email sending on success page - ensures emails are sent even if webhook fails
+[33m0f7d33e[m HEAD@{17}: commit: Fix email sending and Firebase permissions - improve base URL detection and allow public read access to orders
+[33m9694ec9[m HEAD@{18}: commit: Fix webhook function parameter - add missing request parameter for email API call
+[33m782094d[m HEAD@{19}: commit: Fix webhook email sending and improve success page - better error handling and fallback for order details
+[33m1c6fd43[m HEAD@{20}: commit: Fix email sending and order details API issues - correct Firebase import path and improve error handling
+[33mc62bdd4[m HEAD@{21}: commit: continue
+[33mfccdb8d[m HEAD@{22}: commit: Add complete Stripe sandbox integration with webhook handling, test endpoints, and enhanced payment processing
+[33mbc6d7ed[m HEAD@{23}: commit: continue
+[33m03d6d47[m HEAD@{24}: commit: fix: use full service account object with proper field names for Firebase Admin SDK
+[33m8f93fd6[m HEAD@{25}: commit: fix: correct service account format for Firebase Admin SDK
+[33m6ee732c[m HEAD@{26}: commit: fix: revert to working Firebase Admin SDK configuration
+[33m79fd791[m HEAD@{27}: commit: feat: use environment variables for Firebase Admin SDK configuration
+[33m0dd3734[m HEAD@{28}: commit: fix: simplify Firebase Admin SDK service account
+[33m4fa119f[m HEAD@{29}: commit: fix: add proper ServiceAccount type to Firebase Admin SDK
+[33m55b1d72[m HEAD@{30}: commit: fix: complete overhaul of Firebase Admin SDK setup
+[33m81fe0d5[m HEAD@{31}: commit: fix: update Firebase Admin SDK initialization to use require for service account
+[33me3ebf18[m HEAD@{32}: commit: Fix Firebase Admin SDK initialization with proper imports
+[33mfb6465f[m HEAD@{33}: commit: Simplify Firebase Admin SDK initialization
+[33m0ca5095[m HEAD@{34}: commit: Update service account credentials with correct details from Google Cloud Console
+[33m17736a7[m HEAD@{35}: commit: Use service account JSON file for Firebase Admin SDK initialization
+[33mb33747b[m HEAD@{36}: commit: Add detailed logging to Firebase test endpoint
+[33m1550af8[m HEAD@{37}: commit: Fix Firebase Admin SDK by using service account credentials directly
+[33md8e6b72[m HEAD@{38}: commit: Fix Firebase Admin SDK export and ServiceAccount type issues
+[33m940813f[m HEAD@{39}: commit: Fix adminDb export and ServiceAccount type issues
+[33m8243777[m HEAD@{40}: commit: Switch back to Firebase Admin SDK with proper environment variable configuration
+[33m9161c27[m HEAD@{41}: commit: Fix test-firebase API to use allowed collection
+[33m8800411[m HEAD@{42}: commit: Fix Stripe null check in webhook route
+[33mc2c3399[m HEAD@{43}: commit: Fix Firebase authentication conflicts by unifying all APIs to use Firebase Client SDK
+[33mb973c4c[m HEAD@{44}: commit: Replace Firebase Admin SDK with working Firebase client SDK solution
+[33mba6d9bf[m HEAD@{45}: commit: Use environment variables from .env file instead of hardcoded credentials
+[33m5670e1f[m HEAD@{46}: commit: Fix Firebase Admin SDK with working credentials - hardcoded for immediate functionality
+[33m6fdb45a[m HEAD@{47}: commit: Add enhanced Firebase Admin SDK testing with collection listing
+[33mfa70d00[m HEAD@{48}: commit: Fix private key processing and add detailed debugging
+[33m4470e95[m HEAD@{49}: commit: Add enhanced debugging for Firebase Admin SDK credentials
+[33mdeecd37[m HEAD@{50}: commit: Add debugging logs for Firebase Admin SDK credentials
+[33m36dc630[m HEAD@{51}: commit: Add force-dynamic export to prevent build-time API route execution
+[33mc1caf2a[m HEAD@{52}: commit: Implement dynamic imports for Firebase Admin SDK to prevent build-time initialization
+[33mf965906[m HEAD@{53}: commit: Prevent Firebase Admin SDK initialization during build time to avoid authentication errors
+[33mf81c4ef[m HEAD@{54}: commit: Fix missing adminDb reference in handlePaymentFailed function
+[33m5358408[m HEAD@{55}: commit: Fix Firebase Admin SDK lazy initialization to prevent build-time authentication errors
+[33maced345[m HEAD@{56}: commit: Add Firebase Admin SDK environment variable debugging
+[33mb011c2c[m HEAD@{57}: commit: Fix Firebase Admin SDK ServiceAccount type and move credentials to env vars
+[33m5a0b6c6[m HEAD@{58}: commit: Fix Firebase Admin SDK TypeScript type error
+[33mbf04603[m HEAD@{59}: commit: Complete Firebase Admin SDK fix with robust initialization and debugging
+[33mf40a257[m HEAD@{60}: commit: Add Firebase Admin SDK error handling and test endpoint
+[33mbd4f89e[m HEAD@{61}: commit: Add storageBucket to Firebase Admin SDK configuration
+[33m6faf255[m HEAD@{62}: commit: Embed Firebase service account directly in code for better reliability
+[33ma318982[m HEAD@{63}: commit: Fix Firebase Admin SDK path and project configuration
+[33m104628e[m HEAD@{64}: commit: Fix Timestamp import for Firebase Admin SDK
+[33mace2d24[m HEAD@{65}: commit: Fix Firebase Admin SDK syntax - use correct import and method calls
+[33m5d295ff[m HEAD@{66}: commit: Complete Firebase Admin SDK fix for all webhook handlers
+[33m6704c81[m HEAD@{67}: commit: continue
+[33ma0d0418[m HEAD@{68}: commit: continue
+[33m4c1251f[m HEAD@{69}: commit: continue
+[33med84577[m HEAD@{70}: commit: Adjust mobile layout: move logo right and make product cards bigger
+[33m0f1dbcf[m HEAD@{71}: commit: Complete mobile optimization: 2 cards per row, centered logo, smaller banner dots, working filter modal, and improved mobile layout
+[33mf20b3d6[m HEAD@{72}: commit: Create dedicated mobile navigation bar - clean mobile layout with separate search bar and optimized desktop navigation
+[33m1774abd[m HEAD@{73}: commit: Fix mobile layout issues - reduce logo size, icon sizes, and product card dimensions for better mobile experience
+[33mf9ae0e2[m HEAD@{74}: commit: Optimize main page for mobile responsiveness - improve NavBar, ProductCarousel, ProductCard, and layout spacing
+[33mc3fda4c[m HEAD@{75}: commit: Fix TypeScript errors and Suspense boundaries for Next.js 14 compatibility
+[33m3390806[m HEAD@{76}: commit: continue
+[33m400ff48[m HEAD@{77}: commit: continue
+[33mffa0043[m HEAD@{78}: commit: continue
+[33mb4824cb[m HEAD@{79}: commit: continue
+[33m18cb44a[m HEAD@{80}: commit: continue
+[33m6c5a8ae[m HEAD@{81}: commit: continue
+[33md267205[m HEAD@{82}: commit: (continue)
+[33m5ebcfb3[m HEAD@{83}: Branch: renamed refs/heads/master to refs/heads/main
+[33m5ebcfb3[m HEAD@{85}: commit: first commit
+[33mcfc2bf4[m HEAD@{86}: commit (initial): Initial commit from Create Next App

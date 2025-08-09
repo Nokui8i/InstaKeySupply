@@ -169,13 +169,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const provider = new GoogleAuthProvider();
       
+      // Add custom parameters for better mobile support
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       // Check if we're on mobile and use redirect instead of popup
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      console.log('AuthContext: Device detection - Mobile:', isMobile, 'iOS:', isIOS);
       
       if (isMobile) {
         console.log('AuthContext: Using redirect for mobile Google sign-in');
-        await signInWithRedirect(auth, provider);
-        return null; // Will redirect, so return null
+        try {
+          await signInWithRedirect(auth, provider);
+          return null; // Will redirect, so return null
+        } catch (redirectError) {
+          console.error('AuthContext: Redirect failed, trying popup as fallback:', redirectError);
+          // Fallback to popup if redirect fails
+          const cred = await signInWithPopup(auth, provider);
+          console.log('AuthContext: Fallback popup successful, user:', cred.user.email);
+          setUser(cred.user);
+          const token = await cred.user.getIdTokenResult();
+          setIsAdmin(!!token.claims.admin);
+          return cred.user;
+        }
       } else {
         console.log('AuthContext: Using popup for desktop Google sign-in');
         const cred = await signInWithPopup(auth, provider);
@@ -218,6 +237,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return cred.user;
       }
     } catch (e) {
+      console.error('AuthContext: Google sign-in error:', e);
       setLoading(false);
       throw e;
     } finally {

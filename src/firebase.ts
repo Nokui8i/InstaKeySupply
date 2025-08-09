@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -18,4 +18,14 @@ export { app };
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app); 
+export const storage = getStorage(app);
+
+// Configure auth for better mobile support
+if (typeof window !== 'undefined') {
+  // Set persistence to LOCAL for better mobile experience
+  auth.setPersistence('local');
+  
+  // Log auth domain for debugging
+  console.log('Firebase Auth Domain:', firebaseConfig.authDomain);
+  console.log('Current Domain:', window.location.hostname);
+} 
