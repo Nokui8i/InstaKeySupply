@@ -145,7 +145,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
            <div>
              <h2 className="font-bold text-gray-900">InstaKey Supply</h2>
              {user ? (
-               <p className="text-sm text-gray-500">Signed in</p>
+               <div className="space-y-1">
+                 <p className="text-sm text-gray-500">Signed in</p>
+                 {user.email && (
+                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                 )}
+               </div>
              ) : (
                <Link 
                  href="/login" 
@@ -168,6 +173,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
+          {/* Admin Panel Section - Only show if user is admin */}
+          {user && (
+            <div className="p-4 border-b border-gray-100">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Admin
+              </h3>
+              <Link 
+                href="/admin" 
+                className="flex items-center gap-3 p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                onClick={onClose}
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Admin Panel</span>
+              </Link>
+            </div>
+          )}
+
           {/* Categories */}
           {categories.length > 0 && (
             <div className="p-4 space-y-2 border-t border-gray-100">
