@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
+import Dropzone from 'react-dropzone';
 
 interface CustomField {
   id: string;
@@ -812,6 +813,85 @@ export default function FlexibleProductForm({
     alert(`Parsed ${parsedFields.length} custom fields from the table.`);
   };
 
+  const isValidImageUrl = (url: string) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const lowerCaseUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowerCaseUrl.endsWith(ext));
+  };
+
+  // Function to handle images dragged from websites
+  const handleImageFromWebsite = async (url: string) => {
+    try {
+      // Check if it's a valid image URL
+      if (!isValidImageUrl(url)) {
+        alert('Please enter a valid image URL (must end with .jpg, .jpeg, .png, .gif, or .webp)');
+        return false;
+      }
+
+      // Test if the image loads
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      return new Promise<boolean>((resolve) => {
+        img.onload = () => {
+          const currentImages = formData.images || [];
+          const newImages = [...currentImages, url];
+          setFormData({...formData, images: newImages});
+          resolve(true);
+        };
+        
+        img.onerror = () => {
+          alert('Could not load image from this URL. Please check if the URL is correct and the image is accessible.');
+          resolve(false);
+        };
+        
+        img.src = url;
+      });
+    } catch (error) {
+      console.error('Error loading image from URL:', error);
+      alert('Error loading image from URL. Please try again.');
+      return false;
+    }
+  };
+
+  // Handle paste events for images from websites
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Handle pasted images
+        if (item.type.indexOf('image') !== -1) {
+          const file = item.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const currentImages = formData.images || [];
+              const newImages = [...currentImages, e.target?.result as string];
+              setFormData({...formData, images: newImages});
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+        
+        // Handle pasted URLs
+        if (item.type === 'text/plain') {
+          item.getAsString(async (text) => {
+            if (text && isValidImageUrl(text)) {
+              await handleImageFromWebsite(text);
+            }
+          });
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [formData.images]);
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 max-w-4xl mx-auto">
       <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-6">
@@ -931,15 +1011,163 @@ export default function FlexibleProductForm({
         {/* Product Images */}
         <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Images *</h3>
+          
+          {/* Instructions */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="text-blue-600 text-lg">💡</div>
+              <div className="text-sm text-blue-800">
+                <div className="font-medium mb-1">Quick ways to add images:</div>
+                <ul className="space-y-1 text-xs">
+                  <li>• <strong>Drag & drop:</strong> Drag images from your computer or from other websites</li>
+                  <li>• <strong>Paste URL:</strong> Copy image URL from a website and paste it in the input below</li>
+                  <li>• <strong>Paste image:</strong> Copy an image (Ctrl+C) and paste it here (Ctrl+V)</li>
+                  <li>• <strong>Click to browse:</strong> Click the drop zone to select files from your computer</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
           <div className="space-y-3 sm:space-y-4">
+            
+            {/* URL Input for Images */}
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="Paste image URL from website (e.g., https://example.com/image.jpg)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                onKeyPress={async (e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const url = e.currentTarget.value.trim();
+                    if (url) {
+                      const success = await handleImageFromWebsite(url);
+                      if (success) {
+                        e.currentTarget.value = '';
+                      }
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={async (e) => {
+                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                  const url = input.value.trim();
+                  if (url) {
+                    const success = await handleImageFromWebsite(url);
+                    if (success) {
+                      input.value = '';
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+              >
+                Add URL
+              </button>
+            </div>
+
+            {/* Drag & Drop Zone */}
+            <Dropzone
+              onDrop={(acceptedFiles, rejectedFiles) => {
+                // Handle dropped files
+                acceptedFiles.forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    const currentImages = formData.images || [];
+                    const newImages = [...currentImages, e.target?.result as string];
+                    setFormData({...formData, images: newImages});
+                  };
+                  reader.readAsDataURL(file);
+                });
+
+                // Handle dropped URLs (from websites)
+                rejectedFiles.forEach(file => {
+                  if (file.errors.some(error => error.code === 'file-invalid-type')) {
+                    // This might be a URL or other content
+                    console.log('Dropped content:', file);
+                  }
+                });
+              }}
+              onDropAccepted={(files) => {
+                files.forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    const currentImages = formData.images || [];
+                    const newImages = [...currentImages, e.target?.result as string];
+                    setFormData({...formData, images: newImages});
+                  };
+                  reader.readAsDataURL(file);
+                });
+              }}
+              accept={{
+                'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
+              }}
+              maxFiles={4 - (formData.images?.length || 0)}
+              disabled={formData.images?.length >= 4}
+            >
+              {({getRootProps, getInputProps, isDragActive, isDragReject}) => (
+                <div
+                  {...getRootProps()}
+                  className={`w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                    isDragActive 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : isDragReject 
+                        ? 'border-red-500 bg-red-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <div className="text-center">
+                    {isDragActive ? (
+                      <div className="text-blue-600">
+                        <div className="text-2xl mb-2">📁</div>
+                        <div className="font-medium">Drop images here!</div>
+                        <div className="text-sm">You can also drag images from websites</div>
+                      </div>
+                    ) : isDragReject ? (
+                      <div className="text-red-600">
+                        <div className="text-2xl mb-2">❌</div>
+                        <div className="font-medium">Invalid file type</div>
+                        <div className="text-sm">Please drop image files only</div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-600">
+                        <div className="text-2xl mb-2">📁</div>
+                        <div className="font-medium">
+                          {formData.images?.length >= 4 
+                            ? 'Maximum images reached' 
+                            : 'Drag & drop images here'
+                          }
+                        </div>
+                        <div className="text-sm">
+                          {formData.images?.length >= 4 
+                            ? 'Remove some images to add more' 
+                            : 'Or click to browse files'
+                          }
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Supports: JPG, PNG, GIF, WebP
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Dropzone>
+
+            {/* Display uploaded images */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {/* Display uploaded images */}
               {formData.images?.map((image, index) => (
                 <div key={index} className="relative">
                   <img 
                     src={image} 
                     alt={`Product ${index + 1}`} 
                     className="w-full h-20 sm:h-24 object-cover rounded border"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder-image.png'; // Fallback image
+                      console.error('Failed to load image:', image);
+                    }}
                   />
                   <div className="absolute top-1 right-1 flex gap-1">
                     <button
@@ -968,37 +1196,11 @@ export default function FlexibleProductForm({
                   </div>
                 </div>
               ))}
-              
-              {/* Upload slot */}
-              {(!formData.images || formData.images.length < 4) && (
-                <div className="w-full h-20 sm:h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                          const currentImages = formData.images || [];
-                          const newImages = [...currentImages, e.target?.result as string];
-                          setFormData({...formData, images: newImages});
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="text-center">
-                    <div className="text-gray-400 text-xl sm:text-2xl mb-1">+</div>
-                    <div className="text-gray-400 text-xs">Add Image</div>
-                  </div>
-                </div>
-              )}
             </div>
             
-            <div className="text-xs text-gray-500">
-              Upload 1-4 clear images of the product (JPG, PNG, GIF). At least one image is required.
+            {/* Image count info */}
+            <div className="text-sm text-gray-600">
+              {formData.images?.length || 0} of 4 images uploaded
             </div>
           </div>
         </div>
