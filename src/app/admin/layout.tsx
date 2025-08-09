@@ -73,7 +73,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
@@ -86,7 +86,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       <aside className={`
         fixed top-0 left-0 z-[99999] w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      `} style={{ position: 'fixed', top: 0, left: 0, zIndex: 99999 }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -199,17 +199,20 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content - Separate from sidebar */}
-      <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : 'lg:ml-0'}`}>
-        {/* Content Area */}
-        <main className="p-4 sm:p-8 lg:pt-8 pt-16">
-          {children}
-        </main>
+      {/* Main Content Container */}
+      <div className="min-h-screen bg-gray-50">
+        {/* Main Content - Separate from sidebar */}
+        <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : 'lg:ml-0'}`}>
+          {/* Content Area */}
+          <main className="p-4 sm:p-8 lg:pt-8 pt-16">
+            {children}
+          </main>
+        </div>
+        
+        {/* Session Timeout Warning */}
+        <SessionTimeoutWarning />
       </div>
-      
-      {/* Session Timeout Warning */}
-      <SessionTimeoutWarning />
-    </div>
+    </>
   );
 }
 
