@@ -10,7 +10,7 @@ interface AdminSidebarContextType {
 const AdminSidebarContext = createContext<AdminSidebarContextType | undefined>(undefined);
 
 export function AdminSidebarProvider({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
