@@ -481,10 +481,18 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           <div className="flex items-center gap-4 ml-auto">
             {/* User/account icon */}
             <div className="relative">
-              <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none">
-                <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
-              </button>
-              <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+              {user ? (
+                <div className="relative group">
+                  <button ref={userIconRef} onClick={() => setAuthDropdownOpen(v => !v)} className="relative group focus:outline-none">
+                    <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+                  </button>
+                  <UserAuthDropdown open={authDropdownOpen} onClose={() => setAuthDropdownOpen(false)} anchorRef={userIconRef} />
+                </div>
+              ) : (
+                <Link href="/login" className="relative group focus:outline-none">
+                  <UserIcon className="w-6 h-6 md:w-7 md:h-7 text-white hover:text-blue-300 transition" />
+                </Link>
+              )}
             </div>
             {/* Wishlist icon (only if logged in) */}
             {user && (
