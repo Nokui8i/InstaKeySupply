@@ -77,14 +77,14 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/20 z-[9998] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Collapsible Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 z-[9999] w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Header */}

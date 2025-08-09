@@ -253,7 +253,7 @@ function FooterContactBlock() {
   if (!contact) return null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-start gap-2 md:gap-16 py-6 border-t border-blue-900/40">
+    <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center md:items-start gap-6 md:gap-16 py-6 border-t border-blue-900/40">
       {/* Contact Column */}
       <div className="flex flex-col items-center md:items-start md:text-left gap-2">
         <div className="flex items-center gap-2 mb-1">
@@ -261,15 +261,15 @@ function FooterContactBlock() {
           <span className="font-bold text-blue-300 uppercase tracking-wide text-xs">Contact</span>
         </div>
         {Array.isArray(contact.phones) && contact.phones.map((p, i) => (
-          <div key={i} className="text-sm text-blue-100 flex flex-col">
-            <span className="font-mono">{p.number}</span>
-            {p.label && <span className="text-xs text-blue-400">{p.label}</span>}
+          <div key={i} className="text-sm text-blue-100 flex flex-col items-center md:items-start">
+            <span className="font-mono text-center md:text-left">{p.number}</span>
+            {p.label && <span className="text-xs text-blue-400 text-center md:text-left">{p.label}</span>}
           </div>
         ))}
         {contact.email && (
           <div className="flex items-center gap-2 mt-1">
             <FaEnvelope className="text-blue-400" />
-            <a href={`mailto:${contact.email}`} className="text-blue-100 hover:underline text-sm">{contact.email}</a>
+            <a href={`mailto:${contact.email}`} className="text-blue-100 hover:underline text-sm text-center md:text-left">{contact.email}</a>
           </div>
         )}
       </div>
@@ -280,15 +280,15 @@ function FooterContactBlock() {
           <span className="font-bold text-blue-300 uppercase tracking-wide text-xs">Address</span>
         </div>
         {Array.isArray(contact.address) && contact.address.map((line, i) => (
-          <div key={i} className="text-sm text-blue-100 font-mono">{line}</div>
+          <div key={i} className="text-sm text-blue-100 font-mono text-center md:text-left">{line}</div>
         ))}
         {contact.hours && (
-          <div className="mt-2"><span className="font-bold text-blue-300">Hours:</span> <span className="text-blue-100">{contact.hours}</span></div>
+          <div className="mt-2 text-center md:text-left"><span className="font-bold text-blue-300">Hours:</span> <span className="text-blue-100">{contact.hours}</span></div>
         )}
       </div>
       {/* Socials Column */}
       <div className="flex flex-col items-center md:items-start gap-2">
-        <div className="font-bold text-blue-300 uppercase tracking-wide text-xs mb-1">Follow us on the Social Platforms!</div>
+        <div className="font-bold text-blue-300 uppercase tracking-wide text-xs mb-1 text-center md:text-left">Follow us on the Social Platforms!</div>
         <div className="flex gap-4 mt-1">
           {Array.isArray(contact.socials) && contact.socials.filter((s: { type: string; url: string }) => s.type && s.url).map((s: { type: string; url: string }, i: number) => {
             const iconPath = SOCIAL_ICON_PATHS[s.type];
@@ -327,7 +327,7 @@ export default function Footer({ onShowTerms, onShowPrivacy }: { onShowTerms: ()
             <div className="flex flex-col items-center">
               <h3 className="text-blue-400 font-bold mb-3 text-xs uppercase tracking-wider text-center">Information</h3>
               <ul className="space-y-2 text-sm text-center">
-                <li><button onClick={() => setShowContact(true)} className="hover:underline text-left w-full bg-transparent border-none p-0 text-gray-300">Contact Us</button></li>
+                <li><button onClick={() => setShowContact(true)} className="hover:underline bg-transparent border-none p-0 text-gray-300">Contact Us</button></li>
                 <li><a href="/about" className="hover:underline">About Us</a></li>
                 <li><a href="#" onClick={e => { e.preventDefault(); onShowTerms(); }} className="hover:underline cursor-pointer">Terms</a></li>
                 <li><a href="#" onClick={e => { e.preventDefault(); onShowPrivacy(); }} className="hover:underline cursor-pointer">Privacy Policy</a></li>
