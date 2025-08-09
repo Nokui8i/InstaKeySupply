@@ -25,34 +25,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   return (
     <>
-      {/* Mobile: Full-screen modal */}
-      <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div 
-          ref={dropdownRef}
-          className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto"
-          style={{ transform: 'translateZ(0)' }}
-        >
-          {/* Mobile Header */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 bg-white">
-            <h3 className="text-lg font-bold text-gray-900">Sign In</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Mobile Content */}
-          <div className="p-4">
-            <AuthContent />
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop: Dropdown */}
+      {/* Desktop: Dropdown ONLY */}
       <div className="hidden md:block absolute top-full right-0 mt-2 z-50">
         <div 
           ref={dropdownRef}
