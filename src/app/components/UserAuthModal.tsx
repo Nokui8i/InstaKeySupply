@@ -25,25 +25,25 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   return (
     <>
-      {/* Mobile: Full screen modal with mobile-optimized design */}
-      <div className="md:hidden fixed inset-0 z-[9999] bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
-        <div className="min-h-screen flex flex-col">
-          {/* Mobile Header */}
-          <div className="flex items-center justify-between p-4 pt-12">
-            <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      {/* Mobile: Clean, simple modal */}
+      <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Sign In</h2>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          {/* Mobile Content */}
-          <div className="flex-1 flex items-center justify-center px-6 pb-8">
-            <div className="w-full max-w-sm">
+            {/* Mobile Content */}
+            <div className="p-6">
               <MobileAuthContent />
             </div>
           </div>
@@ -89,10 +89,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
     if (!user) {
       return (
         <div className="space-y-6">
-          {/* Google Sign-In - Mobile Optimized */}
+          {/* Google Sign-In - Clean Design */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 rounded-2xl py-4 px-6 shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold focus:outline-none focus:ring-4 focus:ring-blue-300 active:scale-95"
+            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl py-4 px-6 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             onClick={async () => {
               console.log('Mobile Google sign-in button clicked');
               setError(null);
@@ -105,7 +105,6 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 setTimeout(() => onClose(), 1500);
               } catch (e: any) {
                 console.error('Mobile Google sign-in error:', e);
-                // Handle specific mobile errors
                 if (e.code === 'auth/popup-closed-by-user') {
                   setError('Sign-in was cancelled. Please try again.');
                 } else if (e.code === 'auth/unauthorized-domain') {
@@ -117,7 +116,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             }}
             disabled={loading}
           >
-            <svg className="w-6 h-6" viewBox="0 0 48 48">
+            <svg className="w-5 h-5" viewBox="0 0 48 48">
               <g>
                 <path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.6l6.85-6.85C35.64 2.7 30.3 0 24 0 14.82 0 6.88 5.48 2.69 13.44l7.98 6.2C12.13 13.09 17.62 9.5 24 9.5z"/>
                 <path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.04h12.4c-.54 2.9-2.18 5.36-4.65 7.04l7.18 5.59C43.98 37.13 46.1 31.36 46.1 24.55z"/>
@@ -131,19 +130,19 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
           {/* Divider */}
           <div className="flex items-center">
-            <div className="flex-1 border-t border-white/20"></div>
-            <span className="px-4 text-white/60 text-sm font-medium">or</span>
-            <div className="flex-1 border-t border-white/20"></div>
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-gray-500 text-sm font-medium">or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          {/* Tabs - Mobile Optimized */}
-          <div className="flex bg-white/10 rounded-2xl p-1">
+          {/* Tabs - Clean Design */}
+          <div className="flex bg-gray-100 rounded-xl p-1">
             <button
               type="button"
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
+              className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 tab === 'login' 
-                  ? 'bg-white text-blue-900 shadow-lg' 
-                  : 'text-white/80 hover:text-white'
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
               onClick={() => setTab('login')}
               disabled={loading}
@@ -152,10 +151,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             </button>
             <button
               type="button"
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
+              className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 tab === 'register' 
-                  ? 'bg-white text-blue-900 shadow-lg' 
-                  : 'text-white/80 hover:text-white'
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
               onClick={() => setTab('register')}
               disabled={loading}
@@ -164,7 +163,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             </button>
           </div>
 
-          {/* Form - Mobile Optimized */}
+          {/* Form - Clean and Stable */}
           <form onSubmit={async (e) => {
             e.preventDefault();
             console.log('Mobile form submitted:', { tab, email, password });
@@ -186,7 +185,6 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               }
             } catch (e: any) {
               console.error('Mobile auth error:', e);
-              // Handle specific mobile errors
               if (e.code === 'auth/invalid-credential') {
                 setError('Invalid email or password. Please try again.');
               } else if (e.code === 'auth/user-not-found') {
@@ -208,10 +206,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
           }} 
           className="space-y-4">
             <div>
-              <label className="block text-white font-semibold mb-2 text-sm">Email</label>
+              <label className="block text-gray-700 font-medium mb-2 text-sm">Email</label>
               <input 
                 type="email" 
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-200 text-base" 
+                className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
                 placeholder="Enter your email"
@@ -220,10 +218,10 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               />
             </div>
             <div>
-              <label className="block text-white font-semibold mb-2 text-sm">Password</label>
+              <label className="block text-gray-700 font-medium mb-2 text-sm">Password</label>
               <input 
                 type="password" 
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-200 text-base" 
+                className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 placeholder="Enter your password"
@@ -233,43 +231,43 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 <button
                   type="button"
                   onClick={() => setShowPasswordReset(true)}
-                  className="text-white/80 hover:text-white text-sm transition-colors mt-2"
+                  className="text-blue-600 hover:text-blue-700 text-sm transition-colors mt-2"
                 >
                   Forgot password?
                 </button>
               )}
             </div>
             {tab === 'register' && (
-              <div className="flex items-start gap-3 text-white/80 text-sm">
+              <div className="flex items-start gap-3 text-gray-600 text-sm">
                 <input
                   type="checkbox"
                   id="accept-terms-mobile"
                   checked={acceptedTerms}
                   onChange={e => setAcceptedTerms(e.target.checked)}
-                  className="rounded border-white/30 focus:ring-white/50 mt-1"
+                  className="rounded border-gray-300 focus:ring-blue-500 mt-1"
                   required
                 />
                 <label htmlFor="accept-terms-mobile" className="select-none">
                   I agree to the
-                  <button type="button" className="text-white hover:underline mx-1 bg-transparent border-none p-0 cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('show-terms'))}>Terms</button>
+                  <button type="button" className="text-blue-600 hover:underline mx-1 bg-transparent border-none p-0 cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('show-terms'))}>Terms</button>
                   and
-                  <button type="button" className="text-white hover:underline ml-1 bg-transparent border-none p-0 cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('show-privacy'))}>Privacy Policy</button>
+                  <button type="button" className="text-blue-600 hover:underline ml-1 bg-transparent border-none p-0 cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('show-privacy'))}>Privacy Policy</button>
                 </label>
               </div>
             )}
             {error && (
-              <div className="bg-red-500/20 border border-red-400/30 text-red-100 font-medium text-center text-sm p-4 rounded-xl">
+              <div className="bg-red-50 border border-red-200 text-red-700 font-medium text-center text-sm p-4 rounded-xl">
                 {error}
               </div>
             )}
             {success && (
-              <div className="bg-green-500/20 border border-green-400/30 text-green-100 font-medium text-center text-sm p-4 rounded-xl">
+              <div className="bg-green-50 border border-green-200 text-green-700 font-medium text-center text-sm p-4 rounded-xl">
                 {success}
               </div>
             )}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 text-base active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || (tab === 'register' && !acceptedTerms)}
             >
               {loading ? (tab === 'login' ? 'Signing In...' : 'Creating Account...') : (tab === 'login' ? 'Sign In' : 'Create Account')}
@@ -280,15 +278,15 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
     } else {
       return (
         <div className="w-full text-center space-y-4">
-          <div className="text-white font-semibold break-all text-lg">{user.email}</div>
+          <div className="text-gray-900 font-medium break-all text-lg">{user.email}</div>
           {isAdmin && (
-            <a href="/admin" className="block w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white font-semibold hover:bg-white/20 transition">
+            <a href="/admin" className="block w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-blue-700 font-medium hover:bg-blue-100 transition">
               Admin Panel
             </a>
           )}
           <button 
             onClick={logout} 
-            className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 text-base active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-300/50"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Sign Out
           </button>
