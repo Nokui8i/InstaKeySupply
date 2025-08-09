@@ -205,7 +205,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           )}
           
           {/* Center: Logo */}
-          <a href="/" className="flex items-center justify-center flex-1 ml-6">
+          <a href="/" className="flex items-center justify-center flex-1 ml-2">
             <Image src="/Untitled design.png" alt="InstaKey Logo" width={80} height={80} className="object-contain" priority />
           </a>
           
@@ -291,7 +291,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           {/* Logo (always visible, left) */}
           <a href="/" className="flex items-center gap-2 drop-shadow-xl shrink-0 z-10 relative">
             {/* Desktop logo (larger) */}
-            <span className="relative flex items-center justify-center" style={{position: 'absolute', top: '-100px', left: '-300px', height: '260px', width: '340px'}}>
+            <span className="relative flex items-center justify-center" style={{position: 'absolute', top: '-100px', left: '-350px', height: '260px', width: '340px'}}>
               <Image src="/Untitled design.png" alt="InstaKey Logo" width={260} height={260} className="object-contain" priority />
             </span>
           </a>
