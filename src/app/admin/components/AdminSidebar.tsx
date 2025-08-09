@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { 
   XMarkIcon,
   HomeIcon, 
@@ -28,7 +29,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAdminAuth();
 
-  return (
+  // Use portal to render at document body level for true overlay
+  if (typeof window === 'undefined') return null;
+
+  const sidebarContent = (
     <>
       {/* Backdrop */}
       {isOpen && (
@@ -42,7 +46,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       <div className={`
         fixed top-0 left-0 h-full w-72 md:w-80 bg-white shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        border-2 border-red-500
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -50,10 +53,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">A</span>
             </div>
-            <div>
-              <h2 className="font-bold text-gray-900">Admin Panel</h2>
-              <p className="text-xs text-red-500 font-bold">MOBILE DEBUG</p>
-              {user ? (
+                         <div>
+               <h2 className="font-bold text-gray-900">Admin Panel</h2>
+               {user ? (
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">Signed in</p>
                   {user.email && (
@@ -146,8 +148,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               <span className="text-sm font-medium">Logout</span>
             </button>
           </div>
-        </div>
-      </div>
-    </>
-  );
-}
+                 </div>
+       </div>
+     </>
+   );
+
+  return createPortal(sidebarContent, document.body);
+ }
