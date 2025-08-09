@@ -2,13 +2,10 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "./NavBar";
 import Sidebar from "./Sidebar";
-import { usePathname } from 'next/navigation';
+
 
 
 export default function MainLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isAdminPage = pathname?.startsWith('/admin');
-  
   const [vehicleFilters, setVehicleFilters] = useState<{
     make: string;
     model: string;
@@ -57,32 +54,27 @@ export default function MainLayoutClient({ children }: { children: React.ReactNo
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Only show on non-admin pages */}
-      {!isAdminPage && (
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)} 
-        />
-      )}
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+      />
       
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isAdminPage && sidebarOpen ? 'lg:ml-80' : ''}`}>
-        {/* NavBar - Only show on non-admin pages */}
-        {!isAdminPage && (
-          <NavBar 
-            onVehicleFiltersChange={(filters) => {
-              setVehicleFilters(filters);
-              window.dispatchEvent(new CustomEvent('vehicle-filters-change', { detail: filters }));
-            }}
-            onClearVehicleFilters={() => {
-              setVehicleFilters(null);
-              window.dispatchEvent(new CustomEvent('clear-vehicle-filters'));
-            }}
-            onSidebarToggle={handleSidebarToggle}
-            sidebarOpen={sidebarOpen}
-          />
-        )}
-        <main className={`flex-1 overflow-auto transition-all duration-500 ${!isAdminPage ? 'pt-2 sm:pt-6' : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : ''}`}>
+        <NavBar 
+          onVehicleFiltersChange={(filters) => {
+            setVehicleFilters(filters);
+            window.dispatchEvent(new CustomEvent('vehicle-filters-change', { detail: filters }));
+          }}
+          onClearVehicleFilters={() => {
+            setVehicleFilters(null);
+            window.dispatchEvent(new CustomEvent('clear-vehicle-filters'));
+          }}
+          onSidebarToggle={handleSidebarToggle}
+          sidebarOpen={sidebarOpen}
+        />
+        <main className="flex-1 overflow-auto pt-2 sm:pt-6 transition-all duration-500">
           {children}
         </main>
       </div>
