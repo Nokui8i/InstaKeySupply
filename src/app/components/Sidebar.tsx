@@ -158,6 +158,48 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
+          {/* User Account Section */}
+          <div className="p-4 border-b border-gray-100">
+            {user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                  <UserIcon className="w-5 h-5 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                    <p className="text-xs text-gray-500">Signed in</p>
+                  </div>
+                </div>
+                <Link 
+                  href="/wishlist" 
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={onClose}
+                >
+                  <HeartIcon className="w-5 h-5 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">Wishlist</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Link 
+                  href="/login" 
+                  className="flex items-center gap-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={onClose}
+                >
+                  <UserIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Sign In</span>
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={onClose}
+                >
+                  <UserIcon className="w-5 h-5 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">Create Account</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
           {/* Categories */}
           {categories.length > 0 && (
             <div className="p-4 space-y-2 border-t border-gray-100">
