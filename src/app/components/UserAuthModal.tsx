@@ -25,7 +25,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   return (
     <>
-      {/* Mobile: Clean, simple modal */}
+      {/* Mobile: Optimized for mobile keyboard */}
       <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
         <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs" style={{ transform: 'translateZ(0)' }}>
@@ -84,12 +84,12 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
     </>
   );
 
-  // Mobile-specific content component
+  // Mobile-specific content component - Optimized for mobile
   function MobileAuthContent() {
     if (!user) {
       return (
         <div className="space-y-4">
-          {/* Google Sign-In - Smaller Design */}
+          {/* Google Sign-In */}
           <button
             type="button"
             className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 rounded-lg py-3 px-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -135,7 +135,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          {/* Tabs - Smaller Design */}
+          {/* Tabs */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               type="button"
@@ -171,48 +171,8 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
             </button>
           </div>
 
-          {/* Form - Fixed and Smaller */}
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            console.log('Mobile form submitted:', { tab, email, password });
-            setError(null);
-            setSuccess(null);
-            try {
-              if (tab === 'login') {
-                console.log('Attempting mobile login...');
-                await login(email, password);
-                console.log('Mobile login successful!');
-                setSuccess('Successfully logged in!');
-                setTimeout(() => onClose(), 1500);
-              } else {
-                console.log('Attempting mobile registration...');
-                await register(email, password);
-                console.log('Mobile registration successful!');
-                setSuccess('Successfully registered!');
-                setTimeout(() => onClose(), 1500);
-              }
-            } catch (e: any) {
-              console.error('Mobile auth error:', e);
-              if (e.code === 'auth/invalid-credential') {
-                setError('Invalid email or password. Please try again.');
-              } else if (e.code === 'auth/user-not-found') {
-                setError('No account found with this email address.');
-              } else if (e.code === 'auth/wrong-password') {
-                setError('Incorrect password. Please try again.');
-              } else if (e.code === 'auth/email-already-in-use') {
-                setError('An account with this email already exists.');
-              } else if (e.code === 'auth/weak-password') {
-                setError('Password should be at least 6 characters long.');
-              } else if (e.code === 'auth/network-request-failed') {
-                setError('Network error. Please check your connection and try again.');
-              } else if (e.code === 'auth/unauthorized-domain') {
-                setError('Please try again or contact support if the issue persists.');
-              } else {
-                setError(e.message || 'Something went wrong. Please try again.');
-              }
-            }
-          }} 
-          className="space-y-3">
+          {/* Mobile Optimized Form */}
+          <div className="space-y-3">
             <div>
               <label className="block text-gray-700 font-medium mb-1 text-xs">Email</label>
               <input 
@@ -228,6 +188,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 spellCheck="false"
                 autoCorrect="off"
                 data-form-type="other"
+                enterKeyHint="next"
               />
             </div>
             <div>
@@ -244,6 +205,7 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 spellCheck="false"
                 autoCorrect="off"
                 data-form-type="other"
+                enterKeyHint="done"
               />
               {tab === 'login' && (
                 <button
@@ -284,13 +246,52 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
               </div>
             )}
             <button
-              type="submit"
+              type="button"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || (tab === 'register' && !acceptedTerms)}
+              onClick={async () => {
+                console.log('Mobile form submitted:', { tab, email, password });
+                setError(null);
+                setSuccess(null);
+                try {
+                  if (tab === 'login') {
+                    console.log('Attempting mobile login...');
+                    await login(email, password);
+                    console.log('Mobile login successful!');
+                    setSuccess('Successfully logged in!');
+                    setTimeout(() => onClose(), 1500);
+                  } else {
+                    console.log('Attempting mobile registration...');
+                    await register(email, password);
+                    console.log('Mobile registration successful!');
+                    setSuccess('Successfully registered!');
+                    setTimeout(() => onClose(), 1500);
+                  }
+                } catch (e: any) {
+                  console.error('Mobile auth error:', e);
+                  if (e.code === 'auth/invalid-credential') {
+                    setError('Invalid email or password. Please try again.');
+                  } else if (e.code === 'auth/user-not-found') {
+                    setError('No account found with this email address.');
+                  } else if (e.code === 'auth/wrong-password') {
+                    setError('Incorrect password. Please try again.');
+                  } else if (e.code === 'auth/email-already-in-use') {
+                    setError('An account with this email already exists.');
+                  } else if (e.code === 'auth/weak-password') {
+                    setError('Password should be at least 6 characters long.');
+                  } else if (e.code === 'auth/network-request-failed') {
+                    setError('Network error. Please check your connection and try again.');
+                  } else if (e.code === 'auth/unauthorized-domain') {
+                    setError('Please try again or contact support if the issue persists.');
+                  } else {
+                    setError(e.message || 'Something went wrong. Please try again.');
+                  }
+                }
+              }}
             >
               {loading ? (tab === 'login' ? 'Signing In...' : 'Creating Account...') : (tab === 'login' ? 'Sign In' : 'Create Account')}
             </button>
-          </form>
+          </div>
         </div>
       );
     } else {
