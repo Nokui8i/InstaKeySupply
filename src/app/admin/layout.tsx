@@ -70,23 +70,25 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Admin Sidebar */}
+    <>
+      {/* Admin Sidebar - Rendered outside flex container for true overlay */}
       <AdminSidebar 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)} 
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : ''}`}>
-        <main className="flex-1 overflow-auto pt-2 sm:pt-6 transition-all duration-500">
-          {children}
-        </main>
-        
-        {/* Session Timeout Warning */}
-        <SessionTimeoutWarning />
+      <div className="flex h-screen bg-gray-50">
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : ''}`}>
+          <main className="flex-1 overflow-auto pt-2 sm:pt-6 transition-all duration-500">
+            {children}
+          </main>
+          
+          {/* Session Timeout Warning */}
+          <SessionTimeoutWarning />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

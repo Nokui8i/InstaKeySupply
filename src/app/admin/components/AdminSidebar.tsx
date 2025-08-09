@@ -73,9 +73,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Navigation */}
-          <div className="p-4 space-y-2">
+        <div className="flex flex-col h-full">
+          {/* Navigation - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Management
             </h3>
@@ -132,8 +132,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </nav>
           </div>
           
-          {/* Logout Section */}
-          <div className="p-4 border-t border-gray-100">
+          {/* Logout Section - Always at bottom */}
+          <div className="p-4 border-t border-gray-100 mt-auto">
             <button 
               onClick={logout} 
               className="w-full flex items-center gap-3 p-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
