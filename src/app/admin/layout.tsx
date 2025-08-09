@@ -77,16 +77,17 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* Backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
+          style={{ zIndex: 999998 }}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      `} style={{ zIndex: 999999 }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -110,7 +111,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         </div>
         
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-col h-full">
           {/* User Info */}
           {user && (
             <div className="p-4 border-b border-gray-100">
@@ -126,8 +127,8 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="p-4 space-y-2">
+          {/* Navigation - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Management
             </h3>
@@ -184,8 +185,8 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
             </nav>
           </div>
           
-          {/* Logout Section */}
-          <div className="p-4 border-t border-gray-100">
+          {/* Logout Section - Always at bottom */}
+          <div className="p-4 border-t border-gray-100 mt-auto">
             <button 
               onClick={logout} 
               className="w-full flex items-center gap-3 p-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
