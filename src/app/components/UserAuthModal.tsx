@@ -27,8 +27,8 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
     <>
       {/* Mobile: Clean, simple modal */}
       <div className="md:hidden fixed inset-0 z-[9999] bg-black/60">
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs">
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs" style={{ transform: 'translateZ(0)' }}>
             {/* Mobile Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">Sign In</h2>
@@ -144,7 +144,11 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-800'
               }`}
-              onClick={() => setTab('login')}
+              onClick={() => {
+                setTab('login');
+                setError(null);
+                setSuccess(null);
+              }}
               disabled={loading}
             >
               Sign In
@@ -156,7 +160,11 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-800'
               }`}
-              onClick={() => setTab('register')}
+              onClick={() => {
+                setTab('register');
+                setError(null);
+                setSuccess(null);
+              }}
               disabled={loading}
             >
               Sign Up
@@ -218,6 +226,8 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 inputMode="email"
                 autoCapitalize="none"
                 spellCheck="false"
+                autoCorrect="off"
+                data-form-type="other"
               />
             </div>
             <div>
@@ -232,6 +242,8 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
                 autoComplete="current-password"
                 autoCapitalize="none"
                 spellCheck="false"
+                autoCorrect="off"
+                data-form-type="other"
               />
               {tab === 'login' && (
                 <button
