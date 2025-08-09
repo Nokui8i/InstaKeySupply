@@ -77,16 +77,17 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-[99998] lg:hidden"
+          className="fixed inset-0 bg-black/20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999998 }}
         />
       )}
 
       {/* Collapsible Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-[99999] w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `} style={{ position: 'fixed', top: 0, left: 0, zIndex: 99999 }}>
+      `} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999999 }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
