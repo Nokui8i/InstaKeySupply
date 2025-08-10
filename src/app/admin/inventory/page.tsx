@@ -438,8 +438,16 @@ function AdminInventoryContent() {
           if (image.startsWith('data:')) {
             console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
             try {
-              const response = await fetch(image);
-              const blob = await response.blob();
+              // Convert base64 to blob directly without using fetch
+              const base64Response = image.split(',')[1];
+              const byteCharacters = atob(base64Response);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let j = 0; j < byteCharacters.length; j++) {
+                byteNumbers[j] = byteCharacters.charCodeAt(j);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'image/jpeg' });
+              
               const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
               await uploadBytes(storageRef, blob);
               const downloadUrl = await getDownloadURL(storageRef);
@@ -549,8 +557,16 @@ function AdminInventoryContent() {
           if (image.startsWith('data:')) {
             console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
             try {
-              const response = await fetch(image);
-              const blob = await response.blob();
+              // Convert base64 to blob directly without using fetch
+              const base64Response = image.split(',')[1];
+              const byteCharacters = atob(base64Response);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let j = 0; j < byteCharacters.length; j++) {
+                byteNumbers[j] = byteCharacters.charCodeAt(j);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'image/jpeg' });
+              
               const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
               await uploadBytes(storageRef, blob);
               const downloadUrl = await getDownloadURL(storageRef);

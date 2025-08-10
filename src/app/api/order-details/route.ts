@@ -3,15 +3,17 @@ import { stripe } from '../../../lib/stripe';
 import { db } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     if (!stripe) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
     }
     
-    // Get session ID from URL parameters
-    const url = new URL(request.url);
-    const sessionId = url.searchParams.get('session_id');
+    // Get session ID from URL parameters - use nextUrl for better compatibility
+    const sessionId = request.nextUrl?.searchParams.get('session_id');
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
