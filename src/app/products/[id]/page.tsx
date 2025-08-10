@@ -352,8 +352,8 @@ export default function ProductDetail() {
     await addToCart({
       id: product.id,
       title: product.title,
-      price: parseFloat(product.price),
-      imageUrl: product.images?.[0] || product.imageUrl,
+      price: getPriceAsNumber(product.price),
+      imageUrl: product.images?.[0] || product.imageUrl || '/sample-key-1.png',
       quantity,
     }, quantity);
     setNotification('Added to cart!');
@@ -390,17 +390,25 @@ export default function ProductDetail() {
     return '/sample-key-1.png'; // Fallback image
   };
 
+  // Helper function to safely convert price to number
+  const getPriceAsNumber = (price: string | number): number => {
+    if (typeof price === 'number') {
+      return price;
+    }
+    // Remove $ and any other non-numeric characters, then parse
+    return parseFloat(price.replace(/[^\d.]/g, ''));
+  };
+
   // Helper function to calculate discount percentage
   const calculateDiscountPercentage = (oldPrice: string | number, currentPrice: string | number): number => {
-    const oldPriceNum = typeof oldPrice === 'string' ? parseFloat(oldPrice.replace('$', '')) : oldPrice;
-    const currentPriceNum = typeof currentPrice === 'string' ? parseFloat(currentPrice.replace('$', '')) : currentPrice;
+    const oldPriceNum = getPriceAsNumber(oldPrice);
+    const currentPriceNum = getPriceAsNumber(currentPrice);
     return Math.round(((oldPriceNum - currentPriceNum) / oldPriceNum) * 100);
   };
 
-  const isOnSale = product.oldPrice && parseFloat(product.oldPrice.toString().replace('$', '')) > parseFloat(product.price.toString().replace('$', ''));
-  const discountPercentage = isOnSale 
-    ? calculateDiscountPercentage(product.oldPrice!, product.price)
-    : 0;
+  // These will be calculated after the null check
+  let isOnSale = false;
+  let discountPercentage = 0;
 
   // Debug: log best sellers
   if (typeof window !== 'undefined') {
@@ -443,6 +451,12 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  // Calculate sale status after null check
+  isOnSale = !!product.oldPrice && getPriceAsNumber(product.oldPrice) > getPriceAsNumber(product.price);
+  discountPercentage = isOnSale && product.oldPrice
+    ? calculateDiscountPercentage(product.oldPrice, product.price)
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
