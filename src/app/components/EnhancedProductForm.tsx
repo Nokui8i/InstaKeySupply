@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -655,13 +655,13 @@ export default function EnhancedProductForm({
   }, [selectedVehicleType, dynamicVehicleTypes, dynamicBrands]);
 
   // Memoized models for each brand to prevent re-renders
-  const brandModelsMap = useMemo(() => {
+  const availableModelsMap = useMemo(() => {
     const modelsMap: { [key: string]: any } = {};
     availableBrands.forEach((brand: string) => {
       modelsMap[brand] = getAvailableModels(brand);
     });
     return modelsMap;
-  }, [availableBrands, dynamicBrands, dynamicModels, getAvailableModels]);
+  }, [availableBrands, getAvailableModels]);
 
   // Get available key types for a brand and model
   const getAvailableKeyTypes = (brand: string, model: string) => {
@@ -737,7 +737,7 @@ export default function EnhancedProductForm({
   };
 
   // Generate description text from compatibility array and technical specs
-  const generateCompatibilityDescription = (compatList: Array<{ make: string, model: string, yearRange: string }>) => {
+  const generateCompatibilityDescription = useCallback((compatList: Array<{ make: string, model: string, yearRange: string }>) => {
     let description = '';
     
     // Vehicle compatibility section
@@ -816,7 +816,7 @@ export default function EnhancedProductForm({
     }
     
     return description.trim();
-  };
+  }, [formData.technicalSpecs, formData.oemPartNumber, formData.isOem, formData.technicalSpecs?.aftermarket]);
 
   // Auto-regenerate description when technical specs or compatibility changes
   useEffect(() => {

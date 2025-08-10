@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
 interface BannerImage {
   src: string;
@@ -21,26 +21,26 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
   
   const total = images.length;
 
-  function handlePrev() {
+  const handlePrev = useCallback(() => {
     if (isTransitioning) return;
     setDirection("left");
     setNextIndex(current === 0 ? total - 1 : current - 1);
     setIsTransitioning(true);
-  }
+  }, [isTransitioning, current, total]);
   
-  function handleNext() {
+  const handleNext = useCallback(() => {
     if (isTransitioning) return;
     setDirection("right");
     setNextIndex((current === total - 1 ? 0 : current + 1));
     setIsTransitioning(true);
-  }
+  }, [isTransitioning, current, total]);
   
-  function handleDot(i: number) {
+  const handleDot = useCallback((i: number) => {
     if (isTransitioning || i === current) return;
     setDirection(i > current ? "right" : "left");
     setNextIndex(i);
     setIsTransitioning(true);
-  }
+  }, [isTransitioning, current]);
 
   // Auto-advance every 10 seconds
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
       handleNext();
     }, 10000);
     return () => clearTimeout(timer);
-  }, [current, isTransitioning, total, handleNext]);
+  }, [isTransitioning, handleNext]);
 
   // After animation, update current
   useEffect(() => {

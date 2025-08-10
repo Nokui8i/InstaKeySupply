@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useCallback } from "react";
 import CarouselBanner from "./components/CarouselBanner";
 import ProductCarousel from "./components/ProductCarousel";
 import ProductCard from "./components/ProductCard";
@@ -324,7 +324,7 @@ function HomeContent() {
   };
 
   // NEW: Vehicle compatibility filter logic
-  const handleVehicleFiltersChange = (filters: {
+  const handleVehicleFiltersChange = useCallback((filters: {
     make: string;
     model: string;
     yearRange: string;
@@ -361,7 +361,7 @@ function HomeContent() {
     });
     
     setFilteredProducts(filtered);
-  };
+  }, [products]); // Add products to dependency array
 
   const handleClearFilters = () => {
     setActiveFilters(null);

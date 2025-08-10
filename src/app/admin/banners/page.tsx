@@ -228,7 +228,7 @@ function AdminBannersContent() {
                   {/* Upload Dropzone */}
                   {!selectedFile && (
                     <div className="mb-4 sm:mb-6">
-                      <Dropzone onDrop={onDrop} accept={{'image/*': []}} multiple={false}>
+                      <Dropzone onDrop={onDrop} accept={{"image/*": []}} multiple={false}>
                         {({ getRootProps, getInputProps }) => (
                           <div {...getRootProps()} className="border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[100px] sm:min-h-[120px] w-full">
                             <input {...getInputProps()} />

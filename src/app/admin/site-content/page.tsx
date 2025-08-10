@@ -190,7 +190,7 @@ function SiteContentContent() {
       }
       fetchMessages();
     }
-  }, [section, promoModal]);
+  }, [section]);
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setContactObj(obj => ({ ...obj, [e.target.name]: e.target.value }));

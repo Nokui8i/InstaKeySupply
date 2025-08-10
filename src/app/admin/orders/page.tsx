@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy, updateDoc, doc, where, limit, startAfter, getCountFromServer, deleteDoc } from "firebase/firestore";
 
@@ -90,7 +90,7 @@ export default function AdminOrdersPage() {
     setShippedEmailLoading(null);
   };
 
-  const fetchOrders = async (direction: 'next' | 'prev' | 'init' = 'init', customPage?: number) => {
+  const fetchOrders = useCallback(async (direction: 'next' | 'prev' | 'init' = 'init', customPage?: number) => {
     setLoading(true);
     let q = query(
       collection(db, "orders"),
@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
     );
     setTotalOrders(countSnap.data().count);
     setLoading(false);
-  };
+  }, [statusFilter, lastDoc, firstDoc, page, PAGE_SIZE]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
