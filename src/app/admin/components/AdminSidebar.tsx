@@ -73,7 +73,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                  {/* Scrollable Content */}
          <div className="flex flex-col h-full">
            {/* Navigation - Scrollable */}
-           <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+           <div className="flex-1 overflow-y-auto p-4 space-y-2">
              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                Management
              </h3>
@@ -131,10 +131,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
           
                      {/* Logout Section - Always at bottom */}
-           <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50">
+           <div className="p-4 border-t border-gray-100 mt-auto">
              <button 
                onClick={logout} 
-               className="w-full flex items-center gap-3 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+               className="w-full flex items-center gap-3 p-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
              >
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
