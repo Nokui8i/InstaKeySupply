@@ -80,7 +80,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="flex h-screen bg-gray-50">
         <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-          <main className="flex-1 overflow-auto pt-2 sm:pt-6 transition-all duration-500">
+          <main className="flex-1 overflow-hidden pt-2 sm:pt-6 transition-all duration-500">
             {children}
           </main>
           
