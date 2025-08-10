@@ -661,7 +661,7 @@ export default function EnhancedProductForm({
       modelsMap[brand] = getAvailableModels(brand);
     });
     return modelsMap;
-  }, [availableBrands, dynamicBrands, dynamicModels]);
+  }, [availableBrands, dynamicBrands, dynamicModels, getAvailableModels]);
 
   // Get available key types for a brand and model
   const getAvailableKeyTypes = (brand: string, model: string) => {
@@ -825,7 +825,7 @@ export default function EnhancedProductForm({
       ...prev,
       description: description
     }));
-  }, [compatibility, formData.technicalSpecs, formData.oemPartNumber, formData.isOem]);
+  }, [compatibility, formData.technicalSpecs, formData.oemPartNumber, formData.isOem, generateCompatibilityDescription]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

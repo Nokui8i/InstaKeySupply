@@ -317,7 +317,7 @@ function HomeContent() {
       window.removeEventListener('vehicle-filters-change', handleNavbarVehicleFiltersChange as EventListener);
       window.removeEventListener('clear-vehicle-filters', handleNavbarClearVehicleFilters);
     };
-  }, [products]); // Add products to dependency array
+  }, [products, handleVehicleFiltersChange]); // Add products and handleVehicleFiltersChange to dependency array
 
   const handleFiltersChange = (filtered: any[]) => {
     setFilteredProducts(filtered);

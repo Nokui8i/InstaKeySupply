@@ -14,12 +14,33 @@ interface CarouselBannerProps {
 export default function CarouselBanner({ images }: CarouselBannerProps) {
   const [current, setCurrent] = useState(0);
   const [nextIndex, setNextIndex] = useState<number | null>(null);
-  const [direction, setDirection] = useState<"left" | "right">("right");
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+  const [direction, setDirection] = useState<"left" | "right">("right");
+
   if (!images || images.length === 0) return null;
   
   const total = images.length;
+
+  function handlePrev() {
+    if (isTransitioning) return;
+    setDirection("left");
+    setNextIndex(current === 0 ? total - 1 : current - 1);
+    setIsTransitioning(true);
+  }
+  
+  function handleNext() {
+    if (isTransitioning) return;
+    setDirection("right");
+    setNextIndex((current === total - 1 ? 0 : current + 1));
+    setIsTransitioning(true);
+  }
+  
+  function handleDot(i: number) {
+    if (isTransitioning || i === current) return;
+    setDirection(i > current ? "right" : "left");
+    setNextIndex(i);
+    setIsTransitioning(true);
+  }
 
   // Auto-advance every 10 seconds
   useEffect(() => {
@@ -28,26 +49,7 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
       handleNext();
     }, 10000);
     return () => clearTimeout(timer);
-  }, [current, isTransitioning, total]);
-
-  function handlePrev() {
-    if (isTransitioning) return;
-    setDirection("left");
-    setNextIndex(current === 0 ? total - 1 : current - 1);
-    setIsTransitioning(true);
-  }
-  function handleNext() {
-    if (isTransitioning) return;
-    setDirection("right");
-    setNextIndex((current === total - 1 ? 0 : current + 1));
-    setIsTransitioning(true);
-  }
-  function handleDot(i: number) {
-    if (isTransitioning || i === current) return;
-    setDirection(i > current ? "right" : "left");
-    setNextIndex(i);
-    setIsTransitioning(true);
-  }
+  }, [current, isTransitioning, total, handleNext]);
 
   // After animation, update current
   useEffect(() => {

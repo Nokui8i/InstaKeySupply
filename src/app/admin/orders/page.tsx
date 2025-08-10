@@ -140,7 +140,7 @@ export default function AdminOrdersPage() {
     if (!isAuthenticated) return;
     setPage(1);
     fetchOrders('init', 1);
-  }, [isAuthenticated, statusFilter]);
+  }, [isAuthenticated, statusFilter, fetchOrders]);
 
   if (isLoading) {
     return <AdminLayout><div className="text-center py-12 text-gray-500">Loading...</div></AdminLayout>;

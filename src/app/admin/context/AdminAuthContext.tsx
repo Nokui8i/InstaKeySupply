@@ -63,7 +63,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     const interval = setInterval(checkSessionTimeout, 60 * 1000);
     
     return () => clearInterval(interval);
-  }, [lastActivity, user]);
+  }, [lastActivity, user, SESSION_TIMEOUT]);
 
   // Handle logout
   const logout = async () => {
