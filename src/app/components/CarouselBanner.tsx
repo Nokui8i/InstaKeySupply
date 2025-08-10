@@ -81,17 +81,21 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <div className="relative w-full overflow-hidden bg-white/10 rounded-2xl shadow-2xl md:border-2 md:border-blue-400/30">
+      <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl">
         {/* Image area */}
-        <div className="relative w-full aspect-[16/7] md:aspect-[16/5] h-full">
+        <div className="relative w-full aspect-[16/5] h-full bg-gray-100">
           {/* Current image */}
           <div className={`absolute top-0 left-0 w-full h-full transition-transform duration-500 ${getClass("current")}`} key={current}>
             <Image
               src={images[current].src}
               alt={images[current].alt}
               fill
-              className="object-cover w-full h-full rounded-2xl"
+              className="object-contain w-full h-full"
               priority
+              quality={100}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 80vw, (max-width: 1280px) 80vw, (max-width: 1536px) 80vw, 1200px"
             />
           </div>
           {/* Next image (only during transition) */}
@@ -101,8 +105,12 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
                 src={images[nextIndex].src}
                 alt={images[nextIndex].alt}
                 fill
-                className="object-cover w-full h-full rounded-2xl"
+                className="object-contain w-full h-full"
                 priority
+                quality={100}
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 80vw, (max-width: 1280px) 80vw, (max-width: 1536px) 80vw, 1200px"
               />
             </div>
           )}
@@ -111,25 +119,25 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
         {/* Navigation arrows */}
         <button
           onClick={handlePrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 hover:scale-110"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
           aria-label="Previous image"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <button
           onClick={handleNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 hover:scale-110"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
           aria-label="Next image"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5l7 7-7 7" />
           </svg>
         </button>
 
-        {/* Dots indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
+        {/* Dots indicator - Hidden on mobile, visible on larger screens */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2 hidden md:flex">
           {images.map((_, i) => (
             <button
               key={i}

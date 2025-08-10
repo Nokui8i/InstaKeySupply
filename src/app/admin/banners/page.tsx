@@ -38,6 +38,7 @@ function AdminBannersContent() {
   const [uploading, setUploading] = useState(false);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [imageQuality, setImageQuality] = useState<number>(95); // 95% quality by default
   const cropAspect = 16 / 5;
 
   async function fetchBanners() {
@@ -116,7 +117,7 @@ function AdminBannersContent() {
     if (!selectedFile || !croppedAreaPixels) return;
     setUploading(true);
     // Crop image
-    const croppedBlob = await getCroppedImg(previewUrl, croppedAreaPixels);
+    const croppedBlob = await getCroppedImg(previewUrl, croppedAreaPixels, imageQuality);
     // Upload to Storage
     const storageRef = ref(storage, `banners/${Date.now()}_${selectedFile.name}`);
     await uploadBytes(storageRef, croppedBlob);
@@ -237,6 +238,9 @@ function AdminBannersContent() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                               </svg>
                               <span className="text-gray-600 font-medium text-sm sm:text-base">Drag &amp; drop banner image here, or <span className="underline text-blue-600">tap to select</span></span>
+                              <p className="text-xs text-gray-500 text-center max-w-xs">
+                                For best quality on 4K displays, use images with dimensions like 3840×1200 or 2560×800
+                              </p>
                             </div>
                           </div>
                         )}
@@ -299,6 +303,46 @@ function AdminBannersContent() {
                           <span className="text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">
                             Min: {minZoom.toFixed(1)}x
                           </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Quality Control */}
+                  {cropping && (
+                    <div className="mb-4 sm:mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Image Quality: {imageQuality}%
+                        </label>
+                        <span className="text-xs text-gray-500">
+                          {imageQuality === 100 ? 'PNG (Lossless)' : 'JPEG (Compressed)'}
+                        </span>
+                      </div>
+                      <div className="w-full">
+                        <Slider
+                          min={60}
+                          max={100}
+                          step={5}
+                          value={imageQuality}
+                          onChange={(_, value) => setImageQuality(value as number)}
+                          size="medium"
+                          sx={{
+                            '& .MuiSlider-thumb': {
+                              width: 18,
+                              height: 18,
+                            },
+                            '& .MuiSlider-track': {
+                              height: 3,
+                            },
+                            '& .MuiSlider-rail': {
+                              height: 3,
+                            }
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>60% (Smaller file)</span>
+                          <span>100% (Best quality)</span>
                         </div>
                       </div>
                     </div>
