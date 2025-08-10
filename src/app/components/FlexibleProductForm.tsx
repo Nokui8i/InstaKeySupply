@@ -394,6 +394,11 @@ export default function FlexibleProductForm({
     }
   }, [categories, initialData]);
 
+  // Debug: monitor formData changes
+  useEffect(() => {
+    console.log('FormData changed:', formData);
+  }, [formData]);
+
   // Fetch categories and vehicle data
   useEffect(() => {
     const fetchData = async () => {
@@ -456,11 +461,13 @@ export default function FlexibleProductForm({
   };
 
   const handleMainCategoryChange = (categoryId: string) => {
+    console.log('Main category changed to:', categoryId);
     setSelectedMainCategory(categoryId);
     
     // Find subcategories for the selected main category
     const mainCategorySubcategories = categories.filter(cat => cat.parentId === categoryId);
     setSubcategories(mainCategorySubcategories);
+    console.log('Found subcategories:', mainCategorySubcategories);
     
     // Clear the selected category if it's not a subcategory of the new main category
     if (formData.categoryId && !mainCategorySubcategories.find(sub => sub.id === formData.categoryId)) {
@@ -470,10 +477,23 @@ export default function FlexibleProductForm({
         category: ''
       }));
     }
+    
+    // If no subcategories exist for this main category, set it as the category directly
+    if (mainCategorySubcategories.length === 0) {
+      const selectedCategory = categories.find(cat => cat.id === categoryId);
+      console.log('No subcategories, setting main category as category:', selectedCategory);
+      setFormData(prev => ({
+        ...prev,
+        categoryId: categoryId,
+        category: selectedCategory?.name || ''
+      }));
+    }
   };
 
   const handleSubcategoryChange = (subcategoryId: string) => {
+    console.log('Subcategory changed to:', subcategoryId);
     const selectedSubcategory = subcategories.find(sub => sub.id === subcategoryId);
+    console.log('Selected subcategory:', selectedSubcategory);
     setFormData(prev => ({
       ...prev,
       categoryId: subcategoryId,
@@ -721,6 +741,12 @@ export default function FlexibleProductForm({
       return;
     }
 
+    // Validate category selection
+    if (!formData.categoryId) {
+      alert('Please select a category');
+      return;
+    }
+
     // Generate selectedCompatibility from compatibility
     const selectedCompatibility = (compatibility || []).map((comp: any) => {
       let yearStart = '';
@@ -742,6 +768,24 @@ export default function FlexibleProductForm({
 
     // Generate description from custom fields
     const description = generateDescription();
+
+    // Debug: log the form data being submitted
+    console.log('Submitting form data:', {
+      ...formData,
+      description,
+      stock: formData.stock ? parseInt(formData.stock) : 0,
+      price: parseFloat(formData.price),
+      compatibility: compatibility,
+      selectedCompatibility,
+    });
+    
+    // Debug: log price details
+    console.log('Price debugging:', {
+      originalPrice: formData.price,
+      originalPriceType: typeof formData.price,
+      parsedPrice: parseFloat(formData.price),
+      parsedPriceType: typeof parseFloat(formData.price)
+    });
 
     onSubmit({
       ...formData,
@@ -913,17 +957,10 @@ export default function FlexibleProductForm({
                   <div className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium">
                     {categories.find(cat => cat.id === selectedMainCategory)?.name}
                   </div>
+                  {/* Hidden input to ensure category data is set */}
                   <input 
                     type="hidden" 
                     value={selectedMainCategory} 
-                    onChange={(e) => {
-                      const selectedCategory = categories.find(cat => cat.id === selectedMainCategory);
-                      setFormData(prev => ({
-                        ...prev,
-                        categoryId: selectedMainCategory,
-                        category: selectedCategory?.name || ''
-                      }));
-                    }}
                   />
                 </div>
               )}

@@ -209,11 +209,17 @@ function AdminInventoryContent() {
 
   // Helper function to format price consistently
   const formatPrice = (price: string | number): string => {
+    console.log('formatPrice called with:', price, 'type:', typeof price);
     if (typeof price === 'string') {
       if (price.startsWith('$')) {
         return price;
       }
-      return `$${price}`;
+      // Convert string to number and format consistently
+      const numPrice = parseFloat(price);
+      if (isNaN(numPrice)) {
+        return `$${price}`;
+      }
+      return `$${numPrice.toFixed(2)}`;
     }
     return `$${price.toFixed(2)}`;
   };
@@ -471,6 +477,14 @@ function AdminInventoryContent() {
       }
       
       console.log('Final imageUrls array:', imageUrls);
+      
+      // Debug: log price before saving
+      console.log('Price before saving to Firestore:', {
+        originalPrice: formData.price,
+        originalPriceType: typeof formData.price,
+        parsedPrice: parseFloat(formData.price),
+        parsedPriceType: typeof parseFloat(formData.price)
+      });
       
       // Save to Firestore with flexible fields
       await addDoc(collection(db, "products"), {
