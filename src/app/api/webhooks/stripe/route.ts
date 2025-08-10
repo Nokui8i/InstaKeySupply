@@ -120,12 +120,21 @@ async function handleCheckoutSessionCompleted(session: any, request: NextRequest
         // Try to get from request headers
         const host = request.headers.get('host');
         const protocol = request.headers.get('x-forwarded-proto') || 'https';
-        baseUrl = host ? `${protocol}://${host}` : 'https://instakeysupply.com';
+        baseUrl = host ? `${protocol}://${host}` : '';
       }
       
       // Ensure we have a valid base URL
-      if (!baseUrl.startsWith('http')) {
-        baseUrl = `https://${baseUrl}`;
+      if (!baseUrl || !baseUrl.startsWith('http')) {
+        // Use the request origin as fallback
+        const origin = request.headers.get('origin');
+        if (origin) {
+          baseUrl = origin;
+        } else {
+          // Last resort: construct from host header
+          const host = request.headers.get('host');
+          const protocol = request.headers.get('x-forwarded-proto') || 'https';
+          baseUrl = host ? `${protocol}://${host}` : 'https://instakeysupply.com';
+        }
       }
       
       console.log('Sending email using base URL:', baseUrl);

@@ -14,9 +14,9 @@ const getAuthDomain = () => {
       return 'instakeysuply.firebaseapp.com';
     }
     
-    // For production domain
+    // For production domain - use environment variable or fallback
     if (hostname === 'instakeysupply.com' || hostname.includes('instakeysupply')) {
-      return 'instakeysupply.com';
+      return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'instakeysupply.com';
     }
     
     // Fallback to the environment variable or default

@@ -7,6 +7,16 @@ import { FaCheckCircle, FaShoppingCart } from 'react-icons/fa';
 // Force dynamic rendering to avoid build issues
 export const dynamic = 'force-dynamic';
 
+// Helper function to get the current base URL dynamically
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Use the current protocol and domain
+    return `${window.location.protocol}//${window.location.host}`;
+  }
+  // Fallback for SSR
+  return process.env.NEXT_PUBLIC_BASE_URL || 'https://instakeysupply.com';
+};
+
 function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,24 +25,26 @@ function CheckoutSuccessContent() {
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
+    
     if (sessionId) {
-      // Clear cart immediately
       clearCart();
       
       // Send email as fallback
       sendOrderEmail(sessionId);
       
-      // Redirect to main page after 2 seconds using window.location
+      // Redirect to main page after 2 seconds using dynamic URL
       const timer = setTimeout(() => {
         console.log('Redirecting to main page...');
-        window.location.href = 'https://instakeysupply.com/';
+        const baseUrl = getBaseUrl();
+        window.location.href = `${baseUrl}/`;
       }, 2000);
 
       return () => clearTimeout(timer);
     } else {
       // No session ID, redirect immediately
       console.log('No session ID, redirecting immediately...');
-      window.location.href = 'https://instakeysupply.com/';
+      const baseUrl = getBaseUrl();
+      window.location.href = `${baseUrl}/`;
     }
   }, [searchParams, clearCart]);
 
@@ -107,7 +119,10 @@ function CheckoutSuccessContent() {
 
         {/* Manual Redirect Button */}
         <button
-          onClick={() => window.location.href = 'https://instakeysupply.com/'}
+          onClick={() => {
+            const baseUrl = getBaseUrl();
+            window.location.href = `${baseUrl}/`;
+          }}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
         >
           <FaShoppingCart className="mr-2" />
