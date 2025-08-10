@@ -51,6 +51,22 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
     }));
 
+    // Add shipping cost as a separate line item
+    if (shippingCost > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Shipping Cost',
+            description: 'Standard shipping and handling',
+          },
+          unit_amount: Math.round(shippingCost * 100), // Convert to cents
+        },
+        quantity: 1,
+      });
+      console.log('Added shipping cost line item:', { shippingCost, unit_amount: Math.round(shippingCost * 100) });
+    }
+
     // Add discount if applicable
     if (promoDiscount > 0) {
       lineItems.push({
@@ -65,6 +81,19 @@ export async function POST(request: NextRequest) {
         quantity: 1,
       });
     }
+
+    console.log('Final line items for Stripe:', {
+      itemCount: lineItems.length,
+      items: lineItems.map((item: any) => ({
+        name: item.price_data.product_data.name,
+        amount: item.price_data.unit_amount,
+        quantity: item.quantity
+      })),
+      subtotal,
+      shippingCost,
+      promoDiscount,
+      total
+    });
 
     // Create checkout session with enhanced metadata
     const session = await stripe.checkout.sessions.create({

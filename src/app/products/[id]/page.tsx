@@ -324,13 +324,19 @@ export default function ProductDetail() {
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= (product?.stock || 1)) {
+      console.log('Product page: Changing quantity from', quantity, 'to', newQuantity);
       setQuantity(newQuantity);
     }
   };
 
   const handleAddToCart = () => {
     if (!product) return;
-    console.log('handleAddToCart called:', { product, quantity });
+    console.log('Product page: Adding to cart:', { 
+      product: product.id, 
+      quantity, 
+      stock: product.stock,
+      price: product.price 
+    });
     addToCart({
       id: product.id,
       title: product.title,
@@ -540,6 +546,40 @@ export default function ProductDetail() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
+              {/* Quantity Selection */}
+              <div className="flex items-center justify-center gap-3">
+                <label className="text-sm font-medium text-gray-700">Quantity:</label>
+                <div className="flex items-center border border-gray-300 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+                    className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors rounded-l-lg"
+                    disabled={quantity <= 1}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={product.stock || 1}
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                    className="w-16 text-center border-0 focus:outline-none focus:ring-0 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(Math.min(product.stock || 1, quantity + 1))}
+                    className="px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors rounded-r-lg"
+                    disabled={quantity >= (product.stock || 1)}
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {product.stock ? `${product.stock} in stock` : 'Stock not specified'}
+                </span>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-2 mt-2">
                 <button
                   onClick={handleAddToCart}

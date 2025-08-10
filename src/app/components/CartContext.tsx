@@ -46,16 +46,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const stored = localStorage.getItem('cart');
     if (stored) {
       try {
-        setCart(JSON.parse(stored));
+        const parsedCart = JSON.parse(stored);
+        console.log('CartContext: Loading cart from localStorage:', parsedCart);
+        setCart(parsedCart);
       } catch (e) {
         console.error('Failed to parse stored cart:', e);
       }
+    } else {
+      console.log('CartContext: No stored cart found, starting with empty cart');
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (hydrated) {
+      console.log('CartContext: Saving cart to localStorage:', cart);
       localStorage.setItem('cart', JSON.stringify(cart));
     }
   }, [cart, hydrated]);
@@ -64,18 +69,35 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
       if (existing) {
+        // If item already exists, add to existing quantity
+        const newQuantity = Math.min(existing.quantity + quantity, item.stock);
         return prev.map(i => 
           i.id === item.id 
-            ? { ...i, quantity: Math.min(i.quantity + quantity, i.stock) }
+            ? { ...i, quantity: newQuantity }
             : i
         );
       }
+      // If item doesn't exist, add new item with specified quantity
       return [...prev, { ...item, quantity: Math.min(quantity, item.stock) }];
     });
   };
 
   const removeFromCart = (id: string) => setCart(prev => prev.filter(i => i.id !== id));
-  const updateQuantity = (id: string, quantity: number) => setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, Math.min(quantity, i.stock)) } : i));
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity < 1) return;
+    
+    console.log('CartContext: updateQuantity called:', { id, quantity, currentCart: cart });
+    
+    setCart(prev => {
+      const updated = prev.map(item => 
+        item.id === id 
+          ? { ...item, quantity: Math.min(Math.max(1, quantity), item.stock) }
+          : item
+      );
+      console.log('CartContext: Cart updated:', { previous: prev, updated });
+      return updated;
+    });
+  };
   const clearCart = () => setCart([]);
 
   const calculateShipping = async () => {
@@ -85,15 +107,20 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      console.log('Calculating shipping for cart:', cart.length, 'items');
       const { getShippingCost } = await import('../../lib/shipping');
       const shippingCost = await getShippingCost();
+      
+      console.log('Shipping cost calculated:', shippingCost);
       
       if (shippingCost > 0) {
         setShippingInfo({
           cost: shippingCost
         });
+        console.log('Shipping info set:', { cost: shippingCost });
       } else {
         setShippingInfo(null);
+        console.log('No shipping cost, shipping info cleared');
       }
     } catch (error) {
       console.error('Error calculating shipping:', error);

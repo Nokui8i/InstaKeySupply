@@ -12,7 +12,14 @@ export default function CartPage() {
   const total = subtotal + shippingCost;
 
   // Debug log
-  console.log('CartPage render:', { cart, hydrated });
+  console.log('CartPage render:', { 
+    cart, 
+    hydrated, 
+    subtotal, 
+    shippingCost, 
+    total,
+    shippingInfo 
+  });
 
   if (!hydrated) {
     return (
@@ -83,14 +90,51 @@ export default function CartPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-600">Qty:</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={item.stock}
-                      value={item.quantity}
-                      onChange={e => updateQuantity(item.id, parseInt(e.target.value))}
-                      className="w-16 border border-gray-300 rounded px-2 py-1 text-center text-sm"
-                    />
+                    <div className="flex items-center border border-gray-300 rounded">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newQuantity = Math.max(1, item.quantity - 1);
+                          console.log('Decreasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                          updateQuantity(item.id, newQuantity);
+                        }}
+                        className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                        disabled={item.quantity <= 1}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.stock}
+                        value={item.quantity}
+                        onChange={e => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          console.log('Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                          updateQuantity(item.id, newQuantity);
+                        }}
+                        onBlur={e => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          if (newQuantity !== item.quantity) {
+                            console.log('Blur: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                            updateQuantity(item.id, newQuantity);
+                          }
+                        }}
+                        className="w-12 border-0 text-center text-sm focus:outline-none focus:ring-0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newQuantity = Math.min(item.stock, item.quantity + 1);
+                          console.log('Increasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                          updateQuantity(item.id, newQuantity);
+                        }}
+                        className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                        disabled={item.quantity >= item.stock}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">
@@ -131,14 +175,51 @@ export default function CartPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <input
-                          type="number"
-                          min={1}
-                          max={item.stock}
-                          value={item.quantity}
-                          onChange={e => updateQuantity(item.id, parseInt(e.target.value))}
-                          className="w-16 border border-gray-300 rounded px-2 py-1 text-center text-sm"
-                        />
+                        <div className="flex items-center border border-gray-300 rounded">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newQuantity = Math.max(1, item.quantity - 1);
+                              console.log('Desktop: Decreasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                              updateQuantity(item.id, newQuantity);
+                            }}
+                            className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                            disabled={item.quantity <= 1}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={item.stock}
+                            value={item.quantity}
+                            onChange={e => {
+                              const newQuantity = parseInt(e.target.value) || 1;
+                              console.log('Desktop: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                              updateQuantity(item.id, newQuantity);
+                            }}
+                            onBlur={e => {
+                              const newQuantity = parseInt(e.target.value) || 1;
+                              if (newQuantity !== item.quantity) {
+                                console.log('Desktop Blur: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                                updateQuantity(item.id, newQuantity);
+                              }
+                            }}
+                            className="w-12 border-0 text-center text-sm focus:outline-none focus:ring-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newQuantity = Math.min(item.stock, item.quantity + 1);
+                              console.log('Desktop: Increasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
+                              updateQuantity(item.id, newQuantity);
+                            }}
+                            className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                            disabled={item.quantity >= item.stock}
+                          >
+                            +
+                          </button>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right text-sm text-gray-900">${item.price.toFixed(2)}</td>
                       <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">

@@ -182,15 +182,25 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPlacingOrder(true);
     setError(null);
+
     if (cart.length === 0) {
       setError("Your cart is empty.");
+      setPlacingOrder(false);
       return;
     }
-    setPlacingOrder(true);
 
     try {
-      // Create Stripe checkout session
+      console.log('Placing order with:', {
+        items: cart,
+        customerInfo: { name, email, phone, address: { street, city, state, zip, country } },
+        promoDiscount: promoApplied ? promoDiscount : 0,
+        shippingCost: shippingCost,
+        subtotal,
+        total
+      });
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
