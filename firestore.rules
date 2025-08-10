@@ -68,13 +68,18 @@ service cloud.firestore {
       allow read, write, delete: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // Allow public read access to shipping costs, admin-only write
+    // Allow users to read and write their own cart data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow public read access to shipping costs, but only admin write access
     match /shippingCosts/{document} {
       allow read: if true;
       allow write, delete: if request.auth != null && request.auth.token.admin == true;
     }
-
-    // Allow each user to read/write their own cart
+    
+    // Allow users to read and write their own cart data (legacy support)
     match /userCarts/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

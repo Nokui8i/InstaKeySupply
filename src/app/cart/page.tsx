@@ -54,6 +54,11 @@ export default function CartPage() {
     router.push('/checkout');
   };
 
+  const handleClearCart = async () => {
+    await clearCart();
+    // Don't redirect - let the component show the empty cart state
+  };
+
   // Show loading state while cart is hydrating
   if (!hydrated) {
     return (
@@ -75,22 +80,9 @@ export default function CartPage() {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart</h1>
             <p className="text-gray-600 mb-8">Your cart is empty</p>
-            {user ? (
-              <p className="text-sm text-gray-500 mb-4">
-                Your cart is synced across all devices when you're logged in
-              </p>
-            ) : (
-              <p className="text-sm text-gray-500 mb-4">
-                <button 
-                  onClick={() => router.push('/login')}
-                  className="text-blue-600 hover:text-blue-800 underline"
-                >
-                  Sign in
-                </button> to sync your cart across devices
-              </p>
-            )}
+
             <button
-              onClick={() => router.push('/products')}
+              onClick={() => router.push('/')}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Continue Shopping
@@ -109,14 +101,7 @@ export default function CartPage() {
             <h1 className="text-3xl font-bold text-gray-900">Your Cart</h1>
             <p className="text-gray-600">{cart.length} item{cart.length !== 1 ? 's' : ''} in your cart</p>
           </div>
-          {user && (
-            <div className="flex items-center text-sm text-green-600 bg-green-50 px-3 py-2 rounded-full">
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Synced across devices
-            </div>
-          )}
+
         </div>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -126,35 +111,38 @@ export default function CartPage() {
 
           <div className="divide-y divide-gray-200">
             {cart.map((item) => (
-              <div key={item.id} className="px-6 py-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+              <div key={item.id} className="px-4 sm:px-6 py-4 sm:py-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                  {/* Product Info */}
+                  <div className="flex items-center space-x-3 sm:space-x-4">
                     <div className="flex-shrink-0">
                       <Image
                         src={item.imageUrl}
                         alt={item.title}
                         width={80}
                         height={80}
-                        className="w-20 h-20 object-cover rounded-lg"
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
-                      <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 truncate">{item.title}</h3>
+                      <p className="text-sm sm:text-base text-gray-600">${item.price.toFixed(2)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  {/* Quantity and Actions */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    {/* Quantity Controls */}
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-gray-600">Qty:</label>
                       <div className="flex items-center border border-gray-300 rounded">
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             const newQuantity = Math.max(1, item.quantity - 1);
-                            updateQuantity(item.id, newQuantity);
+                            await updateQuantity(item.id, newQuantity);
                           }}
-                          className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                          className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50"
                           disabled={item.quantity <= 1}
                         >
                           -
@@ -164,29 +152,32 @@ export default function CartPage() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             const newQuantity = item.quantity + 1;
-                            updateQuantity(item.id, newQuantity);
+                            await updateQuantity(item.id, newQuantity);
                           }}
-                          className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                          className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
                         >
                           +
                         </button>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-lg font-medium text-gray-900">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </p>
-                    </div>
+                    {/* Price and Remove */}
+                    <div className="flex items-center justify-between w-full sm:w-auto sm:justify-end space-x-4">
+                      <div className="text-right">
+                        <p className="text-base sm:text-lg font-medium text-gray-900">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
 
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
-                    >
-                      Remove
-                    </button>
+                      <button
+                        onClick={async () => await removeFromCart(item.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors text-sm sm:text-base"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -197,7 +188,7 @@ export default function CartPage() {
             <div className="flex justify-between items-center">
               <div className="flex space-x-4">
                 <button
-                  onClick={clearCart}
+                  onClick={handleClearCart}
                   className="text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Clear Cart

@@ -335,14 +335,14 @@ export default function ProductDetail() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     console.log('Product page: Adding to cart:', { 
       product: product.id, 
       quantity, 
       price: product.price 
     });
-    addToCart({
+    await addToCart({
       id: product.id,
       title: product.title,
       price: parseFloat(product.price),
