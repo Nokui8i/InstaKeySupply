@@ -119,7 +119,7 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
         {/* Navigation arrows */}
         <button
           onClick={handlePrev}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
           aria-label="Previous image"
         >
           <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +128,7 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
         </button>
         <button
           onClick={handleNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 text-white p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110"
           aria-label="Next image"
         >
           <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
