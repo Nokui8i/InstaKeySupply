@@ -5,9 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, hydrated } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, hydrated, shippingInfo } = useCart();
   const router = useRouter();
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingCost = shippingInfo?.cost || 0;
+  const total = subtotal + shippingCost;
 
   // Debug log
   console.log('CartPage render:', { cart, hydrated });
@@ -170,8 +172,18 @@ export default function CartPage() {
                 Clear Cart
               </button>
               <div className="text-right">
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">${total.toFixed(2)}</p>
+                <p className="text-sm text-gray-600">Subtotal</p>
+                <p className="text-lg font-medium text-gray-900">${subtotal.toFixed(2)}</p>
+                {shippingInfo && (
+                  <div className="mt-1">
+                    <p className="text-sm text-gray-600">Shipping ({shippingInfo.name})</p>
+                    <p className="text-sm font-medium text-gray-700">${shippingCost.toFixed(2)}</p>
+                  </div>
+                )}
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">${total.toFixed(2)}</p>
+                </div>
               </div>
             </div>
             <button

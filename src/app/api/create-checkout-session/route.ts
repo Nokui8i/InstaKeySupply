@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
     }
     
-    const { items, customerInfo, promoDiscount = 0 } = await request.json();
+    const { items, customerInfo, promoDiscount = 0, shippingCost = 0 } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'No items in cart' }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate total
     const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-    const total = Math.max(0, subtotal - promoDiscount);
+    const total = Math.max(0, subtotal + shippingCost - promoDiscount);
 
     // Validate minimum order amount (Stripe requires at least $0.50)
     if (total < 0.50) {
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         customerAddress: JSON.stringify(customerInfo.address),
         items: JSON.stringify(items),
         subtotal: subtotal.toString(),
+        shippingCost: shippingCost.toString(),
         promoDiscount: promoDiscount.toString(),
         total: total.toString(),
         environment: process.env.NODE_ENV || 'development',

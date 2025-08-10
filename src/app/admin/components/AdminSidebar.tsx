@@ -103,6 +103,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <TagIcon className="w-5 h-5" />
                 <span className="text-sm font-medium">Promo Codes</span>
               </Link>
+              <Link href="/admin/shipping-costs" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/shipping-costs' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
+                <TruckIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Shipping Costs</span>
+              </Link>
               <Link href="/admin/vehicle-compatibility" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/vehicle-compatibility' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
                 <TruckIcon className="w-5 h-5" />
                 <span className="text-sm font-medium">Vehicle Compatibility</span>

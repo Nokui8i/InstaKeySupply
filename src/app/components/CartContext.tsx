@@ -11,6 +11,13 @@ export interface CartItem {
   stock: number;
 }
 
+export interface ShippingInfo {
+  cost: number;
+  name: string;
+  description: string;
+  region?: string;
+}
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: CartItem, quantity?: number) => void;
@@ -18,6 +25,9 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   hydrated: boolean;
+  shippingInfo: ShippingInfo | null;
+  setShippingInfo: (info: ShippingInfo | null) => void;
+  calculateShipping: (region?: string) => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -31,6 +41,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('cart');
@@ -81,8 +92,54 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const updateQuantity = (id: string, quantity: number) => setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, Math.min(quantity, i.stock)) } : i));
   const clearCart = () => setCart([]);
 
+  const calculateShipping = async (region?: string) => {
+    try {
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      if (total === 0) {
+        setShippingInfo(null);
+        return;
+      }
+
+      const { calculateShippingCost } = await import('../../lib/shipping');
+      const shippingCalculation = await calculateShippingCost(total, region);
+      
+      if (shippingCalculation) {
+        setShippingInfo({
+          cost: shippingCalculation.cost,
+          name: shippingCalculation.name,
+          description: shippingCalculation.description,
+          region
+        });
+      } else {
+        setShippingInfo(null);
+      }
+    } catch (error) {
+      console.error('Error calculating shipping:', error);
+      setShippingInfo(null);
+    }
+  };
+
+  // Calculate shipping when cart changes
+  useEffect(() => {
+    if (hydrated && cart.length > 0) {
+      calculateShipping();
+    } else {
+      setShippingInfo(null);
+    }
+  }, [cart, hydrated]);
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, hydrated }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      removeFromCart, 
+      updateQuantity, 
+      clearCart, 
+      hydrated,
+      shippingInfo,
+      setShippingInfo,
+      calculateShipping
+    }}>
       {children}
     </CartContext.Provider>
   );

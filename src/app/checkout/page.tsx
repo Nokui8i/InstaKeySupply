@@ -32,7 +32,7 @@ const US_STATES = [
 import { US_CITIES } from '../../data/usCities';
 
 export default function CheckoutPage() {
-  const { cart, clearCart } = useCart();
+  const { cart, clearCart, shippingInfo, calculateShipping } = useCart();
   const router = useRouter();
   // Step state
   const [step, setStep] = useState(1); // 1: Info, 2: Review, 3: Success
@@ -49,7 +49,9 @@ export default function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingCost = shippingInfo?.cost || 0;
+  const total = subtotal + shippingCost;
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
@@ -68,6 +70,13 @@ export default function CheckoutPage() {
       setCity("");
     }
   }, [state]);
+
+  // Calculate shipping when state changes
+  useEffect(() => {
+    if (state && cart.length > 0) {
+      calculateShipping(state);
+    }
+  }, [state, cart, calculateShipping]);
 
   // Google Places Autocomplete setup
   useEffect(() => {
@@ -194,6 +203,7 @@ export default function CheckoutPage() {
             address: { street, city, state, zip, country }
           },
           promoDiscount: promoApplied ? promoDiscount : 0,
+          shippingCost: shippingCost,
         }),
       });
 
@@ -438,6 +448,16 @@ export default function CheckoutPage() {
                 </li>
               ))}
             </ul>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Subtotal:</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            {shippingInfo && (
+              <div className="flex justify-between text-sm mb-1">
+                <span>Shipping ({shippingInfo.name}):</span>
+                <span>${shippingCost.toFixed(2)}</span>
+              </div>
+            )}
             {promoApplied && promoType && (
               <div className="flex justify-between text-green-700 font-bold text-base items-center">
                 <span className="flex items-center gap-1"><FaCheckCircle /> Promo Discount:</span>
