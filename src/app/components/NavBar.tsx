@@ -50,7 +50,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { cart } = useCart();
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cart.length; // Show number of unique products, not total quantity
   const { user, logout } = useAuth();
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const userIconRef = useRef<HTMLButtonElement>(null);

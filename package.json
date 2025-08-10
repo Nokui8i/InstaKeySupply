@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-favicons": "node scripts/generate-favicons.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -39,6 +40,7 @@
     "react-icons": "^5.5.0",
     "react-image-crop": "^11.0.10",
     "react-places-autocomplete": "^7.3.0",
+    "sharp": "^0.34.3",
     "stripe": "^18.3.0",
     "tailwind-merge": "^3.3.1"
   },

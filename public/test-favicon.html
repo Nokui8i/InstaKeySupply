@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favicon Test - Larger Icons</title>
+    
+    <!-- Direct favicon links with multiple sizes -->
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- Apple touch icons -->
+    <link rel="apple-touch-icon" href="/Untitled design.png" />
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .favicon-preview {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .favicon-item {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .favicon-item img {
+            border: 1px solid #ccc;
+            border-radius: 2px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Favicon Test - Larger Icons</h1>
+    
+    <div class="test-box">
+        <h2>Current Logo</h2>
+        <div class="logo">
+            <img src="/Untitled design.png" alt="InstaKeySupply Logo" />
+        </div>
+        <p>This logo should now appear much larger and clearer in your browser tab!</p>
+    </div>
+    
+    <div class="test-box">
+        <h2>New Favicon Sizes</h2>
+        <div class="favicon-preview">
+            <div class="favicon-item">
+                <img src="/favicon.png" alt="64x64" width="64" height="64" />
+                <p>64x64 (Main)</p>
+            </div>
+            <div class="favicon-item">
+                <img src="/favicons/favicon-32x32.png" alt="32x32" width="32" height="32" />
+                <p>32x32</p>
+            </div>
+            <div class="favicon-item">
+                <img src="/favicons/favicon-16x16.png" alt="16x16" width="16" height="16" />
+                <p>16x16</p>
+            </div>
+        </div>
+        <p>The 64x64 favicon should now be much more visible in your browser tab!</p>
+    </div>
+    
+    <div class="test-box">
+        <h2>Quick Test Steps</h2>
+        <div class="status info">
+            <strong>1.</strong> Look at your browser tab - you should now see a much larger, clearer logo
+        </div>
+        <div class="status info">
+            <strong>2.</strong> If you still see a small dot, hard refresh: Ctrl+F5 (Windows) or Cmd+Shift+R (Mac)
+        </div>
+        <div class="status info">
+            <strong>3.</strong> Check if the new favicon files exist: <a href="/favicon.png" target="_blank">64x64</a>, <a href="/favicons/favicon-32x32.png" target="_blank">32x32</a>
+        </div>
+    </div>
+    
+    <div class="test-box">
+        <h2>File Check</h2>
+        <ul>
+            <li><strong>Main Logo:</strong> <a href="/Untitled design.png" target="_blank">/Untitled design.png</a></li>
+            <li><strong>64x64 Favicon:</strong> <a href="/favicon.png" target="_blank">/favicon.png</a></li>
+            <li><strong>32x32 Favicon:</strong> <a href="/favicons/favicon-32x32.png" target="_blank">/favicons/favicon-32x32.png</a></li>
+            <li><strong>16x16 Favicon:</strong> <a href="/favicons/favicon-16x16.png" target="_blank">/favicons/favicon-16x16.png</a></li>
+            <li><strong>ICO File:</strong> <a href="/favicon.ico" target="_blank">/favicon.ico</a></li>
+        </ul>
+    </div>
+    
+    <div class="test-box">
+        <h2>Expected Result</h2>
+        <div class="status success">
+            <p><strong>✅ Your browser tab should now show a much larger, clearer InstaKeySupply logo instead of a tiny black dot!</strong></p>
+        </div>
+    </div>
+    
+    <script>
+        // Check if new favicon loads
+        const img = new Image();
+        img.onload = function() {
+            console.log('✅ New favicon loaded successfully');
+            document.body.innerHTML += '<div class="test-box"><div class="status success">✅ New favicon files are accessible and load correctly!</div></div>';
+        };
+        img.onerror = function() {
+            console.log('❌ New favicon failed to load');
+            document.body.innerHTML += '<div class="test-box"><div class="status info">❌ New favicon could not be loaded. Check the file paths.</div></div>';
+        };
+        img.src = '/favicon.png';
+    </script>
+</body>
+</html>

@@ -1,31 +1,45 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "../components/CartContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, hydrated, shippingInfo } = useCart();
+  const { cart, updateQuantity, removeFromCart, shippingInfo, calculateShipping, testUpdate, version, manualSave, directUpdate, resetCart, addTestItem } = useCart();
+  const [subtotal, setSubtotal] = useState(0);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [testCounter, setTestCounter] = useState(0);
   const router = useRouter();
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = shippingInfo?.cost || 0;
-  const total = subtotal + shippingCost;
 
-  // Debug log
-  console.log('CartPage render:', { 
-    cart, 
-    hydrated, 
-    subtotal, 
-    shippingCost, 
-    total,
-    shippingInfo 
-  });
+  // Debug: log cart changes
+  useEffect(() => {
+    console.log('CartPage: Cart changed:', cart);
+    console.log('CartPage: Cart items with quantities:', cart.map(item => ({ id: item.id, title: item.title, quantity: item.quantity })));
+    console.log('CartPage: Cart version:', version);
+  }, [cart, version]);
 
-  if (!hydrated) {
+  // Debug: log component render
+  console.log('CartPage: Component rendering with cart:', cart);
+  console.log('CartPage: Cart items:', cart.map(item => ({ id: item.id, quantity: item.quantity })));
+
+  useEffect(() => {
+    const calculate = () => {
+      const newSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      setSubtotal(newSubtotal);
+      const newShippingCost = shippingInfo?.cost || 0;
+      setShippingCost(newShippingCost);
+      const newTotal = newSubtotal + newShippingCost;
+      setTotal(newTotal);
+    };
+    calculate();
+  }, [cart, shippingInfo]);
+
+  if (!shippingInfo) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
-        <span className="text-gray-500 ml-4">Loading cart...</span>
+        <span className="text-gray-500 ml-4">Loading shipping info...</span>
       </div>
     );
   }
@@ -39,6 +53,88 @@ export default function CartPage() {
           <p className="text-sm sm:text-base text-gray-600 mt-1">
             {cart.length === 0 ? "Your cart is empty" : `${cart.length} item${cart.length !== 1 ? 's' : ''} in your cart`}
           </p>
+        </div>
+      </div>
+
+      {/* Test Button for Debugging */}
+      <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Debug Controls</h3>
+        <div className="space-y-2">
+          <p className="text-sm text-yellow-700">
+            <strong>Cart Version:</strong> {version} | <strong>Cart Items:</strong> {cart.length} | <strong>Total Quantity:</strong> {cart.reduce((sum, item) => sum + item.quantity, 0)}
+          </p>
+          <button
+            onClick={() => {
+              if (cart.length > 0) {
+                const firstItem = cart[0];
+                console.log('Test: Updating quantity for first item:', firstItem);
+                updateQuantity(firstItem.id, firstItem.quantity + 1);
+              }
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Test: Increase First Item Quantity
+          </button>
+          <button
+            onClick={() => {
+              setTestCounter(prev => prev + 1);
+              console.log('Test: Incrementing test counter');
+            }}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Test: Increment Counter ({testCounter})
+          </button>
+          <button
+            onClick={() => {
+              console.log('Test: Calling CartContext testUpdate');
+              testUpdate();
+            }}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+          >
+            Test: CartContext Update
+          </button>
+          <button
+            onClick={() => {
+              console.log('Test: Manual save triggered');
+              manualSave();
+            }}
+            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+          >
+            Test: Manual Save
+          </button>
+          <button
+            onClick={() => {
+              if (cart.length > 0) {
+                const firstItem = cart[0];
+                console.log('Test: Direct update for first item:', firstItem);
+                directUpdate(firstItem.id, firstItem.quantity + 1);
+              }
+            }}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Test: Direct Update
+          </button>
+          <button
+            onClick={() => {
+              console.log('Test: Resetting cart');
+              resetCart();
+            }}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Test: Reset Cart
+          </button>
+          <button
+            onClick={() => {
+              console.log('Test: Adding test item');
+              addTestItem();
+            }}
+            className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+          >
+            Test: Add Test Item
+          </button>
+          <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
+            Current cart state: {JSON.stringify(cart.map(item => ({ id: item.id, quantity: item.quantity })))}
+          </div>
         </div>
       </div>
 
@@ -103,34 +199,17 @@ export default function CartPage() {
                       >
                         -
                       </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={item.stock}
-                        value={item.quantity}
-                        onChange={e => {
-                          const newQuantity = parseInt(e.target.value) || 1;
-                          console.log('Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
-                          updateQuantity(item.id, newQuantity);
-                        }}
-                        onBlur={e => {
-                          const newQuantity = parseInt(e.target.value) || 1;
-                          if (newQuantity !== item.quantity) {
-                            console.log('Blur: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
-                            updateQuantity(item.id, newQuantity);
-                          }
-                        }}
-                        className="w-12 border-0 text-center text-sm focus:outline-none focus:ring-0"
-                      />
+                      <span className="w-12 text-center text-sm px-2 py-1 bg-gray-50">
+                        {item.quantity}
+                      </span>
                       <button
                         type="button"
                         onClick={() => {
-                          const newQuantity = Math.min(item.stock, item.quantity + 1);
+                          const newQuantity = item.quantity + 1;
                           console.log('Increasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
                           updateQuantity(item.id, newQuantity);
                         }}
                         className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-                        disabled={item.quantity >= item.stock}
                       >
                         +
                       </button>
@@ -188,34 +267,17 @@ export default function CartPage() {
                           >
                             -
                           </button>
-                          <input
-                            type="number"
-                            min={1}
-                            max={item.stock}
-                            value={item.quantity}
-                            onChange={e => {
-                              const newQuantity = parseInt(e.target.value) || 1;
-                              console.log('Desktop: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
-                              updateQuantity(item.id, newQuantity);
-                            }}
-                            onBlur={e => {
-                              const newQuantity = parseInt(e.target.value) || 1;
-                              if (newQuantity !== item.quantity) {
-                                console.log('Desktop Blur: Updating quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
-                                updateQuantity(item.id, newQuantity);
-                              }
-                            }}
-                            className="w-12 border-0 text-center text-sm focus:outline-none focus:ring-0"
-                          />
+                          <span className="w-12 text-center text-sm px-2 py-1 bg-gray-50">
+                            {item.quantity}
+                          </span>
                           <button
                             type="button"
                             onClick={() => {
-                              const newQuantity = Math.min(item.stock, item.quantity + 1);
+                              const newQuantity = item.quantity + 1;
                               console.log('Desktop: Increasing quantity for item:', item.id, 'from', item.quantity, 'to', newQuantity);
                               updateQuantity(item.id, newQuantity);
                             }}
                             className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-                            disabled={item.quantity >= item.stock}
                           >
                             +
                           </button>
@@ -243,15 +305,31 @@ export default function CartPage() {
           {/* Cart Summary */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
-              <button 
-                className="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center gap-1"
-                onClick={clearCart}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Clear Cart
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center gap-1"
+                  onClick={() => router.push("/")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Clear Cart
+                </button>
+                {cart.length > 0 && (
+                  <button 
+                    className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                    onClick={() => {
+                      const firstItem = cart[0];
+                      if (firstItem) {
+                        console.log('Test: Updating quantity for first item from', firstItem.quantity, 'to', firstItem.quantity + 1);
+                        updateQuantity(firstItem.id, firstItem.quantity + 1);
+                      }
+                    }}
+                  >
+                    Test Quantity Update
+                  </button>
+                )}
+              </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Subtotal</p>
                 <p className="text-lg font-medium text-gray-900">${subtotal.toFixed(2)}</p>
