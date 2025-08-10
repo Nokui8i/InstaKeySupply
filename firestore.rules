@@ -74,6 +74,11 @@ service cloud.firestore {
       allow write, delete: if request.auth != null && request.auth.token.admin == true;
     }
 
+    // Allow each user to read/write their own cart
+    match /userCarts/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Allow anyone to create orders, but only admins to read/update/delete
     match /orders/{orderId} {
       allow create: if true;

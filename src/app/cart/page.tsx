@@ -1,12 +1,14 @@
 'use client';
 
 import { useCart } from '../components/CartContext';
+import { useAuth } from '../components/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart, hydrated } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
   const [subtotal, setSubtotal] = useState(0);
   const [shippingCost, setShippingCost] = useState(0);
@@ -52,6 +54,20 @@ export default function CartPage() {
     router.push('/checkout');
   };
 
+  // Show loading state while cart is hydrating
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your cart...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
@@ -59,6 +75,20 @@ export default function CartPage() {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart</h1>
             <p className="text-gray-600 mb-8">Your cart is empty</p>
+            {user ? (
+              <p className="text-sm text-gray-500 mb-4">
+                Your cart is synced across all devices when you're logged in
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mb-4">
+                <button 
+                  onClick={() => router.push('/login')}
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  Sign in
+                </button> to sync your cart across devices
+              </p>
+            )}
             <button
               onClick={() => router.push('/products')}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -74,8 +104,20 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
-        <p className="text-gray-600 mb-8">{cart.length} item{cart.length !== 1 ? 's' : ''} in your cart</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Your Cart</h1>
+            <p className="text-gray-600">{cart.length} item{cart.length !== 1 ? 's' : ''} in your cart</p>
+          </div>
+          {user && (
+            <div className="flex items-center text-sm text-green-600 bg-green-50 px-3 py-2 rounded-full">
+              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Synced across devices
+            </div>
+          )}
+        </div>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">

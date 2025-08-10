@@ -1,6 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface CartItem {
   id: string;
@@ -48,279 +51,277 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [hydrated, setHydrated] = useState(false);
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
   const [version, setVersion] = useState(0); // Force re-renders
+  const { user } = useAuth();
 
-  useEffect(() => {
-    console.log('CartContext: useEffect for localStorage loading triggered');
-    const stored = localStorage.getItem('cart');
-    console.log('CartContext: Raw localStorage value:', stored);
+  // Save cart to Firestore when user is logged in
+  const saveCartToFirestore = async (cartData: CartItem[]) => {
+    if (!user?.uid) return;
     
-    if (stored) {
-      try {
-        const parsedCart = JSON.parse(stored);
-        console.log('CartContext: Parsed cart from localStorage:', parsedCart);
-        
-        // Validate the parsed cart data
-        if (Array.isArray(parsedCart)) {
-          const validatedCart = parsedCart.filter(item => 
-            item && 
-            item.id && 
-            item.title && 
-            typeof item.price === 'number' && 
-            typeof item.quantity === 'number' &&
-            item.quantity > 0
-          );
-          
-          console.log('CartContext: Validated cart:', validatedCart);
-          
-          if (validatedCart.length !== parsedCart.length) {
-            console.warn('CartContext: Some cart items were invalid and filtered out:', {
-              original: parsedCart,
-              validated: validatedCart
-            });
-          }
-          
-          setCart(validatedCart);
-          console.log('CartContext: Cart state set to:', validatedCart);
-        } else {
-          console.warn('CartContext: Stored cart is not an array, clearing cart');
-          setCart([]);
-        }
-      } catch (e) {
-        console.error('CartContext: Failed to parse stored cart:', e);
-        setCart([]);
-      }
-    } else {
-      console.log('CartContext: No stored cart found, starting with empty cart');
+    try {
+      const userCartRef = doc(db, 'userCarts', user.uid);
+      await setDoc(userCartRef, {
+        items: cartData,
+        updatedAt: new Date().toISOString(),
+        userId: user.uid
+      });
+      console.log('CartContext: Cart saved to Firestore for user:', user.uid);
+    } catch (error) {
+      console.error('CartContext: Failed to save cart to Firestore:', error);
     }
-    setHydrated(true);
-    console.log('CartContext: Hydrated set to true');
-  }, []);
+  };
 
-  useEffect(() => {
-    if (hydrated) {
-      console.log('CartContext: Saving cart to localStorage - hydrated:', hydrated, 'cart:', cart);
-      const cartString = JSON.stringify(cart);
-      console.log('CartContext: Cart stringified:', cartString);
-      localStorage.setItem('cart', cartString);
-      console.log('CartContext: Cart saved to localStorage successfully');
+  // Load cart from Firestore when user is logged in
+  const loadCartFromFirestore = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const userCartRef = doc(db, 'userCarts', user.uid);
+      const cartDoc = await getDoc(userCartRef);
       
-      // Verify the save
-      const verify = localStorage.getItem('cart');
-      console.log('CartContext: Verification - retrieved from localStorage:', verify);
-    } else {
-      console.log('CartContext: Not saving to localStorage - not hydrated yet');
+      if (cartDoc.exists()) {
+        const cartData = cartDoc.data();
+        if (cartData.items && Array.isArray(cartData.items)) {
+          console.log('CartContext: Cart loaded from Firestore:', cartData.items);
+          setCart(cartData.items);
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('CartContext: Failed to load cart from Firestore:', error);
     }
-  }, [cart, hydrated]);
+    return false;
+  };
+
+  // Listen to real-time cart updates from Firestore
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const userCartRef = doc(db, 'userCarts', user.uid);
+    const unsubscribe = onSnapshot(userCartRef, (doc) => {
+      if (doc.exists()) {
+        const cartData = doc.data();
+        if (cartData.items && Array.isArray(cartData.items)) {
+          console.log('CartContext: Real-time cart update from Firestore:', cartData.items);
+          setCart(cartData.items);
+        }
+      }
+    }, (error) => {
+      console.error('CartContext: Firestore listener error:', error);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Load cart from localStorage or Firestore
+  useEffect(() => {
+    console.log('CartContext: useEffect for cart loading triggered, user:', user?.uid);
+    
+    const loadCart = async () => {
+      if (user?.uid) {
+        // User is logged in - try to load from Firestore first
+        console.log('CartContext: User logged in, loading from Firestore');
+        const loadedFromFirestore = await loadCartFromFirestore();
+        
+        if (!loadedFromFirestore) {
+          // If no Firestore cart, try to load from localStorage and migrate it
+          const stored = localStorage.getItem('cart');
+          if (stored) {
+            try {
+              const parsedCart = JSON.parse(stored);
+              if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+                console.log('CartContext: Migrating localStorage cart to Firestore:', parsedCart);
+                setCart(parsedCart);
+                await saveCartToFirestore(parsedCart);
+                // Clear localStorage after migration
+                localStorage.removeItem('cart');
+              }
+            } catch (e) {
+              console.error('CartContext: Failed to parse stored cart:', e);
+            }
+          }
+        }
+      } else {
+        // User is not logged in - load from localStorage
+        console.log('CartContext: No user, loading from localStorage');
+        const stored = localStorage.getItem('cart');
+        
+        if (stored) {
+          try {
+            const parsedCart = JSON.parse(stored);
+            console.log('CartContext: Parsed cart from localStorage:', parsedCart);
+            
+            if (Array.isArray(parsedCart)) {
+              const validatedCart = parsedCart.filter(item => 
+                item && 
+                item.id && 
+                item.title && 
+                typeof item.price === 'number' && 
+                typeof item.quantity === 'number' &&
+                item.quantity > 0
+              );
+              
+              console.log('CartContext: Validated cart:', validatedCart);
+              
+              if (validatedCart.length !== parsedCart.length) {
+                console.warn('CartContext: Some cart items were invalid and filtered out:', {
+                  original: parsedCart,
+                  validated: validatedCart
+                });
+              }
+              
+              setCart(validatedCart);
+              console.log('CartContext: Cart state set to:', validatedCart);
+            } else {
+              console.warn('CartContext: Stored cart is not an array, clearing cart');
+              setCart([]);
+            }
+          } catch (e) {
+            console.error('CartContext: Failed to parse stored cart:', e);
+            setCart([]);
+          }
+        } else {
+          console.log('CartContext: No stored cart found, starting with empty cart');
+        }
+      }
+      setHydrated(true);
+      console.log('CartContext: Hydrated set to true');
+    };
+
+    loadCart();
+  }, [user?.uid]);
+
+  // Save cart to appropriate storage when cart changes
+  useEffect(() => {
+    if (!hydrated) return;
+
+    if (user?.uid) {
+      // User is logged in - save to Firestore
+      saveCartToFirestore(cart);
+    } else {
+      // User is not logged in - save to localStorage
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    
+    console.log('CartContext: Cart saved, current cart:', cart);
+  }, [cart, user?.uid, hydrated]);
 
   const addToCart = (item: CartItem, quantity = 1) => {
-    console.log('CartContext: addToCart called:', { item, quantity, currentCart: cart });
+    console.log('CartContext: addToCart called with:', { item, quantity });
     
     setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) {
-        // If item already exists, add to existing quantity (no stock limit)
-        const newQuantity = existing.quantity + quantity;
-        const updated = prev.map(i => 
-          i.id === item.id 
-            ? { ...i, quantity: newQuantity }
-            : i
-        );
-        console.log('CartContext: Item already exists, updated quantity:', { 
-          existing: existing, 
-          newQuantity, 
-          updated: updated.find(i => i.id === item.id),
-          allItems: updated.map(item => ({ id: item.id, quantity: item.quantity }))
-        });
+      const existingItemIndex = prev.findIndex(cartItem => cartItem.id === item.id);
+      
+      if (existingItemIndex > -1) {
+        // Item already exists, update quantity
+        const updated = [...prev];
+        updated[existingItemIndex] = {
+          ...updated[existingItemIndex],
+          quantity: updated[existingItemIndex].quantity + quantity
+        };
+        console.log('CartContext: Updated existing item quantity:', updated[existingItemIndex]);
         return updated;
+      } else {
+        // Item doesn't exist, add new item
+        const newItem = { ...item, quantity };
+        console.log('CartContext: Added new item to cart:', newItem);
+        return [...prev, newItem];
       }
-      // If item doesn't exist, add new item with specified quantity (no stock limit)
-      const newCart = [...prev, { ...item, quantity: quantity }];
-      console.log('CartContext: New item added:', { 
-        newItem: { ...item, quantity: quantity },
-        allItems: newCart.map(item => ({ id: item.id, quantity: item.quantity }))
-      });
-      return newCart;
     });
-    
-    // Force re-render by incrementing version
-    setVersion(prev => prev + 1);
   };
 
   const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(i => i.id !== id));
-    // Force re-render by incrementing version
-    setVersion(prev => prev + 1);
+    console.log('CartContext: removeFromCart called with id:', id);
+    setCart(prev => prev.filter(item => item.id !== id));
   };
+
   const updateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) return;
+    console.log('CartContext: updateQuantity called with:', { id, quantity });
     
-    console.log('CartContext: updateQuantity called:', { id, quantity, currentCart: cart });
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
     
     setCart(prev => {
-      console.log('CartContext: updateQuantity setCart callback - prev state:', prev);
-      
-      const item = prev.find(i => i.id === id);
-      if (!item) {
-        console.warn('CartContext: Item not found for quantity update:', id);
-        return prev;
-      }
-      
-      console.log('CartContext: Found item to update:', item);
-      
-      // No stock limit - just ensure quantity is at least 1
-      const validQuantity = Math.max(1, quantity);
-      
       const updated = prev.map(item => 
-        item.id === id 
-          ? { ...item, quantity: validQuantity }
-          : item
+        item.id === id ? { ...item, quantity } : item
       );
-      
-      console.log('CartContext: Cart updated:', { 
-        previous: prev, 
-        updated,
-        changedItem: updated.find(item => item.id === id),
-        allItems: updated.map(item => ({ id: item.id, quantity: item.quantity }))
-      });
-      
-      // Force a re-render by creating a new array reference
-      const finalCart = [...updated];
-      console.log('CartContext: Final cart state to be set:', finalCart);
-      
-      return finalCart;
+      console.log('CartContext: Updated cart with new quantity:', updated);
+      return updated;
     });
     
     // Force re-render by incrementing version
     setVersion(prev => prev + 1);
   };
+
   const clearCart = () => {
+    console.log('CartContext: clearCart called');
     setCart([]);
-    // Force re-render by incrementing version
-    setVersion(prev => prev + 1);
   };
 
+  // Debug functions (keeping for now but can be removed later)
   const testUpdate = () => {
     console.log('CartContext: testUpdate called');
-    setCart(prev => {
-      console.log('CartContext: testUpdate - current cart:', prev);
-      if (prev.length > 0) {
-        const updated = prev.map((item, index) => 
-          index === 0 ? { ...item, quantity: item.quantity + 1 } : item
-        );
-        console.log('CartContext: testUpdate - updated cart:', updated);
-        return updated;
-      }
-      return prev;
-    });
-    
-    // Force re-render by incrementing version
     setVersion(prev => prev + 1);
   };
 
-  const calculateShipping = async () => {
-    try {
-      if (cart.length === 0) {
-        setShippingInfo(null);
-        return;
-      }
-
-      console.log('Calculating shipping for cart:', cart.length, 'items');
-      const { getShippingCost } = await import('../../lib/shipping');
-      const shippingCost = await getShippingCost();
-      
-      console.log('Shipping cost calculated:', shippingCost);
-      
-      if (shippingCost > 0) {
-        setShippingInfo({
-          cost: shippingCost
-        });
-        console.log('Shipping info set:', { cost: shippingCost });
-      } else {
-        setShippingInfo(null);
-        console.log('No shipping cost, shipping info cleared');
-      }
-    } catch (error) {
-      console.error('Error calculating shipping:', error);
-      setShippingInfo(null);
-    }
-  };
-
-  // Calculate shipping when cart changes
-  useEffect(() => {
-    if (hydrated && cart.length > 0) {
-      calculateShipping();
-    } else {
-      setShippingInfo(null);
-    }
-  }, [cart, hydrated]);
-
-  // Manual save function for debugging
   const manualSave = () => {
-    if (hydrated) {
-      console.log('CartContext: Manual save triggered');
-      const cartString = JSON.stringify(cart);
-      localStorage.setItem('cart', cartString);
-      console.log('CartContext: Manual save completed:', cartString);
+    console.log('CartContext: manualSave called');
+    if (user?.uid) {
+      saveCartToFirestore(cart);
+    } else {
+      localStorage.setItem('cart', JSON.stringify(cart));
     }
   };
 
-  // Direct cart manipulation for debugging
   const directUpdate = (id: string, newQuantity: number) => {
-    console.log('CartContext: directUpdate called:', { id, newQuantity, currentCart: cart });
-    
-    const updatedCart = cart.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    );
-    
-    console.log('CartContext: directUpdate - updated cart:', updatedCart);
-    setCart(updatedCart);
-    setVersion(prev => prev + 1);
+    console.log('CartContext: directUpdate called with:', { id, newQuantity });
+    updateQuantity(id, newQuantity);
   };
 
-  // Reset cart for debugging
   const resetCart = () => {
     console.log('CartContext: resetCart called');
-    localStorage.removeItem('cart');
     setCart([]);
-    setVersion(prev => prev + 1);
-    console.log('CartContext: Cart reset completed');
+    setVersion(0);
   };
 
-  // Add test item for debugging
   const addTestItem = () => {
     console.log('CartContext: addTestItem called');
     const testItem: CartItem = {
-      id: 'test-item-' + Date.now(),
+      id: 'test-' + Date.now(),
       title: 'Test Item',
       price: 9.99,
-      imageUrl: '/placeholder.jpg',
+      imageUrl: '/test-image.jpg',
       quantity: 1
     };
-    
-    console.log('CartContext: Adding test item:', testItem);
-    setCart(prev => [...prev, testItem]);
-    setVersion(prev => prev + 1);
-    console.log('CartContext: Test item added');
+    addToCart(testItem);
+  };
+
+  const calculateShipping = async () => {
+    // This function can be implemented later if needed
+    console.log('CartContext: calculateShipping called');
+  };
+
+  const value: CartContextType = {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    hydrated,
+    shippingInfo,
+    setShippingInfo,
+    calculateShipping,
+    testUpdate,
+    version,
+    manualSave,
+    directUpdate,
+    resetCart,
+    addTestItem
   };
 
   return (
-    <CartContext.Provider value={{ 
-      cart, 
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
-      clearCart, 
-      hydrated,
-      shippingInfo,
-      setShippingInfo,
-      calculateShipping,
-      testUpdate,
-      version,
-      manualSave,
-      directUpdate,
-      resetCart,
-      addTestItem
-    }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
