@@ -207,6 +207,28 @@ function AdminInventoryContent() {
   });
   const cropAspect = 1; // Square aspect ratio for product images
 
+  // Helper function to format price consistently
+  const formatPrice = (price: string | number): string => {
+    if (typeof price === 'string') {
+      if (price.startsWith('$')) {
+        return price;
+      }
+      return `$${price}`;
+    }
+    return `$${price.toFixed(2)}`;
+  };
+
+  // Helper function to get the best available image
+  const getProductImage = (product: Product): string => {
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    if (product.imageUrl) {
+      return product.imageUrl;
+    }
+    return '/sample-key-1.png'; // Fallback image
+  };
+
   // Show notification helper
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -1359,9 +1381,13 @@ function AdminInventoryContent() {
                         </td>
                         <td className="px-3 py-2">
                           <img 
-                            src={product.imageUrl} 
+                            src={getProductImage(product)} 
                             alt={product.title}
                             className="w-8 h-8 object-cover rounded border"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/sample-key-1.png';
+                            }}
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -1378,9 +1404,9 @@ function AdminInventoryContent() {
                         </td>
                         <td className="px-3 py-2">
                           <div>
-                            <div className="font-medium text-green-600 text-xs">{product.price}</div>
+                            <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
                             {product.oldPrice && (
-                              <div className="text-xs text-gray-400 line-through">{product.oldPrice}</div>
+                              <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
                             )}
                           </div>
                         </td>
@@ -1464,9 +1490,13 @@ function AdminInventoryContent() {
                     
                     {/* Product Image */}
                     <img 
-                      src={product.imageUrl} 
+                      src={getProductImage(product)} 
                       alt={product.title}
                       className="w-12 h-12 object-cover rounded border flex-shrink-0"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/sample-key-1.png';
+                      }}
                     />
                     
                     {/* Product Info */}
@@ -1480,9 +1510,9 @@ function AdminInventoryContent() {
                         
                         {/* Price */}
                         <div className="text-right">
-                          <div className="font-medium text-green-600 text-xs">{product.price}</div>
+                          <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
                           {product.oldPrice && (
-                            <div className="text-xs text-gray-400 line-through">{product.oldPrice}</div>
+                            <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
                           )}
                         </div>
                       </div>
