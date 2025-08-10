@@ -71,19 +71,7 @@ export default function CheckoutPage() {
     }
   }, [state]);
 
-  // Calculate shipping when cart changes
-  useEffect(() => {
-    if (cart.length > 0) {
-      calculateShipping();
-    }
-  }, [cart, calculateShipping]);
 
-  // Also calculate shipping when component mounts
-  useEffect(() => {
-    if (cart.length > 0) {
-      calculateShipping();
-    }
-  }, []); // Empty dependency array for mount-only
 
   // Google Places Autocomplete setup
   useEffect(() => {

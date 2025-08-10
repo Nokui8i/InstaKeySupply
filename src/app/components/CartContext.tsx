@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { initCart, addToCart as addToCartManager, removeFromCart as removeFromCartManager, clearCart as clearCartManager, updateQuantity as updateQuantityManager } from '../../cartManager';
 import { getShippingCost } from '../../lib/shipping';
@@ -57,6 +57,36 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     initCart(handleCartUpdate);
   }, []);
 
+  const calculateShipping = useCallback(async () => {
+    try {
+      const shippingCost = await getShippingCost();
+      // If no shipping cost is configured, use a default
+      const finalShippingCost = shippingCost > 0 ? shippingCost : 5.99; // Default $5.99
+      setShippingInfo({ cost: finalShippingCost });
+      console.log('CartContext: Shipping cost calculated:', finalShippingCost);
+    } catch (error) {
+      console.error('CartContext: Error calculating shipping:', error);
+      // Set default shipping cost on error
+      setShippingInfo({ cost: 5.99 });
+    }
+  }, []);
+
+  // Calculate shipping when cart changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      console.log('CartContext: Cart changed, calculating shipping...');
+      calculateShipping();
+    }
+  }, [cart, calculateShipping]);
+
+  // Also calculate shipping when component mounts
+  useEffect(() => {
+    if (cart.length > 0) {
+      console.log('CartContext: Component mounted, calculating shipping...');
+      calculateShipping();
+    }
+  }, []); // Empty dependency array for mount-only
+
   const addToCart = async (item: CartItem, quantity = 1) => {
     const itemWithQuantity = { ...item, quantity };
     await addToCartManager(itemWithQuantity);
@@ -76,20 +106,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearCart = async () => {
     await clearCartManager();
-  };
-
-  const calculateShipping = async () => {
-    try {
-      const shippingCost = await getShippingCost();
-      // If no shipping cost is configured, use a default
-      const finalShippingCost = shippingCost > 0 ? shippingCost : 5.99; // Default $5.99
-      setShippingInfo({ cost: finalShippingCost });
-      console.log('CartContext: Shipping cost calculated:', finalShippingCost);
-    } catch (error) {
-      console.error('CartContext: Error calculating shipping:', error);
-      // Set default shipping cost on error
-      setShippingInfo({ cost: 5.99 });
-    }
   };
 
   const value = {

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function CartPage() {
-  const { cart, clearCart, hydrated, shippingInfo } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart, hydrated, shippingInfo } = useCart();
   const { user } = useAuth();
   const router = useRouter();
   const [subtotal, setSubtotal] = useState(0);
@@ -183,7 +183,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping:</span>
-                    <span className="font-medium">${shippingCost.toFixed(2)}</span>
+                    <span className="font-medium">${(shippingInfo?.cost || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total:</span>
