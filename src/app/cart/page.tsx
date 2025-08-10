@@ -176,7 +176,7 @@ export default function CartPage() {
                 <p className="text-lg font-medium text-gray-900">${subtotal.toFixed(2)}</p>
                 {shippingInfo && (
                   <div className="mt-1">
-                    <p className="text-sm text-gray-600">Shipping ({shippingInfo.name})</p>
+                    <p className="text-sm text-gray-600">Shipping</p>
                     <p className="text-sm font-medium text-gray-700">${shippingCost.toFixed(2)}</p>
                   </div>
                 )}

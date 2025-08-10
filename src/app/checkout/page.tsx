@@ -71,12 +71,12 @@ export default function CheckoutPage() {
     }
   }, [state]);
 
-  // Calculate shipping when state changes
+  // Calculate shipping when cart changes
   useEffect(() => {
-    if (state && cart.length > 0) {
-      calculateShipping(state);
+    if (cart.length > 0) {
+      calculateShipping();
     }
-  }, [state, cart, calculateShipping]);
+  }, [cart, calculateShipping]);
 
   // Google Places Autocomplete setup
   useEffect(() => {
@@ -454,7 +454,7 @@ export default function CheckoutPage() {
             </div>
             {shippingInfo && (
               <div className="flex justify-between text-sm mb-1">
-                <span>Shipping ({shippingInfo.name}):</span>
+                <span>Shipping:</span>
                 <span>${shippingCost.toFixed(2)}</span>
               </div>
             )}

@@ -2,20 +2,16 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export interface CartItem {
+interface CartItem {
   id: string;
   title: string;
   price: number;
-  imageUrl: string;
   quantity: number;
   stock: number;
 }
 
 export interface ShippingInfo {
   cost: number;
-  name: string;
-  description: string;
-  region?: string;
 }
 
 interface CartContextType {
@@ -27,15 +23,17 @@ interface CartContextType {
   hydrated: boolean;
   shippingInfo: ShippingInfo | null;
   setShippingInfo: (info: ShippingInfo | null) => void;
-  calculateShipping: (region?: string) => Promise<void>;
+  calculateShipping: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const useCart = () => {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within a CartProvider');
-  return ctx;
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 };
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
@@ -45,44 +43,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const stored = localStorage.getItem('cart');
-    console.log('CartProvider localStorage.getItem:', stored);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        setCart(parsed);
-        console.log('CartProvider hydrated cart:', parsed);
+        setCart(JSON.parse(stored));
       } catch (e) {
-        console.error('CartProvider JSON.parse error:', e);
+        console.error('Failed to parse stored cart:', e);
       }
     }
     setHydrated(true);
-    // Multi-tab sync
-    const sync = (e: StorageEvent) => {
-      if (e.key === 'cart') {
-        setCart(e.newValue ? JSON.parse(e.newValue) : []);
-      }
-    };
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
   }, []);
 
-  // Only write to localStorage after hydration
   useEffect(() => {
     if (hydrated) {
       localStorage.setItem('cart', JSON.stringify(cart));
-      console.log('CartProvider localStorage.setItem:', JSON.stringify(cart));
     }
   }, [cart, hydrated]);
 
-  // Debug log
-  console.log('CartProvider render:', { cart, hydrated });
-
   const addToCart = (item: CartItem, quantity = 1) => {
-    console.log('addToCart called:', { item, quantity });
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
       if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, quantity: Math.min(i.quantity + quantity, i.stock) } : i);
+        return prev.map(i => 
+          i.id === item.id 
+            ? { ...i, quantity: Math.min(i.quantity + quantity, i.stock) }
+            : i
+        );
       }
       return [...prev, { ...item, quantity: Math.min(quantity, item.stock) }];
     });
@@ -92,23 +77,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const updateQuantity = (id: string, quantity: number) => setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, Math.min(quantity, i.stock)) } : i));
   const clearCart = () => setCart([]);
 
-  const calculateShipping = async (region?: string) => {
+  const calculateShipping = async () => {
     try {
-      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      if (total === 0) {
+      if (cart.length === 0) {
         setShippingInfo(null);
         return;
       }
 
-      const { calculateShippingCost } = await import('../../lib/shipping');
-      const shippingCalculation = await calculateShippingCost(total, region);
+      const { getShippingCost } = await import('../../lib/shipping');
+      const shippingCost = await getShippingCost();
       
-      if (shippingCalculation) {
+      if (shippingCost > 0) {
         setShippingInfo({
-          cost: shippingCalculation.cost,
-          name: shippingCalculation.name,
-          description: shippingCalculation.description,
-          region
+          cost: shippingCost
         });
       } else {
         setShippingInfo(null);
