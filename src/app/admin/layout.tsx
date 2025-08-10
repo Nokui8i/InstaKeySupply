@@ -16,12 +16,20 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
   // Set up global event listener for admin sidebar toggle
   React.useEffect(() => {
-    const handleAdminSidebarToggle = () => {
-      console.log('Admin sidebar toggle event received');
+    const handleAdminSidebarToggle = (event: Event) => {
+      // Prevent multiple rapid toggles
+      if (event.timeStamp) {
+        const now = Date.now();
+        if ((window as any).lastSidebarToggle && now - (window as any).lastSidebarToggle < 100) {
+          return;
+        }
+        (window as any).lastSidebarToggle = now;
+      }
       toggleSidebar();
     };
 
     window.addEventListener('admin-sidebar-toggle', handleAdminSidebarToggle);
+    
     return () => {
       window.removeEventListener('admin-sidebar-toggle', handleAdminSidebarToggle);
     };
@@ -70,25 +78,18 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <>
-      {/* Admin Sidebar - Rendered outside flex container for true overlay */}
-      <AdminSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-      />
-
-      {/* Main Content */}
-      <div className="flex h-screen bg-gray-50">
-        <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-          <main className="flex-1 overflow-hidden pt-2 sm:pt-6 transition-all duration-500">
-            {children}
-          </main>
-          
-          {/* Session Timeout Warning */}
-          <SessionTimeoutWarning />
-        </div>
+    <div className="admin-layout flex h-screen bg-gray-100">
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      <div className="admin-content flex-1 flex flex-col min-w-0">
+        <main className="admin-page flex-1 overflow-hidden pt-2 sm:pt-6">
+          {children}
+        </main>
+        
+        {/* Session Timeout Warning */}
+        <SessionTimeoutWarning />
       </div>
-    </>
+    </div>
   );
 }
 

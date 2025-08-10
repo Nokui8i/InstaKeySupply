@@ -47,6 +47,82 @@ body {
   overscroll-behavior: contain;
 }
 
+/* Admin panel specific optimizations */
+.admin-layout {
+  will-change: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.admin-sidebar {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.admin-content {
+  will-change: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevent flickering on admin pages */
+.admin-page {
+  min-height: 100vh;
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* Additional admin table optimizations */
+.admin-table {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.admin-table-row {
+  will-change: auto;
+  backface-visibility: hidden;
+}
+
+/* Prevent layout shifts during loading states */
+.admin-loading {
+  min-height: 200px;
+  will-change: auto;
+}
+
+/* Optimize admin form elements */
+.admin-form {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.admin-input {
+  will-change: auto;
+  backface-visibility: hidden;
+}
+
+/* Smooth transitions for admin UI elements */
+.admin-transition {
+  transition: all 0.2s ease-out;
+  will-change: auto;
+}
+
+/* Prevent flickering on mobile devices */
+@media (max-width: 768px) {
+  .admin-layout,
+  .admin-sidebar,
+  .admin-content,
+  .admin-page {
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
 /* Mobile-specific improvements */
 @media (max-width: 768px) {
   /* Prevent zoom on input focus */
@@ -98,17 +174,22 @@ nav a:hover {
 }
 
 .animate-carousel-slide-in-right {
+  transform: translateX(100%);
   animation: carouselSlideInRight 0.5s forwards;
 }
 .animate-carousel-slide-in-left {
+  transform: translateX(-100%);
   animation: carouselSlideInLeft 0.5s forwards;
 }
 .animate-carousel-slide-out-left {
+  transform: translateX(0);
   animation: carouselSlideOutLeft 0.5s forwards;
 }
 .animate-carousel-slide-out-right {
+  transform: translateX(0);
   animation: carouselSlideOutRight 0.5s forwards;
 }
+
 @keyframes carouselSlideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
@@ -126,22 +207,20 @@ nav a:hover {
   to { transform: translateX(100%); }
 }
 
-/* Auth Modal Animations */
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .animate-scale-in {
-  animation: scale-in 0.2s cubic-bezier(0.4,0,0.2,1);
+  animation: scale-in 0.2s ease-out;
 }
 
-/* Touch-friendly improvements */
 .touch-manipulation {
   touch-action: manipulation;
 }
 
-/* Mobile hover alternatives */
+/* Mobile hover fallbacks */
 @media (hover: none) and (pointer: coarse) {
   .group:hover .group-hover\:opacity-100 {
     opacity: 0;

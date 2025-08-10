@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
@@ -37,51 +37,49 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999998]"
-          style={{ zIndex: 9999998 }}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9999998] md:hidden"
           onClick={onClose}
         />
       )}
-
+      
       {/* Sidebar */}
-      <div className={`
-        fixed top-0 left-0 h-full w-72 md:w-80 bg-white shadow-2xl z-[9999999] transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}
-      style={{ zIndex: 9999999 }}
+      <div 
+        className={`admin-sidebar fixed top-0 left-0 h-full w-72 md:w-80 bg-white shadow-2xl z-[9999999] transform
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:relative md:translate-x-0 md:z-auto`}
       >
-                 {/* Header */}
-         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-               <span className="text-white font-bold text-lg">A</span>
-             </div>
-             <div>
-               <h2 className="font-bold text-gray-900">Admin Panel</h2>
-               <p className="text-sm text-gray-500">Management</p>
-             </div>
-           </div>
-           <button
-             onClick={onClose}
-             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-             aria-label="Close sidebar"
-           >
-             <XMarkIcon className="w-6 h-6 text-gray-600" />
-           </button>
-         </div>
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">A</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900">Admin Panel</h2>
+              <p className="text-sm text-gray-500">Management</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <XMarkIcon className="w-6 h-6 text-gray-600" />
+          </button>
+        </div>
 
-                 {/* Scrollable Content */}
-         <div className="flex flex-col h-full">
-           {/* Navigation - Scrollable */}
-           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-               Management
-             </h3>
-             <nav className="space-y-1">
-               <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
-                 <HomeIcon className="w-5 h-5" />
-                 <span className="text-sm font-medium">Dashboard</span>
-               </Link>
+        {/* Scrollable Content */}
+        <div className="flex flex-col h-full">
+          {/* Navigation - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Management
+            </h3>
+            <nav className="space-y-1">
+              <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
+                <HomeIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Dashboard</span>
+              </Link>
 
               <Link href="/admin/categories" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/categories' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
                 <FolderIcon className="w-5 h-5" />
@@ -134,22 +132,22 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </nav>
           </div>
           
-                     {/* Logout Section - Always at bottom */}
-           <div className="p-4 border-t border-gray-100 mt-auto">
-             <button 
-               onClick={logout} 
-               className="w-full flex items-center gap-3 p-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
-             >
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-               </svg>
-               <span className="text-sm font-medium">Logout</span>
-             </button>
-           </div>
-                 </div>
-       </div>
-     </>
-   );
+          {/* Logout Section - Always at bottom */}
+          <div className="p-4 border-t border-gray-100 mt-auto">
+            <button 
+              onClick={logout} 
+              className="w-full flex items-center gap-3 p-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
   return createPortal(sidebarContent, document.body);
- }
+}

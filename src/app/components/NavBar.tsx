@@ -192,7 +192,15 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
           
           {pathname.startsWith('/admin') && (
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'))}
+              onClick={() => {
+                // Prevent rapid duplicate clicks
+                if ((window as any).lastAdminSidebarClick && Date.now() - (window as any).lastAdminSidebarClick < 100) {
+                  console.log('Ignoring rapid admin sidebar click (mobile)');
+                  return;
+                }
+                (window as any).lastAdminSidebarClick = Date.now();
+                window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'));
+              }}
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Admin menu"
             >
@@ -275,6 +283,12 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               type="button"
               onClick={() => {
                 console.log('Admin sidebar toggle clicked');
+                // Prevent rapid duplicate clicks
+                if ((window as any).lastAdminSidebarClick && Date.now() - (window as any).lastAdminSidebarClick < 100) {
+                  console.log('Ignoring rapid admin sidebar click');
+                  return;
+                }
+                (window as any).lastAdminSidebarClick = Date.now();
                 window.dispatchEvent(new CustomEvent('admin-sidebar-toggle'));
               }}
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors z-50 relative"

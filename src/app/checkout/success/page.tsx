@@ -21,7 +21,6 @@ function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
-  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -29,8 +28,8 @@ function CheckoutSuccessContent() {
     if (sessionId) {
       clearCart();
       
-      // Send email as fallback
-      sendOrderEmail(sessionId);
+      // Note: Order confirmation email is automatically sent by Stripe webhook
+      // No need to send duplicate email from success page
       
       // Redirect to main page after 2 seconds using dynamic URL
       const timer = setTimeout(() => {
@@ -48,56 +47,6 @@ function CheckoutSuccessContent() {
     }
   }, [searchParams, clearCart]);
 
-  const sendOrderEmail = async (sessionId: string) => {
-    try {
-      console.log('Attempting to send order email for session:', sessionId);
-      
-      // Get order details first
-      const orderResponse = await fetch(`/api/order-details?session_id=${sessionId}`);
-      console.log('Order details response status:', orderResponse.status);
-      
-      if (orderResponse.ok) {
-        const orderData = await orderResponse.json();
-        console.log('Order data received:', { 
-          customerEmail: orderData.customer?.email, 
-          orderId: orderData.id,
-          total: orderData.total 
-        });
-        
-        // Send email
-        const emailResponse = await fetch('/api/send-order-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customer: orderData.customer,
-            address: orderData.address,
-            items: orderData.items,
-            total: orderData.total,
-            orderId: sessionId,
-            firestoreOrderId: orderData.id,
-          }),
-        });
-
-        console.log('Email API response status:', emailResponse.status);
-        
-        if (emailResponse.ok) {
-          const emailResult = await emailResponse.json();
-          console.log('Order email sent successfully from success page:', emailResult);
-          setEmailSent(true);
-        } else {
-          const errorText = await emailResponse.text();
-          console.error('Failed to send order email from success page. Status:', emailResponse.status, 'Error:', errorText);
-        }
-      } else {
-        console.error('Failed to get order details. Status:', orderResponse.status);
-        const errorText = await orderResponse.text();
-        console.error('Order details error:', errorText);
-      }
-    } catch (error) {
-      console.error('Error sending order email from success page:', error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4">
       <div className="max-w-md mx-auto text-center">
@@ -112,9 +61,9 @@ function CheckoutSuccessContent() {
           Thank you for your purchase. Your order has been confirmed and you&apos;ll receive a confirmation email shortly.
         </p>
         
-        {/* Email Status */}
+        {/* Email Status - Updated to reflect webhook handling */}
         <p className="text-sm text-green-600 mb-8">
-          {emailSent ? '✓ Email sent successfully!' : 'Sending confirmation email...'}
+          ✓ Order confirmation email will be sent automatically
         </p>
 
         {/* Manual Redirect Button */}

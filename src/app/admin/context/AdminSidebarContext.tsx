@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 interface AdminSidebarContextType {
   sidebarOpen: boolean;
@@ -12,12 +12,20 @@ const AdminSidebarContext = createContext<AdminSidebarContextType | undefined>(u
 export function AdminSidebarProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const handleSetSidebarOpen = useCallback((open: boolean) => {
+    setSidebarOpen(open);
+  }, []);
 
   return (
-    <AdminSidebarContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar }}>
+    <AdminSidebarContext.Provider value={{ 
+      sidebarOpen, 
+      setSidebarOpen: handleSetSidebarOpen, 
+      toggleSidebar 
+    }}>
       {children}
     </AdminSidebarContext.Provider>
   );

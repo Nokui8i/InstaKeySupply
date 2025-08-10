@@ -10,8 +10,6 @@ export default function AdminOrdersPage() {
   const { isAuthenticated, isLoading } = useAdminAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingStartTime, setLoadingStartTime] = useState(0);
-  const MIN_LOADING_TIME = 500; // Minimum loading time in milliseconds
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [shippedEmailSent, setShippedEmailSent] = useState<{ [orderId: string]: boolean }>({});
@@ -118,7 +116,6 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = useCallback(async (direction: 'next' | 'prev' | 'init' = 'init', customPage?: number) => {
     setLoading(true);
-    setLoadingStartTime(Date.now());
     let q = query(
       collection(db, "orders"),
       ...(statusFilter ? [where("orderStatus", "==", statusFilter)] : []),
@@ -145,14 +142,7 @@ export default function AdminOrdersPage() {
       setLastDoc(prevDocs[prevDocs.length - 1]);
       setHasPrevPage((customPage || page) > 2);
       setHasNextPage(prevDocs.length > PAGE_SIZE * (customPage || page));
-      
-      // Ensure minimum loading time
-      const elapsed = Date.now() - loadingStartTime;
-      if (elapsed < MIN_LOADING_TIME) {
-        setTimeout(() => setLoading(false), MIN_LOADING_TIME - elapsed);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
       return;
     }
     const snap = await getDocs(q);
@@ -167,15 +157,8 @@ export default function AdminOrdersPage() {
       query(collection(db, "orders"), ...(statusFilter ? [where("orderStatus", "==", statusFilter)] : []))
     );
     setTotalOrders(countSnap.data().count);
-    
-    // Ensure minimum loading time
-    const elapsed = Date.now() - loadingStartTime;
-    if (elapsed < MIN_LOADING_TIME) {
-      setTimeout(() => setLoading(false), MIN_LOADING_TIME - elapsed);
-    } else {
-      setLoading(false);
-    }
-  }, [statusFilter, lastDoc, firstDoc, page, PAGE_SIZE, loadingStartTime]);
+    setLoading(false);
+  }, [statusFilter, lastDoc, firstDoc, page, PAGE_SIZE]);
 
   // Reset pagination when status filter changes
   useEffect(() => {
@@ -197,302 +180,243 @@ export default function AdminOrdersPage() {
 
   return (
     <AdminLayout>
-      <h1 className="text-lg sm:text-2xl font-semibold mb-4 sm:mb-8 text-gray-900">Orders</h1>
-      
-      {/* Mobile Header */}
-      <div className="lg:hidden mb-4">
-        <div className="bg-white rounded-lg shadow-sm border p-3">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-700">Total Orders: {totalOrders}</span>
-            <span className="text-xs text-gray-500">Page {page} of {Math.ceil(totalOrders / PAGE_SIZE) || 1}</span>
-          </div>
-          <div className="flex gap-2">
-            <select
-              className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-            >
-              {ORDER_STATUSES.map(s => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            <button
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700"
-              onClick={() => setSearch('')}
-            >
-              Clear
-            </button>
-          </div>
-          <input
-            type="text"
-            className="w-full mt-2 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Search by name, email, or phone..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden lg:flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <label className="font-semibold text-sm">Filter by status:</label>
-          <select
-            className="border rounded px-2 py-1 text-sm"
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            {ORDER_STATUSES.map(s => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-        <input
-          type="text"
-          className="border rounded px-2 py-1 text-sm flex-1 min-w-[200px]"
-          placeholder="Search by name, email, or phone..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-      {/* Mobile Order Cards */}
-      <div className="lg:hidden space-y-3">
-        {loading ? (
-          <div className="text-center py-8 text-gray-400">Loading...</div>
-        ) : searchLoading ? (
-          <div className="text-center py-8 text-gray-400">Searching...</div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">No orders found.</div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">No orders match your search.</div>
-        ) : filteredOrders.map(order => (
-          <div key={order.id} className="bg-white rounded-lg shadow-sm border p-3">
-            {/* Order Header */}
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <div className="text-xs text-gray-500 mb-1">
-                  {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : ''}
-                </div>
-                <div className="font-semibold text-sm text-gray-900">{order.customer?.name}</div>
-                <div className="text-xs text-gray-600">{order.customer?.email}</div>
-                <div className="text-xs text-gray-600">{order.customer?.phone}</div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-sm text-green-700">${order.total?.toFixed(2)}</div>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1 ${ORDER_STATUSES.find(s => s.value === order.orderStatus)?.color || 'bg-gray-100 text-gray-800'}`}>
-                  {ORDER_STATUSES.find(s => s.value === order.orderStatus)?.label || order.orderStatus || 'Unknown'}
-                </span>
-              </div>
-            </div>
-
-            {/* Address */}
-            <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
-              <div className="font-medium text-gray-700 mb-1">Shipping Address:</div>
-              <div>{order.address?.street}</div>
-              <div>{order.address?.city}, {order.address?.state} {order.address?.zip}</div>
-              <div>{order.address?.country}</div>
-            </div>
-
-            {/* Items */}
-            <div className="mb-3">
-              <div className="font-medium text-gray-700 text-xs mb-1">Items:</div>
-              <div className="space-y-1">
-                {order.items?.map((item: any, idx: number) => (
-                  <div key={idx} className="text-xs text-gray-600">
-                    {item.title} x {item.quantity} <span className="text-gray-400">(${(item.price * item.quantity).toFixed(2)})</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Status Management */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <select
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={order.orderStatus || 'new'}
-                  onChange={e => handleStatusChange(order.id, e.target.value)}
-                  disabled={statusUpdating === order.id}
-                >
-                  {ORDER_STATUSES.map(s => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-                <button
-                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition"
-                  onClick={() => handleDeleteOrder(order.id)}
-                >
-                  Delete
-                </button>
+      <div className="admin-page">
+        <div className="admin-content">
+          <div className="admin-form">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
+                <p className="text-gray-600 mt-1">Manage and track customer orders</p>
               </div>
               
-              {order.orderStatus === 'shipped' && (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Tracking number (optional)"
-                    value={trackingNumbers[order.id] || ''}
-                    onChange={e => setTrackingNumbers(tn => ({ ...tn, [order.id]: e.target.value }))}
-                    disabled={order.shippedEmailSent}
-                  />
-                  <button
-                    className="w-full px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
-                    onClick={() => handleSendShippedEmail(order)}
-                    disabled={order.shippedEmailSent || shippedEmailLoading === order.id}
-                  >
-                    {order.shippedEmailSent ? 'Email Sent ✓' : shippedEmailLoading === order.id ? 'Sending...' : 'Send Shipped Email'}
-                  </button>
-                </div>
-              )}
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="admin-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="new">New</option>
+                  <option value="processing">Processing</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="admin-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Desktop Table */}
-      <div className="hidden lg:block bg-white rounded-lg shadow border">
-        <div className="overflow-x-auto">
-          <table className="min-w-full border text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 border">Date</th>
-                <th className="px-3 py-2 border">Customer</th>
-                <th className="px-3 py-2 border">Address</th>
-                <th className="px-3 py-2 border">Items</th>
-                <th className="px-3 py-2 border">Status</th>
-                <th className="px-3 py-2 border">Total</th>
-                <th className="px-3 py-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-                          {loading ? (
-              <tr><td colSpan={7} className="text-center py-6 text-gray-400">Loading...</td></tr>
-            ) : searchLoading ? (
-              <tr><td colSpan={7} className="text-center py-6 text-gray-400">Searching...</td></tr>
-            ) : orders.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-6 text-gray-400">No orders found.</td></tr>
-            ) : filteredOrders.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-6 text-gray-400">No orders match your search.</td></tr>
-            ) : filteredOrders.map(order => (
-                <tr key={`${order.id}-${order.orderStatus}-${order.updatedAt || order.createdAt}`} className="border-t">
-                  <td className="px-3 py-2 border text-gray-500">{order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : ''}</td>
-                  <td className="px-3 py-2 border">
-                    <div className="font-semibold">{order.customer?.name}</div>
-                    <div className="text-xs text-gray-600">{order.customer?.email}</div>
-                    <div className="text-xs text-gray-600">{order.customer?.phone}</div>
-                  </td>
-                  <td className="px-3 py-2 border">
-                    <div>{order.address?.street}</div>
-                    <div>{order.address?.city}, {order.address?.state} {order.address?.zip}</div>
-                    <div>{order.address?.country}</div>
-                  </td>
-                  <td className="px-3 py-2 border">
-                    <ul className="list-disc pl-4">
-                      {order.items?.map((item: any, idx: number) => (
-                        <li key={idx}>{item.title} x {item.quantity} <span className="text-gray-400">(${item.price * item.quantity})</span></li>
+            {/* Loading State */}
+            {loading && (
+              <div className="admin-loading flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading orders...</span>
+              </div>
+            )}
+
+            {/* Orders Table */}
+            {!loading && (
+              <div className="admin-table bg-white rounded-lg shadow overflow-hidden">
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Order ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Customer
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                            No orders found
+                          </td>
+                        </tr>
+                      ) : filteredOrders.map(order => (
+                        <tr key={order.id} className="admin-table-row border-t">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {order.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{order.customer?.name}</div>
+                            <div className="text-sm text-gray-500">{order.customer?.email}</div>
+                            <div className="text-sm text-gray-500">{order.customer?.phone}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : ''}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-700">
+                            ${order.total?.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col gap-2">
+                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${ORDER_STATUSES.find(s => s.value === order.orderStatus)?.color || 'bg-gray-100 text-gray-800'}`}>
+                                {ORDER_STATUSES.find(s => s.value === order.orderStatus)?.label || order.orderStatus || 'Unknown'}
+                              </span>
+                              <select
+                                className="border rounded px-2 py-1 text-xs"
+                                value={order.orderStatus || 'new'}
+                                onChange={e => handleStatusChange(order.id, e.target.value)}
+                                disabled={statusUpdating === order.id}
+                              >
+                                {ORDER_STATUSES.filter(s => s.value !== '').map(s => (
+                                  <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex flex-col gap-2">
+                              <button
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition"
+                                onClick={() => handleDeleteOrder(order.id)}
+                              >
+                                Delete
+                              </button>
+                              {order.orderStatus === 'shipped' && (
+                                <div className="flex flex-col gap-1">
+                                  <input
+                                    type="text"
+                                    className="border rounded px-2 py-1 text-xs"
+                                    placeholder="Tracking number"
+                                    value={trackingNumbers[order.id] || ''}
+                                    onChange={e => setTrackingNumbers(tn => ({ ...tn, [order.id]: e.target.value }))}
+                                    disabled={order.shippedEmailSent}
+                                  />
+                                  <button
+                                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
+                                    onClick={() => handleSendShippedEmail(order)}
+                                    disabled={order.shippedEmailSent || shippedEmailLoading === order.id}
+                                  >
+                                    {order.shippedEmailSent ? 'Email Sent ✓' : shippedEmailLoading === order.id ? 'Sending...' : 'Send Email'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       ))}
-                    </ul>
-                  </td>
-                  <td className="px-3 py-2 border align-top">
-                    <div className="flex flex-col gap-2">
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Order Cards */}
+                <div className="md:hidden space-y-3 p-4">
+                  {filteredOrders.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">No orders found</div>
+                  ) : filteredOrders.map(order => (
+                    <div key={order.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-gray-900">{order.customer?.name}</div>
+                          <div className="text-sm text-gray-600">{order.customer?.email}</div>
+                          <div className="text-sm text-gray-600">{order.customer?.phone}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-green-700">${order.total?.toFixed(2)}</div>
+                          <div className="text-xs text-gray-500">
+                            {order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : ''}
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div className="flex items-center gap-2">
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${ORDER_STATUSES.find(s => s.value === order.orderStatus)?.color || 'bg-gray-100 text-gray-800'}`}>
                           {ORDER_STATUSES.find(s => s.value === order.orderStatus)?.label || order.orderStatus || 'Unknown'}
                         </span>
                         <select
-                          className="ml-2 border rounded px-2 py-1 text-xs"
+                          className="border rounded px-2 py-1 text-xs"
                           value={order.orderStatus || 'new'}
                           onChange={e => handleStatusChange(order.id, e.target.value)}
                           disabled={statusUpdating === order.id}
                         >
-                          {ORDER_STATUSES.map(s => (
+                          {ORDER_STATUSES.filter(s => s.value !== '').map(s => (
                             <option key={s.value} value={s.value}>{s.label}</option>
                           ))}
                         </select>
                       </div>
-                      {order.orderStatus === 'shipped' && (
-                        <div className="flex flex-col gap-1 mt-1">
-                          <input
-                            type="text"
-                            className="border rounded px-2 py-1 text-xs"
-                            placeholder="Tracking number (optional)"
-                            value={trackingNumbers[order.id] || ''}
-                            onChange={e => setTrackingNumbers(tn => ({ ...tn, [order.id]: e.target.value }))}
-                            disabled={order.shippedEmailSent}
-                          />
+
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition"
+                          onClick={() => handleDeleteOrder(order.id)}
+                        >
+                          Delete
+                        </button>
+                        {order.orderStatus === 'shipped' && (
                           <button
-                            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
+                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
                             onClick={() => handleSendShippedEmail(order)}
                             disabled={order.shippedEmailSent || shippedEmailLoading === order.id}
                           >
-                            {order.shippedEmailSent ? 'Email Sent' : shippedEmailLoading === order.id ? 'Sending...' : 'Send Shipped Email'}
+                            {order.shippedEmailSent ? 'Email Sent ✓' : shippedEmailLoading === order.id ? 'Sending...' : 'Send Email'}
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2 border font-bold text-green-700">${order.total?.toFixed(2)}</td>
-                  <td className="px-3 py-2 border">
-                    <button
-                      className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition"
-                      onClick={() => handleDeleteOrder(order.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {/* Mobile Pagination */}
-      <div className="lg:hidden mt-4">
-        <div className="flex items-center justify-between">
-          <button
-            className="px-3 py-1.5 bg-gray-200 rounded text-xs disabled:opacity-50"
-            onClick={() => { setPage(p => Math.max(1, p - 1)); fetchOrders('prev', page - 1); }}
-            disabled={!hasPrevPage}
-          >
-            ← Previous
-          </button>
-          <span className="text-xs text-gray-600">Page {page} of {Math.ceil(totalOrders / PAGE_SIZE) || 1}</span>
-          <button
-            className="px-3 py-1.5 bg-gray-200 rounded text-xs disabled:opacity-50"
-            onClick={() => { setPage(p => p + 1); fetchOrders('next', page + 1); }}
-            disabled={!hasNextPage}
-          >
-            Next →
-          </button>
-        </div>
-      </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-      {/* Desktop Pagination */}
-      <div className="hidden lg:flex items-center justify-between mt-4">
-        <button
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-          onClick={() => { setPage(p => Math.max(1, p - 1)); fetchOrders('prev', page - 1); }}
-          disabled={!hasPrevPage}
-        >
-          Previous
-        </button>
-        <span className="text-sm">Page {page} of {Math.ceil(totalOrders / PAGE_SIZE) || 1}</span>
-        <button
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-          onClick={() => { setPage(p => p + 1); fetchOrders('next', page + 1); }}
-          disabled={!hasNextPage}
-        >
-          Next
-        </button>
-      </div>
+            {/* Pagination */}
+            {!loading && (
+              <div className="admin-transition mt-6 flex items-center justify-between">
+                <button
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => { setPage(p => Math.max(1, p - 1)); fetchOrders('prev', page - 1); }}
+                  disabled={!hasPrevPage}
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {page} of {Math.ceil(totalOrders / PAGE_SIZE) || 1}
+                </span>
+                <button
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => { setPage(p => p + 1); fetchOrders('next', page + 1); }}
+                  disabled={!hasNextPage}
+                >
+                  Next
+                </button>
+              </div>
+            )}
 
-      {/* Notification */}
-      {notification && (
-        <div className="mt-4 text-center text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 p-2 rounded">
-          {notification}
+            {/* Notification */}
+            {notification && (
+              <div className="admin-transition mt-4 text-center text-sm font-semibold text-blue-700 bg-blue-50 p-3 rounded">
+                {notification}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </AdminLayout>
   );
 } 
