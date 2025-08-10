@@ -918,7 +918,7 @@ export default function CategoriesPage() {
                 </div>
                 <h2 className="text-base sm:text-lg lg:text-xl font-medium sm:font-semibold mb-1 sm:mb-2">Delete Category</h2>
                 <p className="text-gray-600 text-xs sm:text-sm">
-                  Are you sure you want to delete "{selectedCategory?.name}"? This will remove the category from all associated products.
+                  Are you sure you want to delete &quot;{selectedCategory?.name}&quot;? This will remove the category from all associated products.
                 </p>
               </div>
               <div className="flex gap-2 sm:gap-3">

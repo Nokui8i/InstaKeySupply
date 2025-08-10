@@ -220,7 +220,7 @@ export default function AdminLogin() {
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset Admin Password</h2>
                 <p className="text-gray-600 text-sm">
-                  Enter your admin email address and we'll send you a link to reset your password.
+                  Enter your admin email address and we&apos;ll send you a link to reset your password.
                 </p>
               </div>
 

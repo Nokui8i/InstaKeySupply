@@ -12,11 +12,13 @@ interface CarouselBannerProps {
 }
 
 export default function CarouselBanner({ images }: CarouselBannerProps) {
-  if (!images || images.length === 0) return null;
   const [current, setCurrent] = useState(0);
   const [nextIndex, setNextIndex] = useState<number | null>(null);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  if (!images || images.length === 0) return null;
+  
   const total = images.length;
 
   // Auto-advance every 10 seconds
@@ -100,29 +102,37 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
             </div>
           )}
         </div>
-        {/* Arrows - Mobile optimized */}
+
+        {/* Navigation arrows */}
         <button
           onClick={handlePrev}
-          className="absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-xl sm:text-2xl md:text-4xl font-bold p-1.5 sm:p-2 md:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex items-center justify-center touch-manipulation"
-          aria-label="Previous banner"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 hover:scale-110"
+          aria-label="Previous image"
         >
-          {'<'}
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
         <button
           onClick={handleNext}
-          className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-sm text-white text-xl sm:text-2xl md:text-4xl font-bold p-1.5 sm:p-2 md:p-3 rounded-full hover:bg-black/50 transition z-30 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex items-center justify-center touch-manipulation"
-          aria-label="Next banner"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 hover:scale-110"
+          aria-label="Next image"
         >
-          {'>'}
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5l7 7-7 7" />
+          </svg>
         </button>
-                 {/* Dots - Hidden on mobile, visible on desktop */}
-         <div className="hidden md:flex absolute bottom-1 sm:bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 gap-1 sm:gap-2 md:gap-3 z-40">
+
+        {/* Dots indicator */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
           {images.map((_, i) => (
             <button
               key={i}
               onClick={() => handleDot(i)}
-              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 rounded-full border border-white shadow transition-all duration-200 touch-manipulation ${i === current ? "bg-blue-400" : "bg-white/60 hover:bg-white/80"}`}
-              aria-label={`Go to banner ${i + 1}`}
+              className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                i === current ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
+              }`}
+              aria-label={`Go to image ${i + 1}`}
             />
           ))}
         </div>

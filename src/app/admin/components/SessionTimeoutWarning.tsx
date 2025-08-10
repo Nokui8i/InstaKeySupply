@@ -91,7 +91,7 @@ export default function SessionTimeoutWarning({ warningTime = 5 * 60 * 1000 }: S
             Your session will expire in <span className="font-semibold text-red-600">{timeLeft}</span> seconds due to inactivity.
           </p>
           <p className="text-sm text-gray-600 mt-2">
-            Click "Stay Logged In" to continue your session.
+            Click &quot;Stay Logged In&quot; to continue your session.
           </p>
         </div>
         

@@ -584,7 +584,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33" />
                   </svg>
-                  <p>No products found for "{searchTerm}"</p>
+                  <p>No products found for &quot;{searchTerm}&quot;</p>
                   <p className="text-sm text-gray-400 mt-1">Try different keywords</p>
                 </div>
               ) : (
@@ -593,7 +593,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
                   </svg>
                   <p>Search for products</p>
-                  <p className="text-sm text-gray-400 mt-1">Enter keywords to find what you're looking for</p>
+                  <p className="text-sm text-gray-400 mt-1">Enter keywords to find what you&apos;re looking for</p>
                 </div>
               )}
             </div>

@@ -1202,7 +1202,7 @@ export default function FlexibleProductForm({
             {formData.customFields.length === 0 && (
               <div className="text-center py-6 sm:py-8 text-gray-500">
                 <p className="text-xs sm:text-sm">No custom fields added yet.</p>
-                <p className="text-xs sm:text-sm">Click "Add Field" to create custom product details.</p>
+                <p className="text-xs sm:text-sm">Click &quot;Add Field&quot; to create custom product details.</p>
                 <p className="text-xs sm:text-sm">These will appear in the product description.</p>
               </div>
             )}

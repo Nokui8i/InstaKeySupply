@@ -97,7 +97,7 @@ function CheckoutSuccessContent() {
         {/* Success Message */}
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
         <p className="text-lg text-gray-600 mb-4">
-          Thank you for your purchase. Your order has been confirmed and you'll receive a confirmation email shortly.
+          Thank you for your purchase. Your order has been confirmed and you&apos;ll receive a confirmation email shortly.
         </p>
         
         {/* Email Status */}
