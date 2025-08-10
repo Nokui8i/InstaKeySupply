@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { initCart, addToCart as addToCartManager, removeFromCart as removeFromCartManager, clearCart as clearCartManager, updateQuantity as updateQuantityManager } from '../../cartManager';
+import { getShippingCost } from '../../lib/shipping';
 
 interface CartItem {
   id: string;
@@ -78,8 +79,17 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const calculateShipping = async () => {
-    // This function can be implemented later if needed
-    console.log('CartContext: calculateShipping called');
+    try {
+      const shippingCost = await getShippingCost();
+      // If no shipping cost is configured, use a default
+      const finalShippingCost = shippingCost > 0 ? shippingCost : 5.99; // Default $5.99
+      setShippingInfo({ cost: finalShippingCost });
+      console.log('CartContext: Shipping cost calculated:', finalShippingCost);
+    } catch (error) {
+      console.error('CartContext: Error calculating shipping:', error);
+      // Set default shipping cost on error
+      setShippingInfo({ cost: 5.99 });
+    }
   };
 
   const value = {

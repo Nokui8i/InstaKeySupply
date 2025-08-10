@@ -7,44 +7,24 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, clearCart, hydrated } = useCart();
+  const { cart, clearCart, hydrated, shippingInfo } = useCart();
   const { user } = useAuth();
   const router = useRouter();
   const [subtotal, setSubtotal] = useState(0);
-  const [shippingCost, setShippingCost] = useState(0);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    const calculateTotals = async () => {
+    const calculateTotals = () => {
       const newSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       setSubtotal(newSubtotal);
-
-      try {
-        const response = await fetch('/api/shipping-cost', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ subtotal: newSubtotal }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setShippingCost(data.shippingCost);
-          setTotal(newSubtotal + data.shippingCost);
-        } else {
-          setShippingCost(0);
-          setTotal(newSubtotal);
-        }
-      } catch (error) {
-        console.error('Error fetching shipping cost:', error);
-        setShippingCost(0);
-        setTotal(newSubtotal);
-      }
+      
+      // Use shipping cost from CartContext
+      const shippingCost = shippingInfo?.cost || 0;
+      setTotal(newSubtotal + shippingCost);
     };
 
     calculateTotals();
-  }, [cart]);
+  }, [cart, shippingInfo]);
 
   const handleCheckout = () => {
     if (cart.length === 0) {

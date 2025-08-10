@@ -78,6 +78,13 @@ export default function CheckoutPage() {
     }
   }, [cart, calculateShipping]);
 
+  // Also calculate shipping when component mounts
+  useEffect(() => {
+    if (cart.length > 0) {
+      calculateShipping();
+    }
+  }, []); // Empty dependency array for mount-only
+
   // Google Places Autocomplete setup
   useEffect(() => {
     // @ts-ignore
@@ -462,12 +469,10 @@ export default function CheckoutPage() {
               <span>Subtotal:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            {shippingInfo && (
-              <div className="flex justify-between text-sm mb-1">
-                <span>Shipping:</span>
-                <span>${shippingCost.toFixed(2)}</span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm mb-1">
+              <span>Shipping:</span>
+              <span>${shippingCost.toFixed(2)}</span>
+            </div>
             {promoApplied && promoType && (
               <div className="flex justify-between text-green-700 font-bold text-base items-center">
                 <span className="flex items-center gap-1"><FaCheckCircle /> Promo Discount:</span>
