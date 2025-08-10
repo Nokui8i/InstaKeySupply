@@ -180,7 +180,7 @@ function AdminBannersContent() {
             {banners.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p className="text-sm">No banners uploaded yet.</p>
-                <p className="text-xs text-gray-400 mt-1">Click "Add Banner" to upload your first banner.</p>
+                <p className="text-xs text-gray-400 mt-1">Click &quot;Add Banner&quot; to upload your first banner.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 w-full">

@@ -613,7 +613,7 @@ export default function EnhancedProductForm({
   }, [initialData, isEditing]);
 
   // Get available models for a brand
-  const getAvailableModels = (brand: string) => {
+  const getAvailableModels = useCallback((brand: string) => {
     const brandData = dynamicBrands.find(b => b.name === brand);
     
     if (!brandData) {
@@ -634,7 +634,7 @@ export default function EnhancedProductForm({
     
     console.log(`Found ${brandModels.length} models for brand ${brand}:`, Object.keys(modelsObject));
     return modelsObject;
-  };
+  }, [dynamicBrands, dynamicModels]);
 
   // Get available brands for selected vehicle type
   const availableBrands = useMemo(() => {
@@ -816,7 +816,7 @@ export default function EnhancedProductForm({
     }
     
     return description.trim();
-  }, [formData.technicalSpecs, formData.oemPartNumber, formData.isOem, formData.technicalSpecs?.aftermarket]);
+  }, [formData.technicalSpecs, formData.oemPartNumber, formData.isOem]);
 
   // Auto-regenerate description when technical specs or compatibility changes
   useEffect(() => {

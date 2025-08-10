@@ -12,28 +12,26 @@ interface CarouselBannerProps {
 }
 
 export default function CarouselBanner({ images }: CarouselBannerProps) {
+  // All hooks must be at the top level, before any conditional logic
   const [current, setCurrent] = useState(0);
   const [nextIndex, setNextIndex] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [direction, setDirection] = useState<"left" | "right">("right");
 
-  if (!images || images.length === 0) return null;
-  
-  const total = images.length;
-
+  // Define functions using useCallback - these must come after all hooks
   const handlePrev = useCallback(() => {
     if (isTransitioning) return;
     setDirection("left");
-    setNextIndex(current === 0 ? total - 1 : current - 1);
+    setNextIndex(current === 0 ? (images?.length || 1) - 1 : current - 1);
     setIsTransitioning(true);
-  }, [isTransitioning, current, total]);
+  }, [isTransitioning, current, images?.length]);
   
   const handleNext = useCallback(() => {
     if (isTransitioning) return;
     setDirection("right");
-    setNextIndex((current === total - 1 ? 0 : current + 1));
+    setNextIndex((current === (images?.length || 1) - 1 ? 0 : current + 1));
     setIsTransitioning(true);
-  }, [isTransitioning, current, total]);
+  }, [isTransitioning, current, images?.length]);
   
   const handleDot = useCallback((i: number) => {
     if (isTransitioning || i === current) return;
@@ -61,6 +59,11 @@ export default function CarouselBanner({ images }: CarouselBannerProps) {
     }, 500);
     return () => clearTimeout(timeout);
   }, [isTransitioning, nextIndex]);
+
+  // Early return check - must come after all hooks
+  if (!images || images.length === 0) return null;
+  
+  const total = images.length;
 
   // Animation classes
   const getClass = (type: "current" | "next") => {

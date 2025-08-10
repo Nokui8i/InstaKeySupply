@@ -68,6 +68,46 @@ function HomeContent() {
 
 
 
+  // NEW: Vehicle compatibility filter logic
+  const handleVehicleFiltersChange = useCallback((filters: {
+    make: string;
+    model: string;
+    yearRange: string;
+  }) => {
+    setActiveFilters(filters);
+    
+    // Filter products based on vehicle compatibility
+    const filtered = products.filter(product => {
+      if (!product.compatibility || !Array.isArray(product.compatibility)) {
+        return false;
+      }
+      
+      return product.compatibility.some((compatibility: any) => {
+        // If only make is selected, show all products for that make
+        if (filters.make && !filters.model && !filters.yearRange) {
+          return compatibility.make === filters.make;
+        }
+        
+        // If make and model are selected, show all products for that make/model
+        if (filters.make && filters.model && !filters.yearRange) {
+          return compatibility.make === filters.make && 
+                 compatibility.model === filters.model;
+        }
+        
+        // If all three are selected, show specific products
+        if (filters.make && filters.model && filters.yearRange) {
+          return compatibility.make === filters.make &&
+                 compatibility.model === filters.model &&
+                 compatibility.yearRange === filters.yearRange;
+        }
+        
+        return false;
+      });
+    });
+    
+    setFilteredProducts(filtered);
+  }, [products]); // Add products to dependency array
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -302,7 +342,8 @@ function HomeContent() {
   // NEW: Listen for filter events from navbar
   useEffect(() => {
     const handleNavbarVehicleFiltersChange = (event: CustomEvent) => {
-      handleVehicleFiltersChange(event.detail);
+      const filters = event.detail;
+      handleVehicleFiltersChange(filters);
     };
 
     const handleNavbarClearVehicleFilters = () => {
@@ -322,46 +363,6 @@ function HomeContent() {
   const handleFiltersChange = (filtered: any[]) => {
     setFilteredProducts(filtered);
   };
-
-  // NEW: Vehicle compatibility filter logic
-  const handleVehicleFiltersChange = useCallback((filters: {
-    make: string;
-    model: string;
-    yearRange: string;
-  }) => {
-    setActiveFilters(filters);
-    
-    // Filter products based on vehicle compatibility
-    const filtered = products.filter(product => {
-      if (!product.compatibility || !Array.isArray(product.compatibility)) {
-        return false;
-      }
-      
-      return product.compatibility.some((compatibility: any) => {
-        // If only make is selected, show all products for that make
-        if (filters.make && !filters.model && !filters.yearRange) {
-          return compatibility.make === filters.make;
-        }
-        
-        // If make and model are selected, show all products for that make/model
-        if (filters.make && filters.model && !filters.yearRange) {
-          return compatibility.make === filters.make && 
-                 compatibility.model === filters.model;
-        }
-        
-        // If all three are selected, show specific products
-        if (filters.make && filters.model && filters.yearRange) {
-          return compatibility.make === filters.make &&
-                 compatibility.model === filters.model &&
-                 compatibility.yearRange === filters.yearRange;
-        }
-        
-        return false;
-      });
-    });
-    
-    setFilteredProducts(filtered);
-  }, [products]); // Add products to dependency array
 
   const handleClearFilters = () => {
     setActiveFilters(null);
