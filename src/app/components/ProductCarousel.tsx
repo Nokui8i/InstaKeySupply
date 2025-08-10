@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import ProductCard from "./ProductCard";
 
 interface Product {
@@ -9,8 +10,8 @@ interface Product {
   images?: string[];
   title: string;
   model: string;
-  price: string;
-  oldPrice?: string;
+  price: string | number;
+  oldPrice?: string | number;
   isNew?: boolean;
   isSale?: boolean;
   // NEW: Vehicle compatibility
@@ -19,6 +20,68 @@ interface Product {
     models: string[];
     yearRanges: string[];
   };
+  // Additional fields for consistency with Product interface
+  category?: string;
+  description?: string;
+  shortDescription?: string;
+  sku?: string;
+  partNumber?: string;
+  manufacturer?: string;
+  stock?: number;
+  status?: 'active' | 'inactive' | 'out-of-stock' | 'coming-soon';
+  isFeatured?: boolean;
+  visibility?: 'visible' | 'catalog' | 'search' | 'hidden';
+  salePrice?: string;
+  regularPrice?: string;
+  vehicleType?: 'Car' | 'Truck' | 'SUV' | 'Van' | 'Motorcycle' | 'ATV' | 'Boat' | 'RV' | 'Commercial';
+  brand?: string;
+  year?: number;
+  keyType?: string;
+  availability?: 'in-stock' | 'out-of-stock' | 'coming-soon' | 'discontinued';
+  compatibleModels?: string[];
+  replacesKeyTypes?: string[];
+  technicalSpecs?: {
+    reusable?: boolean;
+    cloneable?: boolean;
+    chipType?: string;
+    testBlade?: string;
+    frequency?: string;
+    batteryType?: string;
+    fccId?: string;
+    can?: string;
+    buttons?: string[];
+    emergencyKeyIncluded?: boolean;
+    aftermarket?: boolean;
+  };
+  oemPartNumber?: string;
+  aftermarketPartNumber?: string;
+  buttonCount?: number;
+  isOem?: boolean;
+  isAftermarket?: boolean;
+  warranty?: string;
+  returnPolicy?: string;
+  shippingInfo?: string;
+  installationNotes?: string;
+  selectedCompatibility?: Array<{
+    brand: string;
+    model: string;
+    yearStart: string;
+    yearEnd: string;
+    keyTypes: string[];
+  }>;
+  vehicleTypes?: string[];
+  categories?: string[];
+  tags?: string[];
+  shippingClass?: string;
+  allowReviews?: boolean;
+  purchaseNote?: string;
+  customFields?: Array<{
+    id: string;
+    label: string;
+    value: string;
+  }>;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 interface ProductCarouselProps {
@@ -34,6 +97,21 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   const next = () => setStart((s) => Math.min(maxStart, s + perPage));
 
   console.log('ProductCarousel received products:', products.length, products);
+
+  // Helper function to get the best available image
+  const getProductImage = (product: Product): string => {
+    // Priority: images[0] > imageUrl > image > fallback
+    if (product.images && product.images.length > 0 && product.images[0]) {
+      return product.images[0];
+    }
+    if (product.imageUrl) {
+      return product.imageUrl;
+    }
+    if (product.image) {
+      return product.image;
+    }
+    return '/sample-key-1.png'; // Fallback image
+  };
 
   // If no products, show a message
   if (!products || products.length === 0) {
@@ -52,7 +130,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
           <ProductCard 
             key={p.id || i} 
             {...p} 
-            image={p.images?.[0] || p.imageUrl || p.image || ''}
+            image={getProductImage(p)}
             vehicleCompatibility={p.vehicleCompatibility}
           />
         ))}
@@ -74,7 +152,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
             <ProductCard 
               key={p.id || i} 
               {...p} 
-              image={p.images?.[0] || p.imageUrl || p.image || ''}
+              image={getProductImage(p)}
               vehicleCompatibility={p.vehicleCompatibility}
             />
           ))}

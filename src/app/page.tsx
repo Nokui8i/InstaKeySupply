@@ -10,38 +10,50 @@ import { useSearchParams } from 'next/navigation';
 
 const sampleProducts = [
   {
+    id: "sample-1",
     image: "/sample-key-1.png",
+    imageUrl: "/sample-key-1.png",
     title: "Ford F-Series 3-Button Remote Key",
     model: "N5F-A08TBLP",
     price: "$188.95",
   },
   {
+    id: "sample-2",
     image: "/sample-key-2.png",
+    imageUrl: "/sample-key-2.png",
     title: "Toyota Smart Key Proximity Remote",
     model: "HYQ14FBA",
     price: "$129.99",
     oldPrice: "$159.99",
   },
   {
+    id: "sample-3",
     image: "/sample-key-3.png",
+    imageUrl: "/sample-key-3.png",
     title: "Honda Accord Transponder Key",
     model: "HON66T",
     price: "$39.95",
   },
   {
+    id: "sample-4",
     image: "/sample-key-1.png",
+    imageUrl: "/sample-key-1.png",
     title: "Chevrolet Silverado Remote Key",
     model: "GM-13584512",
     price: "$99.99",
   },
   {
+    id: "sample-5",
     image: "/sample-key-2.png",
+    imageUrl: "/sample-key-2.png",
     title: "BMW 5-Series Smart Key",
     model: "BMW-868MHz",
     price: "$249.99",
   },
   {
+    id: "sample-6",
     image: "/sample-key-3.png",
+    imageUrl: "/sample-key-3.png",
     title: "Hyundai Elantra Remote Key",
     model: "HY22R",
     price: "$59.95",
@@ -161,7 +173,7 @@ function HomeContent() {
           const sampleProducts = [
             {
               id: "sample-1",
-              imageUrl: "/sample-key-1.png",
+              image: "/sample-key-1.png", // Use 'image' instead of 'imageUrl' for consistency
               title: "Toyota Camry Transponder Key",
               model: "TOY-4D60",
               price: "$89.99",
@@ -182,7 +194,7 @@ function HomeContent() {
             },
             {
               id: "sample-2", 
-              imageUrl: "/sample-key-2.png",
+              image: "/sample-key-2.png", // Use 'image' instead of 'imageUrl' for consistency
               title: "Honda Accord Remote Key",
               model: "HON-72MHz",
               price: "$79.95",
@@ -202,7 +214,7 @@ function HomeContent() {
             },
             {
               id: "sample-3",
-              imageUrl: "/sample-key-3.png", 
+              image: "/sample-key-3.png", 
               title: "BMW 3-Series Smart Key",
               model: "BMW-868MHz",
               price: "$199.99",
@@ -223,7 +235,7 @@ function HomeContent() {
             },
             {
               id: "sample-4",
-              imageUrl: "/sample-key-4.png",
+              image: "/sample-key-4.png",
               title: "Ford F-150 Remote Key",
               model: "FORD-315MHz",
               price: "$69.99",
@@ -243,7 +255,7 @@ function HomeContent() {
             },
             {
               id: "sample-5",
-              imageUrl: "/sample-key-5.png",
+              image: "/sample-key-5.png",
               title: "Chevrolet Silverado Key",
               model: "CHEV-433MHz",
               price: "$59.95",
@@ -263,7 +275,7 @@ function HomeContent() {
             },
             {
               id: "sample-6",
-              imageUrl: "/sample-key-6.png",
+              image: "/sample-key-6.png",
               title: "Nissan Altima Smart Key",
               model: "NISS-434MHz",
               price: "$149.99",

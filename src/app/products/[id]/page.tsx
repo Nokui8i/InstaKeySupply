@@ -16,9 +16,10 @@ interface Product {
   id: string;
   title: string;
   model: string;
-  price: string;
-  oldPrice?: string;
-  imageUrl: string;
+  price: string | number;
+  oldPrice?: string | number;
+  imageUrl?: string; // Make optional since sample products use 'image' field
+  image?: string; // Add this field for sample products
   images?: string[];
   category?: string;
   description?: string;
@@ -187,7 +188,8 @@ export default function ProductDetail() {
         const sampleProducts: Product[] = [
           {
             id: "sample-1",
-            imageUrl: "/sample-key-1.png",
+            image: "/sample-key-1.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-1.png", // Add imageUrl for compatibility
             title: "Toyota Camry Transponder Key",
             model: "TOY-4D60",
             price: "$89.99",
@@ -207,7 +209,8 @@ export default function ProductDetail() {
           },
           {
             id: "sample-2", 
-            imageUrl: "/sample-key-2.png",
+            image: "/sample-key-2.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-2.png", // Add imageUrl for compatibility
             title: "Honda Accord Remote Key",
             model: "HON-72MHz",
             price: "$79.95",
@@ -226,7 +229,8 @@ export default function ProductDetail() {
           },
           {
             id: "sample-3",
-            imageUrl: "/sample-key-3.png", 
+            image: "/sample-key-3.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-3.png", // Add imageUrl for compatibility
             title: "BMW 3-Series Smart Key",
             model: "BMW-868MHz",
             price: "$199.99",
@@ -246,7 +250,8 @@ export default function ProductDetail() {
           },
           {
             id: "sample-4",
-            imageUrl: "/sample-key-4.png",
+            image: "/sample-key-4.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-4.png", // Add imageUrl for compatibility
             title: "Ford F-150 Remote Key",
             model: "FORD-315MHz",
             price: "$69.99",
@@ -265,7 +270,8 @@ export default function ProductDetail() {
           },
           {
             id: "sample-5",
-            imageUrl: "/sample-key-5.png",
+            image: "/sample-key-5.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-5.png", // Add imageUrl for compatibility
             title: "Chevrolet Silverado Key",
             model: "CHEV-433MHz",
             price: "$59.95",
@@ -284,7 +290,8 @@ export default function ProductDetail() {
           },
           {
             id: "sample-6",
-            imageUrl: "/sample-key-6.png",
+            image: "/sample-key-6.png", // Use 'image' instead of 'imageUrl' for consistency
+            imageUrl: "/sample-key-6.png", // Add imageUrl for compatibility
             title: "Nissan Altima Smart Key",
             model: "NISS-434MHz",
             price: "$149.99",
@@ -358,6 +365,48 @@ export default function ProductDetail() {
     router.push('/cart');
   };
 
+  // Helper function to format price consistently
+  const formatPrice = (price: string | number): string => {
+    if (typeof price === 'string') {
+      // If price already has $, return as is
+      if (price.startsWith('$')) {
+        return price;
+      }
+      // If price is a number string, add $
+      return `$${price}`;
+    }
+    // If price is a number, add $
+    return `$${price.toFixed(2)}`;
+  };
+
+  // Helper function to get the best available image
+  const getProductImage = (product: Product): string => {
+    if (product.images && product.images.length > 0 && product.images[selectedImage]) {
+      return product.images[selectedImage];
+    }
+    if (product.imageUrl) {
+      return product.imageUrl;
+    }
+    return '/sample-key-1.png'; // Fallback image
+  };
+
+  // Helper function to calculate discount percentage
+  const calculateDiscountPercentage = (oldPrice: string | number, currentPrice: string | number): number => {
+    const oldPriceNum = typeof oldPrice === 'string' ? parseFloat(oldPrice.replace('$', '')) : oldPrice;
+    const currentPriceNum = typeof currentPrice === 'string' ? parseFloat(currentPrice.replace('$', '')) : currentPrice;
+    return Math.round(((oldPriceNum - currentPriceNum) / oldPriceNum) * 100);
+  };
+
+  const isOnSale = product.oldPrice && parseFloat(product.oldPrice.toString().replace('$', '')) > parseFloat(product.price.toString().replace('$', ''));
+  const discountPercentage = isOnSale 
+    ? calculateDiscountPercentage(product.oldPrice!, product.price)
+    : 0;
+
+  // Debug: log best sellers
+  if (typeof window !== 'undefined') {
+    console.log('Best Sellers for carousel:', bestSellers);
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -395,16 +444,6 @@ export default function ProductDetail() {
     );
   }
 
-  const isOnSale = product.oldPrice && parseFloat(product.oldPrice) > parseFloat(product.price);
-  const discountPercentage = isOnSale 
-    ? Math.round(((parseFloat(product.oldPrice!) - parseFloat(product.price)) / parseFloat(product.oldPrice!)) * 100)
-    : 0;
-
-  // Debug: log best sellers
-  if (typeof window !== 'undefined') {
-    console.log('Best Sellers for carousel:', bestSellers);
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -427,11 +466,16 @@ export default function ProductDetail() {
             {/* Main Image */}
             <div className="relative mx-auto bg-white rounded-xl overflow-hidden shadow-2xl max-w-xs h-72 flex items-center justify-center">
               <Image
-                src={product.images?.[selectedImage] || product.imageUrl}
+                src={getProductImage(product)}
                 alt={product.title}
                 fill
                 className="object-contain"
                 priority
+                onError={(e) => {
+                  // Fallback to sample image if main image fails
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/sample-key-1.png';
+                }}
               />
               {isOnSale && (
                 <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -533,17 +577,17 @@ export default function ProductDetail() {
             <div className="space-y-2 text-center">
               <div className="flex flex-col items-center justify-center">
                 <span className="text-3xl font-bold text-gray-900">
-                  ${product.price}
+                  {formatPrice(product.price)}
                 </span>
                 {isOnSale && (
                   <span className="text-xl text-gray-400 line-through ml-2">
-                    ${product.oldPrice}
+                    {formatPrice(product.oldPrice!)}
                   </span>
                 )}
               </div>
               {isOnSale && (
                 <p className="text-green-600 text-sm">
-                  Save ${(parseFloat(product.oldPrice!) - parseFloat(product.price)).toFixed(2)} ({discountPercentage}% off)
+                  Save ${(parseFloat(product.oldPrice!.toString().replace('$', '')) - parseFloat(product.price.toString().replace('$', ''))).toFixed(2)} ({discountPercentage}% off)
                 </p>
               )}
             </div>

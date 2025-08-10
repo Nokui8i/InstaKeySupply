@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 
 interface ProductCardProps {
@@ -7,8 +7,8 @@ interface ProductCardProps {
   image: string;
   title: string;
   model: string;
-  price: string;
-  oldPrice?: string;
+  price: string | number;
+  oldPrice?: string | number;
   isNew?: boolean;
   isSale?: boolean;
   // NEW: Vehicle compatibility
@@ -17,7 +17,85 @@ interface ProductCardProps {
     models: string[];
     yearRanges: string[];
   };
+  // Additional fields for consistency with Product interface
+  imageUrl?: string;
+  images?: string[];
+  category?: string;
+  description?: string;
+  shortDescription?: string;
+  sku?: string;
+  partNumber?: string;
+  manufacturer?: string;
+  stock?: number;
+  status?: 'active' | 'inactive' | 'out-of-stock' | 'coming-soon';
+  isFeatured?: boolean;
+  visibility?: 'visible' | 'catalog' | 'search' | 'hidden';
+  salePrice?: string;
+  regularPrice?: string;
+  vehicleType?: 'Car' | 'Truck' | 'SUV' | 'Van' | 'Motorcycle' | 'ATV' | 'Boat' | 'RV' | 'Commercial';
+  brand?: string;
+  year?: number;
+  keyType?: string;
+  availability?: 'in-stock' | 'out-of-stock' | 'coming-soon' | 'discontinued';
+  compatibleModels?: string[];
+  replacesKeyTypes?: string[];
+  technicalSpecs?: {
+    reusable?: boolean;
+    cloneable?: boolean;
+    chipType?: string;
+    testBlade?: string;
+    frequency?: string;
+    batteryType?: string;
+    fccId?: string;
+    can?: string;
+    buttons?: string[];
+    emergencyKeyIncluded?: boolean;
+    aftermarket?: boolean;
+  };
+  oemPartNumber?: string;
+  aftermarketPartNumber?: string;
+  buttonCount?: number;
+  isOem?: boolean;
+  isAftermarket?: boolean;
+  warranty?: string;
+  returnPolicy?: string;
+  shippingInfo?: string;
+  installationNotes?: string;
+  selectedCompatibility?: Array<{
+    brand: string;
+    model: string;
+    yearStart: string;
+    yearEnd: string;
+    keyTypes: string[];
+  }>;
+  vehicleTypes?: string[];
+  categories?: string[];
+  tags?: string[];
+  shippingClass?: string;
+  allowReviews?: boolean;
+  purchaseNote?: string;
+  customFields?: Array<{
+    id: string;
+    label: string;
+    value: string;
+  }>;
+  createdAt?: any;
+  updatedAt?: any;
 }
+
+// Helper function to format price consistently
+const formatPrice = (price: string | number): string => {
+  if (typeof price === 'string') {
+    // If price already has $, return as is
+    if (price.startsWith('$')) {
+      return price;
+    }
+    // If price is a number string, add $
+    return `$${price}`;
+  }
+  // If price is a number, add $
+  return `$${price.toFixed(2)}`;
+};
 
 export default function ProductCard({
   id,
@@ -36,6 +114,9 @@ export default function ProductCard({
     router.push(`/products/${id}`);
   };
 
+  // Ensure image has a valid URL
+  const imageUrl = image || '/sample-key-1.png'; // Fallback image
+
   return (
     <div 
       onClick={handleCardClick}
@@ -44,7 +125,18 @@ export default function ProductCard({
       {/* Badges */}
       {/* Product Image */}
       <div className="w-full aspect-square rounded-md overflow-hidden bg-gray-50 flex items-center justify-center mb-2 sm:mb-3 border border-gray-100">
-        <Image src={image} alt={title} width={160} height={160} className="object-contain p-2" />
+        <Image 
+          src={imageUrl} 
+          alt={title} 
+          width={160} 
+          height={160} 
+          className="object-contain p-2"
+          onError={(e) => {
+            // Fallback to sample image if main image fails
+            const target = e.target as HTMLImageElement;
+            target.src = '/sample-key-1.png';
+          }}
+        />
       </div>
       
       {/* Product Details */}
@@ -75,10 +167,12 @@ export default function ProductCard({
         
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3">
           {oldPrice && (
-            <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">{oldPrice}</span>
+            <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">
+              {formatPrice(oldPrice)}
+            </span>
           )}
           <span className="product__price text-blue-600 font-bold text-sm sm:text-base md:text-lg">
-            {price}
+            {formatPrice(price)}
           </span>
         </div>
       </div>
