@@ -93,7 +93,7 @@ function CategoryTreeItem({ category, allCategories, level = 0, onClose }: Categ
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { cart } = useCart();
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -147,9 +147,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
              {user ? (
                <div className="space-y-1">
                  <p className="text-sm text-gray-500">Signed in</p>
-                 {user.email && (
-                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                 )}
+                 <button 
+                   onClick={() => {
+                     logout();
+                     onClose();
+                   }}
+                   className="text-xs text-red-600 hover:text-red-700 font-medium"
+                 >
+                   Logout
+                 </button>
                </div>
              ) : (
                <Link 
@@ -211,7 +217,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           )}
           
-          
+          {/* Logout Section - Only show if user is signed in */}
+          {user && (
+            <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50">
+              <button 
+                onClick={() => {
+                  logout();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-3 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

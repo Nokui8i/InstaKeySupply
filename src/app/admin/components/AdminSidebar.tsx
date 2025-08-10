@@ -50,47 +50,38 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       `}
       style={{ zIndex: 9999999 }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
-                         <div>
+                 {/* Header */}
+         <div className="flex items-center justify-between p-6 border-b border-gray-200">
+           <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+               <span className="text-white font-bold text-lg">A</span>
+             </div>
+             <div>
                <h2 className="font-bold text-gray-900">Admin Panel</h2>
-               {user ? (
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-500">Signed in</p>
-                  {user.email && (
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">Management</p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Close sidebar"
-          >
-            <XMarkIcon className="w-6 h-6 text-gray-600" />
-          </button>
-        </div>
+               <p className="text-sm text-gray-500">Management</p>
+             </div>
+           </div>
+           <button
+             onClick={onClose}
+             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+             aria-label="Close sidebar"
+           >
+             <XMarkIcon className="w-6 h-6 text-gray-600" />
+           </button>
+         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex flex-col h-full">
-          {/* Navigation - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              Management
-            </h3>
-            <nav className="space-y-1">
-              <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
-                <HomeIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">Dashboard</span>
-              </Link>
+                 {/* Scrollable Content */}
+         <div className="flex flex-col h-full">
+           {/* Navigation - Scrollable */}
+           <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+               Management
+             </h3>
+             <nav className="space-y-1">
+               <Link href="/admin" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
+                 <HomeIcon className="w-5 h-5" />
+                 <span className="text-sm font-medium">Dashboard</span>
+               </Link>
 
               <Link href="/admin/categories" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/categories' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
                 <FolderIcon className="w-5 h-5" />
@@ -139,18 +130,18 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </nav>
           </div>
           
-          {/* Logout Section - Always at bottom */}
-          <div className="p-4 border-t border-gray-100 mt-auto">
-            <button 
-              onClick={logout} 
-              className="w-full flex items-center gap-3 p-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="text-sm font-medium">Logout</span>
-            </button>
-          </div>
+                     {/* Logout Section - Always at bottom */}
+           <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50">
+             <button 
+               onClick={logout} 
+               className="w-full flex items-center gap-3 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+             >
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+               </svg>
+               <span className="text-sm font-medium">Logout</span>
+             </button>
+           </div>
                  </div>
        </div>
      </>
