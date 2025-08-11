@@ -394,7 +394,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   setSelectedYear('');
                 }}
               >
-                <option value="">Make</option>
+                <option value="">Vehicle</option>
                 {Object.keys(vehicleData).map(make => (
                   <option key={make} value={make}>{make}</option>
                 ))}
@@ -645,7 +645,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             <div className="p-4 space-y-4">
               {/* Make Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Make</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle</label>
                 <select
                   className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
                   value={selectedMake}
@@ -655,7 +655,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     setSelectedYear('');
                   }}
                 >
-                  <option value="">Select Make</option>
+                  <option value="">Select Vehicle</option>
                   {Object.keys(vehicleData).map(make => (
                     <option key={make} value={make}>{make}</option>
                   ))}
@@ -664,7 +664,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
               {/* Model Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Model</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
                 <select
                   className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
                   value={selectedModel}
@@ -674,7 +674,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   }}
                   disabled={!selectedMake}
                 >
-                  <option value="">Select Model</option>
+                  <option value="">Select Model (Optional)</option>
                   {selectedMake && vehicleData[selectedMake] && Object.keys(vehicleData[selectedMake]).map(model => (
                     <option key={model} value={model}>{model}</option>
                   ))}
@@ -690,7 +690,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   onChange={e => setSelectedYear(e.target.value)}
                   disabled={!selectedModel}
                 >
-                  <option value="">Select Year</option>
+                  <option value="">Select Year Range (Optional)</option>
                   {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
                     <option key={yearRange} value={yearRange}>{yearRange}</option>
                   ))}

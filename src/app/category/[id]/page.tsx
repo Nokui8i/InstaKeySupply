@@ -238,27 +238,42 @@ export default function CategoryPage() {
     // Apply vehicle filters if they exist
     if (vehicleFilters) {
       filtered = filtered.filter(product => {
-        if (!product.compatibility || !Array.isArray(product.compatibility)) {
+        if (!product.selectedCompatibility || !Array.isArray(product.selectedCompatibility)) {
           return false;
         }
         
-        return product.compatibility.some((compatibility: any) => {
+        return product.selectedCompatibility.some((compatibility: any) => {
           // If only make is selected, show all products for that make
           if (vehicleFilters.make && !vehicleFilters.model && !vehicleFilters.yearRange) {
-            return compatibility.make === vehicleFilters.make;
+            return compatibility.brand === vehicleFilters.make;
           }
           
           // If make and model are selected, show all products for that make/model
           if (vehicleFilters.make && vehicleFilters.model && !vehicleFilters.yearRange) {
-            return compatibility.make === vehicleFilters.make && 
-                   compatibility.model === vehicleFilters.model;
+            // Check if product is compatible with this make/model combination
+            // Product is compatible if:
+            // 1. Exact match: brand=make AND model=model
+            // 2. Universal model: brand=make AND model="" (empty = all models)
+            return compatibility.brand === vehicleFilters.make && 
+                   (compatibility.model === vehicleFilters.model || compatibility.model === "");
           }
           
           // If all three are selected, show specific products
           if (vehicleFilters.make && vehicleFilters.model && vehicleFilters.yearRange) {
-            return compatibility.make === vehicleFilters.make &&
-                   compatibility.model === vehicleFilters.model &&
-                   compatibility.yearRange === vehicleFilters.yearRange;
+            // Check if product is compatible with this make/model/year combination
+            // Product is compatible if:
+            // 1. Exact match: brand=make AND model=model AND yearRange matches
+            // 2. Universal model: brand=make AND model="" AND yearRange matches
+            // 3. Universal year: brand=make AND model=model AND (yearStart="" OR yearRange matches)
+            // 4. Universal both: brand=make AND model="" AND (yearStart="" OR yearRange matches)
+            
+            const yearMatches = !compatibility.yearStart || 
+                               (vehicleFilters.yearRange && compatibility.yearStart && compatibility.yearEnd &&
+                                vehicleFilters.yearRange >= compatibility.yearStart && vehicleFilters.yearRange <= compatibility.yearEnd);
+            
+            return compatibility.brand === vehicleFilters.make && 
+                   (compatibility.model === vehicleFilters.model || compatibility.model === "") &&
+                   yearMatches;
           }
           
           return false;

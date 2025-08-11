@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createPortal } from 'react-dom';
 import { 
   XMarkIcon,
   HomeIcon, 
@@ -29,25 +28,21 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAdminAuth();
 
-  // Use portal to render at document body level for true overlay
-  if (typeof window === 'undefined') return null;
-
-  const sidebarContent = (
+  return (
     <>
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-[9999998] md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
-      <div 
-        className={`admin-sidebar fixed top-0 left-0 h-full w-72 md:w-80 bg-white shadow-2xl z-[9999999] transform
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:relative md:translate-x-0 md:z-auto`}
-      >
+      <div className={`
+        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -69,9 +64,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex flex-col h-full">
-          {/* Navigation - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-2">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Management
             </h3>
@@ -148,6 +142,4 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       </div>
     </>
   );
-
-  return createPortal(sidebarContent, document.body);
 }

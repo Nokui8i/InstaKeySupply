@@ -24,11 +24,12 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
 
   // Update filters when selections change
   useEffect(() => {
-    if (selectedMake && selectedModel && selectedYearRange) {
+    // Trigger filter whenever any selection changes, even if not all fields are filled
+    if (selectedMake) {
       onFiltersChange({
         make: selectedMake,
-        model: selectedModel,
-        yearRange: selectedYearRange
+        model: selectedModel || '',
+        yearRange: selectedYearRange || ''
       });
     }
   }, [selectedMake, selectedModel, selectedYearRange, onFiltersChange]);
@@ -56,7 +57,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
         {/* Make Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Vehicle Make
+            Vehicle
           </label>
           <select
             value={selectedMake}
@@ -67,7 +68,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">Select Make</option>
+            <option value="">Select Vehicle</option>
             {Object.keys(vehicleData).map(make => (
               <option key={make} value={make}>{make}</option>
             ))}
@@ -77,7 +78,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
         {/* Model Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Vehicle Model
+            Model
           </label>
           <select
             value={selectedModel}
@@ -88,7 +89,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
             disabled={!selectedMake}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
           >
-            <option value="">Select Model</option>
+            <option value="">Select Model (Optional)</option>
             {selectedMake && vehicleData[selectedMake] && Object.keys(vehicleData[selectedMake]).map(model => (
               <option key={model} value={model}>{model}</option>
             ))}
@@ -106,7 +107,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
             disabled={!selectedModel}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
           >
-            <option value="">Select Year Range</option>
+            <option value="">Select Year Range (Optional)</option>
             {selectedModel && vehicleData[selectedMake]?.[selectedModel]?.map((yearRange: string) => (
               <option key={yearRange} value={yearRange}>{yearRange}</option>
             ))}
@@ -114,7 +115,7 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
         </div>
 
         {/* Selected Filters Display */}
-        {selectedMake && selectedModel && selectedYearRange && (
+        {(selectedMake || selectedModel || selectedYearRange) && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <h4 className="text-sm font-medium text-blue-900 mb-2">Selected Vehicle:</h4>
             <p className="text-sm text-blue-800">
@@ -128,13 +129,14 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
 
         {/* Instructions */}
         <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-          <p className="mb-2">💡 <strong>How to use:</strong></p>
+          <p className="mb-2">💡 <strong>Flexible Filtering:</strong></p>
           <ol className="list-decimal list-inside space-y-1">
-            <li>Select your vehicle make</li>
-            <li>Choose your specific model</li>
-            <li>Pick the year range</li>
-            <li>View compatible products</li>
+            <li><strong>Vehicle only:</strong> See all products for a specific vehicle</li>
+            <li><strong>Vehicle + Model:</strong> See all products for a specific vehicle + model</li>
+            <li><strong>Vehicle + Model + Year:</strong> See specific products for exact match</li>
           </ol>
+          <p className="mt-2 text-xs">Model and Year are optional - leave empty to see broader results!</p>
+          <p className="mt-1 text-xs text-blue-600">💡 <strong>Tip:</strong> Start with just Vehicle to see all available options!</p>
         </div>
       </div>
     </div>

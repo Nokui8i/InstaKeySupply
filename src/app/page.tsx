@@ -90,27 +90,42 @@ function HomeContent() {
     
     // Filter products based on vehicle compatibility
     const filtered = products.filter(product => {
-      if (!product.compatibility || !Array.isArray(product.compatibility)) {
+      if (!product.selectedCompatibility || !Array.isArray(product.selectedCompatibility)) {
         return false;
       }
       
-      return product.compatibility.some((compatibility: any) => {
+      return product.selectedCompatibility.some((compatibility: any) => {
         // If only make is selected, show all products for that make
         if (filters.make && !filters.model && !filters.yearRange) {
-          return compatibility.make === filters.make;
+          return compatibility.brand === filters.make;
         }
         
         // If make and model are selected, show all products for that make/model
         if (filters.make && filters.model && !filters.yearRange) {
-          return compatibility.make === filters.make && 
-                 compatibility.model === filters.model;
+          // Check if product is compatible with this make/model combination
+          // Product is compatible if:
+          // 1. Exact match: brand=make AND model=model
+          // 2. Universal model: brand=make AND model="" (empty = all models)
+          return compatibility.brand === filters.make && 
+                 (compatibility.model === filters.model || compatibility.model === "");
         }
         
         // If all three are selected, show specific products
         if (filters.make && filters.model && filters.yearRange) {
-          return compatibility.make === filters.make &&
-                 compatibility.model === filters.model &&
-                 compatibility.yearRange === filters.yearRange;
+          // Check if product is compatible with this make/model/year combination
+          // Product is compatible if:
+          // 1. Exact match: brand=make AND model=model AND yearRange matches
+          // 2. Universal model: brand=make AND model="" AND yearRange matches
+          // 3. Universal year: brand=make AND model=model AND (yearStart="" OR yearRange matches)
+          // 4. Universal both: brand=make AND model="" AND (yearStart="" OR yearRange matches)
+          
+          const yearMatches = !compatibility.yearStart || 
+                             (filters.yearRange && compatibility.yearStart && compatibility.yearEnd &&
+                              filters.yearRange >= compatibility.yearStart && filters.yearRange <= compatibility.yearEnd);
+          
+          return compatibility.brand === filters.make && 
+                 (compatibility.model === filters.model || compatibility.model === "") &&
+                 yearMatches;
         }
         
         return false;
@@ -419,15 +434,19 @@ function HomeContent() {
       <PromoModal open={showPromo} onClose={() => setShowPromo(false)} />
       
       {/* Hero Section - Carousel Banner */}
-      <section className="mb-12 sm:mb-16 mt-0">
-        <CarouselBanner images={banners} />
-      </section>
+      {!activeFilters && (
+        <section className="mb-12 sm:mb-16 mt-0">
+          <CarouselBanner images={banners} />
+        </section>
+      )}
 
       {/* Products Section */}
       {products.length > 0 && (
         <section className="mb-12 sm:mb-16">
           <div className="relative mb-6 sm:mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-blue-600 drop-shadow text-center">All Products</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-blue-600 drop-shadow text-center">
+              {activeFilters ? `Filtered Products for: ${activeFilters.make}` : 'All Products'}
+            </h2>
             
             {/* Category Filter Display */}
             {searchParams.get('category') && (
@@ -523,7 +542,7 @@ function HomeContent() {
       )}
 
       {/* Featured Product Carousels */}
-      {products.length > 0 && (
+      {products.length > 0 && !activeFilters && (
         <>
           <section className="mt-0 mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>

@@ -10,6 +10,42 @@ const nextConfig = {
         protocol: "https",
         hostname: "via.placeholder.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.americankeysupply.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+      },
+      {
+        protocol: "https",
+        hostname: "loremflickr.com",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "placekitten.com",
+      },
+      {
+        protocol: "https",
+        hostname: "placeimg.com",
+      },
     ],
     // Enhanced image quality settings for 4K and 2K displays
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Includes 4K (3840)

@@ -34,39 +34,152 @@ function ImageEditor({
   const [brushSize, setBrushSize] = useState(20);
   const [brushColor, setBrushColor] = useState('#ffffff');
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Define the image loading functions outside useEffect so they can be called from UI
+  const loadImage = async (src: string, useCORS: boolean = true) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
+    setIsLoading(true);
+    setLoadError(null);
+    
+    // If it's an external URL, we need to download it first
+    if (src.startsWith('http') && !src.startsWith('data:')) {
+      try {
+        console.log('Downloading external image...');
+        
+        // Create a proxy request to avoid CORS issues
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`;
+        
+        const response = await fetch(proxyUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const base64Data = e.target?.result as string;
+            console.log('Successfully downloaded image, size:', base64Data.length);
+            setIsLoading(false);
+            loadImageFromBase64(base64Data);
+          };
+          reader.readAsDataURL(blob);
+          return;
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.log('Proxy download failed, trying direct fetch...', error);
+        
+        // Try direct fetch as fallback
+        try {
+          const response = await fetch(src);
+          if (response.ok) {
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const base64Data = e.target?.result as string;
+              console.log('Direct download successful, size:', base64Data.length);
+              setIsLoading(false);
+              loadImageFromBase64(base64Data);
+            };
+            reader.readAsDataURL(blob);
+            return;
+          }
+        } catch (directError) {
+          console.log('Direct download also failed, trying canvas approach...', directError);
+        }
+      }
+    }
+    
+    // Direct loading approach for local images or as fallback
+    loadImageDirectly(src, useCORS);
+  };
+
+  const loadImageDirectly = (src: string, useCORS: boolean = true) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // Add CORS support
+    if (useCORS) {
+      img.crossOrigin = 'anonymous';
+    }
     
     img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      if (canvas && ctx) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        console.log('Image loaded successfully, canvas size:', canvas.width, 'x', canvas.height);
+        setIsLoading(false);
+      }
     };
     
     img.onerror = () => {
-      // If CORS fails, try without crossOrigin
-      const fallbackImg = new Image();
-      fallbackImg.onload = () => {
-        canvas.width = fallbackImg.width;
-        canvas.height = fallbackImg.height;
-        ctx.drawImage(fallbackImg, 0, 0);
-      };
-      fallbackImg.src = imageSrc;
+      if (useCORS) {
+        console.log('CORS failed, trying without crossOrigin...');
+        loadImageDirectly(src, false);
+      } else {
+        console.error('Image failed to load completely:', src);
+        setIsLoading(false);
+        setLoadError('Failed to load image. Please try a different image or upload from your computer.');
+        // Show error message on canvas
+        if (canvas && ctx) {
+          canvas.width = 400;
+          canvas.height = 300;
+          ctx.fillStyle = '#f3f4f6';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#6b7280';
+          ctx.font = '16px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('Failed to load image', canvas.width / 2, canvas.height / 2 - 20);
+          ctx.fillText('Please try a different image', canvas.width / 2, canvas.height / 2 + 20);
+        }
+      }
     };
     
-    img.src = imageSrc;
+    img.src = src;
+  };
+
+  const loadImageFromBase64 = (base64Data: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      if (canvas && ctx) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        console.log('Base64 image loaded successfully, canvas size:', canvas.width, 'x', canvas.height);
+        setIsLoading(false);
+      }
+    };
+    img.onerror = () => {
+      console.error('Failed to load base64 image');
+      setIsLoading(false);
+      setLoadError('Failed to load downloaded image. Please try again.');
+      loadImageDirectly(imageSrc, true);
+    };
+    img.src = base64Data;
+  };
+
+  useEffect(() => {
+    loadImage(imageSrc);
   }, [imageSrc]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
+    console.log('Started drawing at:', e.clientX, e.clientY);
     draw(e);
   };
 
@@ -106,75 +219,84 @@ function ImageEditor({
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    try {
-      // Try direct export first
-      const editedImage = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Saving edited image, size:', editedImage.length);
-      onSave(editedImage);
-    } catch (error) {
-      console.error('Error saving edited image:', error);
+    console.log('Attempting to save canvas, size:', canvas.width, 'x', canvas.height);
+    
+    // Check if the image is from an external source (URL)
+    const isExternalImage = imageSrc.startsWith('http') && !imageSrc.startsWith('data:');
+    
+    if (isExternalImage) {
+      console.log('External image detected, using special handling...');
       
-      // If canvas is tainted, use a different approach
+      // For external images, we need to handle CORS issues
       try {
-        // Create a new canvas with the same dimensions
+        // Create a new canvas to avoid tainted canvas issues
         const newCanvas = document.createElement('canvas');
         const newCtx = newCanvas.getContext('2d');
         if (!newCtx) {
-          console.error('Could not get 2D context for new canvas');
-          return;
+          throw new Error('Could not get 2D context for new canvas');
         }
         
         newCanvas.width = canvas.width;
         newCanvas.height = canvas.height;
         
-        // Get the image data from the original canvas
-        const imageData = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height);
-        if (!imageData) {
-          console.error('Could not get image data from canvas');
-          return;
-        }
+        // Copy the current canvas content to the new canvas
+        newCtx.drawImage(canvas, 0, 0);
         
-        // Put the image data on the new canvas
-        newCtx.putImageData(imageData, 0, 0);
-        
-        // Now export from the new canvas
-        const editedImage = newCanvas.toDataURL('image/jpeg', 0.8);
-        console.log('Saving edited image via imageData, size:', editedImage.length);
-        onSave(editedImage);
-        
-      } catch (fallbackError) {
-        console.error('Fallback method also failed:', fallbackError);
-        
-        // Last resort: try to create a new canvas and redraw everything
-        try {
-          const newCanvas = document.createElement('canvas');
-          const newCtx = newCanvas.getContext('2d');
-          if (!newCtx) {
-            throw new Error('Could not get 2D context');
+        // Try to save from the new canvas
+        newCanvas.toBlob((blob) => {
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const editedImage = e.target?.result as string;
+              console.log('Successfully saved external image via new canvas, size:', editedImage.length);
+              onSave(editedImage);
+            };
+            reader.readAsDataURL(blob);
+          } else {
+            console.error('Failed to create blob from new canvas');
+            // Try toDataURL as fallback
+            try {
+              const editedImage = newCanvas.toDataURL('image/jpeg', 0.95);
+              console.log('Fallback: saved via toDataURL, size:', editedImage.length);
+              onSave(editedImage);
+            } catch (fallbackError) {
+              console.error('All methods failed for external image:', fallbackError);
+              onSave(imageSrc);
+            }
           }
-          
-          newCanvas.width = canvas.width;
-          newCanvas.height = canvas.height;
-          
-          // Create a new image from the original source
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            newCtx.drawImage(img, 0, 0);
-            
-            // Apply the same drawing operations that were done on the original canvas
-            // This is a simplified approach - we'll just return the original for now
-            console.log('Returning original image as fallback');
-            onSave(imageSrc);
-          };
-          img.onerror = () => {
-            console.log('Returning original image as fallback');
-            onSave(imageSrc);
-          };
-          img.src = imageSrc;
-          
-        } catch (finalError) {
-          console.error('All methods failed:', finalError);
+        }, 'image/jpeg', 0.95);
+        
+      } catch (error) {
+        console.error('Error handling external image:', error);
+        onSave(imageSrc);
+      }
+    } else {
+      // For local/data URLs, use the standard approach
+      try {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const editedImage = e.target?.result as string;
+              console.log('Successfully saved local image via blob, size:', editedImage.length);
+              onSave(editedImage);
+            };
+            reader.readAsDataURL(blob);
+          } else {
+            throw new Error('Failed to create blob from canvas');
+          }
+        }, 'image/jpeg', 0.95);
+        
+      } catch (error) {
+        console.error('Error saving local image:', error);
+        
+        // Fallback: try toDataURL directly
+        try {
+          const editedImage = canvas.toDataURL('image/jpeg', 0.95);
+          console.log('Fallback: saved via toDataURL, size:', editedImage.length);
+          onSave(editedImage);
+        } catch (toDataURLError) {
+          console.error('toDataURL also failed:', toDataURLError);
           onSave(imageSrc);
         }
       }
@@ -268,16 +390,76 @@ function ImageEditor({
 
         {/* Canvas */}
         <div className="flex justify-center mb-4">
-          <div className="border rounded-lg overflow-hidden">
-            <canvas
-              ref={canvasRef}
-              onMouseDown={startDrawing}
-              onMouseUp={stopDrawing}
-              onMouseOut={stopDrawing}
-              onMouseMove={draw}
-              className="max-w-full max-h-96 cursor-crosshair"
-            />
-          </div>
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+              <p className="text-gray-600">Downloading image...</p>
+            </div>
+          )}
+          
+          {loadError && (
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <p className="font-medium">Error Loading Image</p>
+                <p className="text-sm">{loadError}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  setIsLoading(true);
+                  // Reload the image by calling the useEffect again
+                  const canvas = canvasRef.current;
+                  if (canvas) {
+                    loadImage(imageSrc);
+                  }
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+          
+          {!isLoading && !loadError && (
+            <div className="border rounded-lg overflow-hidden">
+              <canvas
+                ref={canvasRef}
+                onMouseDown={startDrawing}
+                onMouseUp={stopDrawing}
+                onMouseOut={stopDrawing}
+                onMouseMove={draw}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  const touch = e.touches[0];
+                  const rect = canvasRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    const mouseEvent = new MouseEvent('mousedown', {
+                      clientX: touch.clientX,
+                      clientY: touch.clientY
+                    });
+                    startDrawing(mouseEvent as any);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  stopDrawing();
+                }}
+                onTouchMove={(e) => {
+                  e.preventDefault();
+                  const touch = e.touches[0];
+                  const rect = canvasRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    const mouseEvent = new MouseEvent('mousemove', {
+                      clientX: touch.clientX,
+                      clientY: touch.clientY
+                    });
+                    draw(mouseEvent as any);
+                  }
+                }}
+                className="max-w-full max-h-96 cursor-crosshair touch-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -695,16 +877,26 @@ export default function FlexibleProductForm({
 
   // Vehicle compatibility functions
   const addVehicleCompatibility = () => {
-    if (compatSelectedMake && compatSelectedModel && compatSelectedYear) {
+    if (compatSelectedMake) {
       const newCompatibility = {
         make: compatSelectedMake,
-        model: compatSelectedModel,
-        yearRange: compatSelectedYear
+        model: compatSelectedModel || '',
+        yearRange: compatSelectedYear || ''
       };
-      setCompatibility(prev => [...prev, newCompatibility]);
-      setCompatSelectedMake('');
-      setCompatSelectedModel('');
-      setCompatSelectedYear('');
+      
+      // Check if this combination already exists
+      const exists = compatibility.some(item => 
+        item.make === newCompatibility.make && 
+        item.model === newCompatibility.model && 
+        item.yearRange === newCompatibility.yearRange
+      );
+      
+      if (!exists) {
+        setCompatibility(prev => [...prev, newCompatibility]);
+        setCompatSelectedMake('');
+        setCompatSelectedModel('');
+        setCompatSelectedYear('');
+      }
     }
   };
 
@@ -727,6 +919,27 @@ export default function FlexibleProductForm({
         });
       }
     });
+
+    // If no custom fields provided, auto-add vehicle compatibility information
+    if (lines.length === 0 && compatibility && compatibility.length > 0) {
+      lines.push('Vehicle Compatibility:');
+      compatibility.forEach((comp: any) => {
+        if (comp.make) {
+          let compText = `  ${comp.make}`;
+          if (comp.model) {
+            compText += ` ${comp.model}`;
+          } else {
+            compText += ' (All Models)';
+          }
+          if (comp.yearRange) {
+            compText += ` ${comp.yearRange}`;
+          } else {
+            compText += ' (All Years)';
+          }
+          lines.push(compText);
+        }
+      });
+    }
 
     // Note: Vehicle compatibility will be shown from custom fields above
     // The structured compatibility data is only used for filtering
@@ -990,6 +1203,19 @@ export default function FlexibleProductForm({
                 // Handle dropped URLs or data from websites
                 rejectedFiles.forEach(file => {
                   console.log('Dropped content:', file);
+                  // Try to extract URL from rejected file
+                  if (file.file && file.file.type === 'text/uri-list') {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      const url = e.target?.result as string;
+                      if (url && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                        const currentImages = formData.images || [];
+                        const newImages = [...currentImages, url];
+                        setFormData({...formData, images: newImages});
+                      }
+                    };
+                    reader.readAsText(file.file);
+                  }
                 });
               }}
               onDropAccepted={(files) => {
@@ -1102,6 +1328,14 @@ export default function FlexibleProductForm({
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder-image.png';
                       console.error('Failed to load image:', image);
+                      // Show error indicator
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'absolute inset-0 bg-red-100 border-2 border-red-300 rounded flex items-center justify-center';
+                        errorDiv.innerHTML = '<span class="text-red-600 text-xs text-center px-2">Image failed to load</span>';
+                        parent.appendChild(errorDiv);
+                      }
                     }}
                   />
                   <div className="absolute top-1 right-1 flex gap-1">
@@ -1274,11 +1508,20 @@ export default function FlexibleProductForm({
             <button
               type="button"
               onClick={addVehicleCompatibility}
-              disabled={!compatSelectedMake || !compatSelectedModel || !compatSelectedYear}
+              disabled={!compatSelectedMake}
               className="px-2 sm:px-3 py-1 bg-green-600 text-white rounded text-xs sm:text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Add Vehicle
             </button>
+          </div>
+          
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 rounded text-xs sm:text-sm text-blue-800">
+            <p className="font-medium mb-1">💡 Flexible Compatibility Options:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>Vehicle only:</strong> Compatible with all models and years for that vehicle</li>
+              <li><strong>Vehicle + Model:</strong> Compatible with all years for that vehicle and model</li>
+              <li><strong>Vehicle + Model + Year:</strong> Compatible with specific year range</li>
+            </ul>
           </div>
           
           {compatLoading ? (
@@ -1290,13 +1533,13 @@ export default function FlexibleProductForm({
               {/* Vehicle Selection */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Make</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Vehicle</label>
                   <select
                     value={compatSelectedMake}
                     onChange={(e) => setCompatSelectedMake(e.target.value)}
                     className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                   >
-                    <option value="">Select Make</option>
+                    <option value="">Select Vehicle</option>
                     {Object.keys(compatData).sort().map((make: string) => (
                       <option key={make} value={make}>{make}</option>
                     ))}
@@ -1319,14 +1562,14 @@ export default function FlexibleProductForm({
                 </div>
                 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Year Range</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Year Range (Optional)</label>
                   <select
                     value={compatSelectedYear}
                     onChange={(e) => setCompatSelectedYear(e.target.value)}
                     className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                     disabled={!compatSelectedModel}
                   >
-                    <option value="">Select Year Range</option>
+                    <option value="">All Years</option>
                     {compatSelectedMake && compatSelectedModel && compatData[compatSelectedMake] && compatData[compatSelectedMake][compatSelectedModel] && compatData[compatSelectedMake][compatSelectedModel].map((yearRange: string) => (
                       <option key={yearRange} value={yearRange}>{yearRange}</option>
                     ))}
@@ -1339,7 +1582,7 @@ export default function FlexibleProductForm({
                 {compatibility.map((vehicle, index) => (
                   <div key={index} className="flex justify-between items-center p-2 sm:p-3 bg-white rounded border">
                     <span className="text-xs sm:text-sm font-medium">
-                      {vehicle.make} {vehicle.model} ({vehicle.yearRange})
+                      {vehicle.make} {vehicle.model ? vehicle.model : '(All Models)'} {vehicle.yearRange ? `(${vehicle.yearRange})` : '(All Years)'}
                     </span>
                     <button
                       type="button"
@@ -1354,7 +1597,6 @@ export default function FlexibleProductForm({
                 {compatibility.length === 0 && (
                   <div className="text-center py-3 sm:py-4 text-gray-500">
                     <p className="text-xs sm:text-sm">No vehicle compatibility added yet.</p>
-                    <p className="text-xs sm:text-sm">Select make, model, and year range above to add compatibility.</p>
                   </div>
                 )}
               </div>
