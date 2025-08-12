@@ -177,7 +177,7 @@ function SiteContentContent() {
       setLoading(false);
     }
     fetchContent();
-  }, [promoModal]);
+  }, []); // Empty dependency array - only run once on mount
 
   useEffect(() => {
     if (section === 'messages') {
@@ -190,7 +190,7 @@ function SiteContentContent() {
       }
       fetchMessages();
     }
-  }, [section, promoModal]);
+  }, [section]); // Only depend on section changes
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setContactObj(obj => ({ ...obj, [e.target.name]: e.target.value }));

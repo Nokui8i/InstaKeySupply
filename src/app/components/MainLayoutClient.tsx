@@ -1,19 +1,21 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import NavBar from "./NavBar";
-import Sidebar from "./Sidebar";
 
 
 
-export default function MainLayoutClient({ children }: { children: React.ReactNode }) {
+interface MainLayoutClientProps {
+  children: React.ReactNode;
+  sidebarOpen: boolean;
+  onSidebarToggle: () => void;
+}
+
+export default function MainLayoutClient({ children, sidebarOpen, onSidebarToggle }: MainLayoutClientProps) {
   const [vehicleFilters, setVehicleFilters] = useState<{
     make: string;
     model: string;
     yearRange: string;
   } | null>(null);
-  
-  // Sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   
 
 
@@ -49,17 +51,11 @@ export default function MainLayoutClient({ children }: { children: React.ReactNo
 
   const handleSidebarToggle = () => {
     console.log('Sidebar toggle clicked, current state:', sidebarOpen);
-    setSidebarOpen(!sidebarOpen);
+    onSidebarToggle();
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-      />
-      
       {/* Main Content */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : ''}`}>
         <NavBar 

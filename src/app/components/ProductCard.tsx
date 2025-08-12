@@ -81,6 +81,18 @@ interface ProductCardProps {
   }>;
   createdAt?: any;
   updatedAt?: any;
+  // NEW: Discount information
+  discountInfo?: {
+    discountId: string;
+    discountName: string;
+    discountType: string;
+    discountValue: number;
+    originalPrice: string;
+    discountedPrice: string;
+    discountAmount: string;
+    appliedAt: any;
+    validUntil: any;
+  };
 }
 
 // Helper function to format price consistently
@@ -107,6 +119,7 @@ export default function ProductCard({
   isNew,
   isSale,
   vehicleCompatibility,
+  discountInfo,
 }: ProductCardProps) {
   const router = useRouter();
 
@@ -166,14 +179,31 @@ export default function ProductCard({
         )}
         
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3">
-          {oldPrice && (
-            <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">
-              {formatPrice(oldPrice)}
-            </span>
+          {/* Show discount info if available */}
+          {discountInfo ? (
+            <>
+              <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">
+                {formatPrice(discountInfo.originalPrice)}
+              </span>
+              <span className="product__price text-red-600 font-bold text-sm sm:text-base md:text-lg">
+                {formatPrice(discountInfo.discountedPrice)}
+              </span>
+              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                {discountInfo.discountType === 'percentage' ? `${discountInfo.discountValue}% OFF` : `$${discountInfo.discountValue} OFF`}
+              </div>
+            </>
+          ) : (
+            <>
+              {oldPrice && (
+                <span className="price--normal text-gray-400 line-through text-xs sm:text-sm">
+                  {formatPrice(oldPrice)}
+                </span>
+              )}
+              <span className="product__price text-blue-600 font-bold text-sm sm:text-base md:text-lg">
+                {formatPrice(price)}
+              </span>
+            </>
           )}
-          <span className="product__price text-blue-600 font-bold text-sm sm:text-base md:text-lg">
-            {formatPrice(price)}
-          </span>
         </div>
       </div>
       

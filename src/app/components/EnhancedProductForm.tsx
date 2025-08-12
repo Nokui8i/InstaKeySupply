@@ -27,151 +27,41 @@ function ImageEditor({
   const [brushSize, setBrushSize] = useState(20);
   const [brushColor, setBrushColor] = useState('#ffffff');
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  // Define the image loading functions outside useEffect so they can be called from UI
-  const loadImage = async (src: string, useCORS: boolean = true) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    setIsLoading(true);
-    setLoadError(null);
-    
-    // If it's an external URL, we need to download it first
-    if (src.startsWith('http') && !src.startsWith('data:')) {
-      try {
-        console.log('Downloading external image...');
-        
-        // Create a proxy request to avoid CORS issues
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`;
-        
-        const response = await fetch(proxyUrl);
-        if (response.ok) {
-          const blob = await response.blob();
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const base64Data = e.target?.result as string;
-            console.log('Successfully downloaded image, size:', base64Data.length);
-            setIsLoading(false);
-            loadImageFromBase64(base64Data);
-          };
-          reader.readAsDataURL(blob);
-          return;
-        } else {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-      } catch (error) {
-        console.log('Proxy download failed, trying direct fetch...', error);
-        
-        // Try direct fetch as fallback
-        try {
-          const response = await fetch(src);
-          if (response.ok) {
-            const blob = await response.blob();
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const base64Data = e.target?.result as string;
-              console.log('Direct download successful, size:', base64Data.length);
-              setIsLoading(false);
-              loadImageFromBase64(base64Data);
-            };
-            reader.readAsDataURL(blob);
-            return;
-          }
-        } catch (directError) {
-          console.log('Direct download also failed, trying canvas approach...', directError);
-        }
-      }
-    }
-    
-    // Direct loading approach for local images or as fallback
-    loadImageDirectly(src, useCORS);
-  };
-
-  const loadImageDirectly = (src: string, useCORS: boolean = true) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new Image();
-    if (useCORS) {
-      img.crossOrigin = 'anonymous';
-    }
-    
-    img.onload = () => {
-      if (canvas && ctx) {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        console.log('Image loaded successfully, canvas size:', canvas.width, 'x', canvas.height);
-        setIsLoading(false);
-      }
-    };
-    
-    img.onerror = () => {
-      if (useCORS) {
-        console.log('CORS failed, trying without crossOrigin...');
-        loadImageDirectly(src, false);
-      } else {
-        console.error('Image failed to load completely:', src);
-        setIsLoading(false);
-        setLoadError('Failed to load image. Please try a different image or upload from your computer.');
-        // Show error message on canvas
-        if (canvas && ctx) {
-          canvas.width = 400;
-          canvas.height = 300;
-          ctx.fillStyle = '#f3f4f6';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#6b7280';
-          ctx.font = '16px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('Failed to load image', canvas.width / 2, canvas.height / 2 - 20);
-          ctx.fillText('Please try a different image', canvas.width / 2, canvas.height / 2 + 20);
-        }
-      }
-    };
-    
-    img.src = src;
-  };
-
-  const loadImageFromBase64 = (base64Data: string) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new Image();
-    img.onload = () => {
-      if (canvas && ctx) {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        console.log('Base64 image loaded successfully, canvas size:', canvas.width, 'x', canvas.height);
-        setIsLoading(false);
-      }
-    };
-    img.onerror = () => {
-      console.error('Failed to load base64 image');
-      setIsLoading(false);
-      setLoadError('Failed to load downloaded image. Please try again.');
-      loadImageDirectly(imageSrc, true);
-    };
-    img.src = base64Data;
-  };
 
   useEffect(() => {
-    loadImage(imageSrc);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Add CORS support
+    
+    img.onload = () => {
+      // Set canvas size to match image
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+    };
+    
+    img.onerror = () => {
+      // If CORS fails, try without crossOrigin
+      const fallbackImg = new Image();
+      fallbackImg.onload = () => {
+        canvas.width = fallbackImg.width;
+        canvas.height = fallbackImg.height;
+        ctx.drawImage(fallbackImg, 0, 0);
+      };
+      fallbackImg.src = imageSrc;
+    };
+    
+    img.src = imageSrc;
   }, [imageSrc]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    console.log('Starting to draw...');
     setIsDrawing(true);
     draw(e);
   };
@@ -213,53 +103,10 @@ function ImageEditor({
     if (!canvas) return;
     
     try {
-      // For external images, create a new canvas to avoid tainted canvas issues
-      if (imageSrc.startsWith('http') && !imageSrc.startsWith('data:')) {
-        console.log('Saving external image with new canvas approach...');
-        
-        const newCanvas = document.createElement('canvas');
-        const newCtx = newCanvas.getContext('2d');
-        if (!newCtx) {
-          console.error('Could not get 2D context for new canvas');
-          return;
-        }
-        
-        newCanvas.width = canvas.width;
-        newCanvas.height = canvas.height;
-        
-        // Copy the current canvas content to the new canvas
-        newCtx.drawImage(canvas, 0, 0);
-        
-        // Try to save from the new canvas
-        try {
-          const editedImage = newCanvas.toBlob((blob) => {
-            if (blob) {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                console.log('Successfully saved external image via blob, size:', dataUrl.length);
-                onSave(dataUrl);
-              };
-              reader.readAsDataURL(blob);
-            } else {
-              console.error('Blob creation failed');
-              onSave(imageSrc);
-            }
-          }, 'image/jpeg', 0.95);
-        } catch (blobError) {
-          console.log('Blob method failed, trying dataURL...', blobError);
-          const editedImage = newCanvas.toDataURL('image/jpeg', 0.95);
-          console.log('Successfully saved external image via dataURL, size:', editedImage.length);
-          onSave(editedImage);
-        }
-        return;
-      }
-      
-      // For local images, try direct export first
+      // Try direct export first
       const editedImage = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Saving local image, size:', editedImage.length);
+      console.log('Saving edited image, size:', editedImage.length);
       onSave(editedImage);
-      
     } catch (error) {
       console.error('Error saving edited image:', error);
       
@@ -334,13 +181,6 @@ function ImageEditor({
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
-
-    // For external images, we need to reload the image to avoid tainted canvas issues
-    if (imageSrc.startsWith('http') && !imageSrc.startsWith('data:')) {
-      console.log('Clearing external image canvas...');
-      loadImage(imageSrc);
-      return;
-    }
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -424,77 +264,45 @@ function ImageEditor({
 
         {/* Canvas */}
         <div className="flex justify-center mb-4">
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-              <p className="text-gray-600">Downloading image...</p>
-            </div>
-          )}
-          
-          {loadError && (
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <p className="font-medium">Error Loading Image</p>
-                <p className="text-sm">{loadError}</p>
-              </div>
-              <button
-                onClick={() => {
-                  setLoadError(null);
-                  setIsLoading(true);
-                  // Reload the image
-                  const canvas = canvasRef.current;
-                  if (canvas) {
-                    loadImage(imageSrc);
-                  }
-                }}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
-          
-          {!isLoading && !loadError && (
-            <div className="border rounded-lg overflow-hidden">
-              <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseUp={stopDrawing}
-                onMouseOut={stopDrawing}
-                onMouseMove={draw}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  const touch = e.touches[0];
-                  const rect = canvasRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    const mouseEvent = new MouseEvent('mousedown', {
-                      clientX: touch.clientX,
-                      clientY: touch.clientY
-                    });
-                    startDrawing(mouseEvent as any);
-                  }
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  stopDrawing();
-                }}
-                onTouchMove={(e) => {
-                  e.preventDefault();
-                  const touch = e.touches[0];
-                  const rect = canvasRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    const mouseEvent = new MouseEvent('mousemove', {
-                      clientX: touch.clientX,
-                      clientY: touch.clientY
-                    });
-                    draw(mouseEvent as any);
-                  }
-                }}
-                className="cursor-crosshair max-w-full max-h-[60vh] touch-none"
-                style={{ maxWidth: '100%', maxHeight: '60vh' }}
-              />
-            </div>
-          )}
+          <div className="border rounded-lg overflow-hidden">
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseUp={stopDrawing}
+              onMouseOut={stopDrawing}
+              onMouseMove={draw}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                  });
+                  startDrawing(mouseEvent as any);
+                }
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                stopDrawing();
+              }}
+              onTouchMove={(e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                  });
+                  draw(mouseEvent as any);
+                }
+              }}
+              className="cursor-crosshair max-w-full max-h-[60vh] touch-none"
+              style={{ maxWidth: '100%', maxHeight: '60vh' }}
+            />
+          </div>
         </div>
 
         {/* Instructions */}
@@ -1051,10 +859,16 @@ export default function EnhancedProductForm({
       keyTypes: ['Remote Key', 'Smart Key'] // Default key types
     }));
     
+    // Generate description from vehicle compatibility if no custom description is provided
+    let finalDescription = formData.description;
+    if (!finalDescription || finalDescription.trim() === '') {
+      finalDescription = generateCompatibilityDescription(compatibility);
+    }
+    
     // Attach compatibility as structured array
     onSubmit({
       ...formData,
-      description: formData.description,
+      description: finalDescription,
       compatibility,
       selectedCompatibility
     });
@@ -1254,14 +1068,7 @@ export default function EnhancedProductForm({
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">Select Vehicle Compatibility *</label>
             
-            <div className="mb-4 p-3 bg-blue-50 rounded text-sm text-blue-800">
-              <p className="font-medium mb-2">💡 Flexible Compatibility Options:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li><strong>Vehicle only:</strong> Compatible with all models and years for that vehicle</li>
-                <li><strong>Vehicle + Model:</strong> Compatible with all years for that vehicle and model</li>
-                <li><strong>Vehicle + Model + Year:</strong> Compatible with specific year range</li>
-              </ul>
-            </div>
+
 
             {compatLoading ? (
               <div className="text-gray-500">Loading vehicle data...</div>
@@ -1330,7 +1137,6 @@ export default function EnhancedProductForm({
                 {/* Selected Compatibility List */}
                 {compatibility.length > 0 && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">Selected Compatibility:</h4>
                     <div className="space-y-2">
                       {compatibility.map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border">
@@ -1572,13 +1378,11 @@ export default function EnhancedProductForm({
                   </div>
                 ) : (
                   <div className="px-3 py-4 text-gray-500 text-sm italic text-center">
-                    Select vehicle compatibility above to auto-generate description
+                    
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                This description is automatically generated based on your vehicle compatibility selections
-              </p>
+
             </div>
           </div>
         </div>

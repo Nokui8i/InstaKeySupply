@@ -15,7 +15,8 @@ import {
   MegaphoneIcon, 
   DocumentTextIcon, 
   ChatBubbleLeftRightIcon, 
-  InboxIcon
+  InboxIcon,
+  ShoppingBagIcon
 } from '@heroicons/react/24/outline';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
@@ -33,14 +34,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] sidebar-overlay"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-[9999] sidebar-content transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Header */}
@@ -84,7 +85,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <span className="text-sm font-medium">Inventory</span>
               </Link>
               <Link href="/admin/orders" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/orders' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
-                <ShoppingCartIcon className="w-5 h-5" />
+                <ShoppingBagIcon className="w-5 h-5" />
                 <span className="text-sm font-medium">Orders</span>
               </Link>
               <Link href="/admin/banners" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/banners' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
@@ -94,6 +95,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               <Link href="/admin/promo-codes" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/promo-codes' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
                 <TagIcon className="w-5 h-5" />
                 <span className="text-sm font-medium">Promo Codes</span>
+              </Link>
+              <Link href="/admin/discounts" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/discounts' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                <span className="text-sm font-medium">Product Discounts</span>
               </Link>
               <Link href="/admin/shipping-costs" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${pathname === '/admin/shipping-costs' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`} onClick={onClose}>
                 <TruckIcon className="w-5 h-5" />

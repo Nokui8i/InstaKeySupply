@@ -78,7 +78,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="admin-layout flex h-screen bg-gray-100">
+    <div className="admin-layout flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       

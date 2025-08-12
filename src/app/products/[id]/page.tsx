@@ -184,142 +184,41 @@ export default function ProductDetail() {
   useEffect(() => {
     async function fetchRandomProducts() {
       try {
-        // Always use sample products for the carousel
-        const sampleProducts: Product[] = [
-          {
-            id: "sample-1",
-            image: "/sample-key-1.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-1.png", // Add imageUrl for compatibility
-            title: "Toyota Camry Transponder Key",
-            model: "TOY-4D60",
-            price: "$89.99",
-            oldPrice: "$129.99",
-            category: "Car Keys",
-            vehicleType: "Car" as const,
-            description: "High-quality transponder key for Toyota Camry models",
-            selectedCompatibility: [
-              {
-                brand: "Toyota",
-                model: "Camry",
-                yearStart: "2012",
-                yearEnd: "2024",
-                keyTypes: ["Transponder Key", "Remote Key"]
-              }
-            ]
-          },
-          {
-            id: "sample-2", 
-            image: "/sample-key-2.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-2.png", // Add imageUrl for compatibility
-            title: "Honda Accord Remote Key",
-            model: "HON-72MHz",
-            price: "$79.95",
-            category: "Car Keys",
-            vehicleType: "Car" as const,
-            description: "Remote key fob for Honda Accord with keyless entry",
-            selectedCompatibility: [
-              {
-                brand: "Honda",
-                model: "Accord",
-                yearStart: "2010",
-                yearEnd: "2024",
-                keyTypes: ["Remote Key", "Smart Key"]
-              }
-            ]
-          },
-          {
-            id: "sample-3",
-            image: "/sample-key-3.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-3.png", // Add imageUrl for compatibility
-            title: "BMW 3-Series Smart Key",
-            model: "BMW-868MHz",
-            price: "$199.99",
-            oldPrice: "$249.99",
-            category: "Car Keys",
-            vehicleType: "Car" as const,
-            description: "Advanced smart key for BMW 3-Series with comfort access",
-            selectedCompatibility: [
-              {
-                brand: "BMW",
-                model: "3-Series",
-                yearStart: "2015",
-                yearEnd: "2024",
-                keyTypes: ["Smart Key", "Proximity Key"]
-              }
-            ]
-          },
-          {
-            id: "sample-4",
-            image: "/sample-key-4.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-4.png", // Add imageUrl for compatibility
-            title: "Ford F-150 Remote Key",
-            model: "FORD-315MHz",
-            price: "$69.99",
-            category: "Car Keys",
-            vehicleType: "Truck" as const,
-            description: "Remote key for Ford F-150 pickup trucks",
-            selectedCompatibility: [
-              {
-                brand: "Ford",
-                model: "F-150",
-                yearStart: "2009",
-                yearEnd: "2024",
-                keyTypes: ["Remote Key", "Transponder Key"]
-              }
-            ]
-          },
-          {
-            id: "sample-5",
-            image: "/sample-key-5.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-5.png", // Add imageUrl for compatibility
-            title: "Chevrolet Silverado Key",
-            model: "CHEV-433MHz",
-            price: "$59.95",
-            category: "Car Keys",
-            vehicleType: "Truck" as const,
-            description: "Standard key for Chevrolet Silverado models",
-            selectedCompatibility: [
-              {
-                brand: "Chevrolet",
-                model: "Silverado",
-                yearStart: "2007",
-                yearEnd: "2024",
-                keyTypes: ["Transponder Key", "Remote Key"]
-              }
-            ]
-          },
-          {
-            id: "sample-6",
-            image: "/sample-key-6.png", // Use 'image' instead of 'imageUrl' for consistency
-            imageUrl: "/sample-key-6.png", // Add imageUrl for compatibility
-            title: "Nissan Altima Smart Key",
-            model: "NISS-434MHz",
-            price: "$149.99",
-            category: "Car Keys",
-            vehicleType: "Car" as const,
-            description: "Smart key system for Nissan Altima with push-button start",
-            selectedCompatibility: [
-              {
-                brand: "Nissan",
-                model: "Altima",
-                yearStart: "2013",
-                yearEnd: "2024",
-                keyTypes: ["Smart Key", "Proximity Key"]
-              }
-            ]
-          }
-        ];
+        // Fetch real products from Firestore
+        const productsRef = collection(db, 'products');
+        const productsQuery = query(productsRef);
+        const productsSnapshot = await getDocs(productsQuery);
         
-        // Exclude the current product if it's a sample product
-        const filtered = sampleProducts.filter((p) => p.id !== params.id);
-        
-        // Shuffle the array to get random products
-        const shuffled = filtered.sort(() => 0.5 - Math.random());
-        // Take first 6 random products
-        const randomProducts = shuffled.slice(0, 6);
-        
-        console.log('Random products for carousel:', randomProducts.length, randomProducts);
-        setBestSellers(randomProducts);
+        if (!productsSnapshot.empty) {
+          const allProducts: Product[] = [];
+          productsSnapshot.forEach((doc) => {
+            const productData = doc.data();
+            allProducts.push({
+              id: doc.id,
+              ...productData
+            } as Product);
+          });
+          
+          // Filter out the current product and show all other products
+          const availableProducts = allProducts.filter((p) => 
+            p.id !== params.id
+          );
+          
+          console.log('All products found:', allProducts.length);
+          console.log('Available products after filtering:', availableProducts.length);
+          console.log('Product statuses:', allProducts.map(p => ({ id: p.id, status: p.status, visibility: p.visibility })));
+          
+          // Shuffle the array to get random products
+          const shuffled = availableProducts.sort(() => 0.5 - Math.random());
+          // Take first 6 random products
+          const randomProducts = shuffled.slice(0, 6);
+          
+          console.log('Random products for carousel:', randomProducts.length, randomProducts);
+          setBestSellers(randomProducts);
+        } else {
+          console.log('No products found in database');
+          setBestSellers([]);
+        }
       } catch (err) {
         console.error('Error fetching random products:', err);
         setBestSellers([]);

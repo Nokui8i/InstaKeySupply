@@ -45,6 +45,16 @@ body {
   /* Improve mobile touch scrolling */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  /* Ensure proper document flow */
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+html {
+  height: 100%;
 }
 
 /* Admin panel specific optimizations */
@@ -62,7 +72,6 @@ body {
 
 /* Prevent flickering on admin pages */
 .admin-page {
-  min-height: 100vh;
   will-change: auto;
   transform: translateZ(0);
 }
@@ -88,6 +97,24 @@ body {
 .admin-form {
   will-change: auto;
   transform: translateZ(0);
+}
+
+/* Ensure sidebar appears above everything on mobile */
+.sidebar-overlay {
+  z-index: 9998 !important;
+}
+
+.sidebar-content {
+  z-index: 9999 !important;
+}
+
+/* Force highest stacking context for mobile sidebars */
+@media (max-width: 1023px) {
+  .sidebar-overlay,
+  .sidebar-content {
+    position: fixed !important;
+    z-index: 9999 !important;
+  }
 }
 
 .admin-input {
