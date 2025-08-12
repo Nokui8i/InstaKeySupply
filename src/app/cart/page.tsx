@@ -18,9 +18,22 @@ export default function CartPage() {
       const newSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       setSubtotal(newSubtotal);
       
+      // Calculate total savings from discounts
+      const totalSavings = cart.reduce((sum, item) => {
+        if (item.originalPrice && item.originalPrice > item.price) {
+          return sum + ((item.originalPrice - item.price) * item.quantity);
+        }
+        return sum;
+      }, 0);
+      
       // Use shipping cost from CartContext
       const shippingCost = shippingInfo?.cost || 0;
       setTotal(newSubtotal + shippingCost);
+      
+      // Log savings for debugging
+      if (totalSavings > 0) {
+        console.log('Total savings from discounts:', totalSavings);
+      }
     };
 
     calculateTotals();
@@ -106,7 +119,23 @@ export default function CartPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base sm:text-lg font-medium text-gray-900 truncate">{item.title}</h3>
-                      <p className="text-sm sm:text-base text-gray-600">${item.price.toFixed(2)}</p>
+                      <div className="flex items-center gap-2">
+                        {item.originalPrice && item.originalPrice > item.price ? (
+                          <>
+                            <span className="text-sm text-gray-400 line-through">${item.originalPrice.toFixed(2)}</span>
+                            <span className="text-sm sm:text-base text-red-600 font-medium">${item.price.toFixed(2)}</span>
+                            {item.discountInfo && (
+                              <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full">
+                                {item.discountInfo.discountType === 'percentage' ? 
+                                  `${item.discountInfo.discountValue}% OFF` : 
+                                  `$${item.discountInfo.discountValue} OFF`}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm sm:text-base text-gray-600">${item.price.toFixed(2)}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -181,6 +210,21 @@ export default function CartPage() {
                     <span className="text-gray-600">Subtotal:</span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
+                  {(() => {
+                    const totalSavings = cart.reduce((sum, item) => {
+                      if (item.originalPrice && item.originalPrice > item.price) {
+                        return sum + ((item.originalPrice - item.price) * item.quantity);
+                      }
+                      return sum;
+                    }, 0);
+                    
+                    return totalSavings > 0 ? (
+                      <div className="flex justify-between text-green-600">
+                        <span>You Save:</span>
+                        <span className="font-medium">-${totalSavings.toFixed(2)}</span>
+                      </div>
+                    ) : null;
+                  })()}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping:</span>
                     <span className="font-medium">${(shippingInfo?.cost || 0).toFixed(2)}</span>

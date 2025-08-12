@@ -11,6 +11,15 @@ interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
+  originalPrice?: number;
+  discountInfo?: {
+    discountName: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    originalPrice: string;
+    discountedPrice: string;
+    discountAmount: string;
+  };
 }
 
 export interface ShippingInfo {

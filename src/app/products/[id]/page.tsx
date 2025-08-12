@@ -34,6 +34,16 @@ interface Product {
   visibility?: 'visible' | 'catalog' | 'search' | 'hidden';
   salePrice?: string;
   regularPrice?: string;
+  discountInfo?: {
+    discountId: string;
+    discountName: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    originalPrice: string;
+    discountedPrice: string;
+    discountAmount: string;
+    appliedAt: any;
+  };
   vehicleType?: 'Car' | 'Truck' | 'SUV' | 'Van' | 'Motorcycle' | 'ATV' | 'Boat' | 'RV' | 'Commercial';
   brand?: string;
   year?: number;
@@ -243,17 +253,28 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!product) return;
+    
+    // Use discounted price if available, otherwise use regular price
+    const finalPrice = product.salePrice ? 
+      getPriceAsNumber(product.salePrice) : 
+      getPriceAsNumber(product.price);
+    
     console.log('Product page: Adding to cart:', { 
       product: product.id, 
       quantity, 
-      price: product.price 
+      originalPrice: product.price,
+      salePrice: product.salePrice,
+      finalPrice: finalPrice
     });
+    
     await addToCart({
       id: product.id,
       title: product.title,
-      price: getPriceAsNumber(product.price),
+      price: finalPrice,
       imageUrl: product.images?.[0] || product.imageUrl || '/sample-key-1.png',
       quantity,
+      originalPrice: product.salePrice ? getPriceAsNumber(product.price) : undefined,
+      discountInfo: product.discountInfo,
     }, quantity);
     setNotification('Added to cart!');
     setTimeout(() => setNotification(null), 2000);
