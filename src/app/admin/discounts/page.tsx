@@ -52,6 +52,16 @@ interface Product {
   categoryId: string;
   images?: string[];
   imageUrl?: string;
+  discountInfo?: {
+    discountId: string;
+    discountName: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    originalPrice: string;
+    discountedPrice: string;
+    discountAmount: string;
+    appliedAt: any;
+  };
 }
 
 interface Category {
@@ -422,7 +432,7 @@ export default function DiscountsPage() {
         console.log('Products found for update:', productsToUpdate.length);
         
         productsToUpdate.forEach(product => {
-          const currentPrice = parseFloat(product.price) || 0;
+          const currentPrice = typeof product.price === 'string' ? parseFloat(product.price) : Number(product.price) || 0;
           if (currentPrice <= 0) return;
           
           let discountedPrice = currentPrice;
@@ -595,7 +605,7 @@ export default function DiscountsPage() {
           );
           
           productsToUpdate.forEach(product => {
-            const currentPrice = parseFloat(product.price) || 0;
+            const currentPrice = typeof product.price === 'string' ? parseFloat(product.price) : Number(product.price) || 0;
             if (currentPrice <= 0) return;
             
             let discountedPrice = currentPrice;
