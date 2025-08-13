@@ -274,6 +274,11 @@ export default function ProductDetail() {
       imageUrl: product.images?.[0] || product.imageUrl || '/sample-key-1.png',
       quantity,
       originalPrice: product.salePrice ? getPriceAsNumber(product.price) : undefined,
+      // Product identification fields
+      sku: product.sku,
+      partNumber: product.partNumber,
+      manufacturer: product.manufacturer,
+      model: product.model,
       discountInfo: product.discountInfo,
     }, quantity);
     setNotification('Added to cart!');

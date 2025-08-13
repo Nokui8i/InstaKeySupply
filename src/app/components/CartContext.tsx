@@ -12,6 +12,12 @@ interface CartItem {
   imageUrl: string;
   quantity: number;
   originalPrice?: number;
+  // Product identification fields
+  sku?: string;
+  partNumber?: string;
+  manufacturer?: string;
+  model?: string;
+  // Discount information
   discountInfo?: {
     discountName: string;
     discountType: "percentage" | "fixed";

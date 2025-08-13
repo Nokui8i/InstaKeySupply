@@ -342,6 +342,9 @@ export default function FlexibleProductForm({
   const [compatSelectedYear, setCompatSelectedYear] = useState('');
   // Structured compatibility array
   const [compatibility, setCompatibility] = useState<Array<{ make: string, model: string, yearRange: string }>>([]);
+  
+  // Vehicle detection state
+  const [vehicleDetectionText, setVehicleDetectionText] = useState('');
 
   // Load initial data if editing
   useEffect(() => {
@@ -501,6 +504,297 @@ export default function FlexibleProductForm({
     }));
   };
 
+    // Helper function to create custom fields from text
+  const createCustomFieldsFromText = (text: string) => {
+    const lines = text.split(/[\n\r]+/).map(line => line.trim()).filter(line => line.length > 0);
+    const newFields: Array<{id: string, label: string, value: string}> = [];
+    
+    // Group items by category first
+    const vehicleModels: string[] = [];
+    const buttons: string[] = [];
+    const oemParts: string[] = [];
+    const otherItems: Array<{label: string, value: string}> = [];
+    
+    lines.forEach(line => {
+      // Skip empty lines
+      if (!line.trim()) return;
+      
+      // Check if line contains a colon (label: value format)
+      if (line.includes(':')) {
+        const [label, ...valueParts] = line.split(':');
+        const value = valueParts.join(':').trim();
+        
+        if (label.trim() && value) {
+          otherItems.push({
+            label: label.trim(),
+            value: value
+          });
+        }
+      } else {
+        // If no colon, try to detect common patterns
+        const lowerLine = line.toLowerCase();
+        
+        // Vehicle compatibility patterns - detect Lexus, BMW, Ford, etc. models
+        if (lowerLine.includes('lexus') || lowerLine.includes('bmw') || lowerLine.includes('ford') || 
+            lowerLine.includes('toyota') || lowerLine.includes('honda') || lowerLine.includes('mercedes') ||
+            lowerLine.includes('audi') || lowerLine.includes('volkswagen') || lowerLine.includes('nissan') ||
+            lowerLine.includes('chevrolet') || lowerLine.includes('dodge') || lowerLine.includes('jeep') ||
+            lowerLine.includes('hyundai') || lowerLine.includes('kia') || lowerLine.includes('mazda') ||
+            lowerLine.includes('subaru') || lowerLine.includes('volvo') || lowerLine.includes('jaguar') ||
+            lowerLine.includes('land rover') || lowerLine.includes('porsche') || lowerLine.includes('ferrari') ||
+            lowerLine.includes('lamborghini') || lowerLine.includes('maserati') || lowerLine.includes('alfa romeo')) {
+          
+          vehicleModels.push(line.trim());
+        }
+        // Button patterns
+        else if (lowerLine.includes('lock') || lowerLine.includes('unlock') || lowerLine.includes('trunk') || lowerLine.includes('panic')) {
+          buttons.push(line.trim());
+        }
+        // OEM Part patterns
+        else if (lowerLine.includes('oem') || lowerLine.includes('part') || /^\d{5}-\d{2}[A-Z]\d{2}$/.test(line.trim())) {
+          oemParts.push(line.trim());
+        }
+        // FCC ID patterns
+        else if (lowerLine.includes('fcc') || lowerLine.includes('hyq')) {
+          otherItems.push({
+            label: 'FCC ID',
+            value: line.trim()
+          });
+        }
+        // Chip patterns
+        else if (lowerLine.includes('chip') || lowerLine.includes('texas') || lowerLine.includes('h-8a')) {
+          otherItems.push({
+            label: 'CHIP',
+            value: line.trim()
+          });
+        }
+        // Frequency patterns
+        else if (lowerLine.includes('mhz') || lowerLine.includes('frequency')) {
+          otherItems.push({
+            label: 'FREQUENCY',
+            value: line.trim()
+          });
+        }
+        // Battery patterns
+        else if (lowerLine.includes('cr') || lowerLine.includes('battery')) {
+          otherItems.push({
+            label: 'BATTERY',
+            value: line.trim()
+          });
+        }
+        // Keyway patterns
+        else if (lowerLine.includes('keyway') || lowerLine.includes('lxp')) {
+          otherItems.push({
+            label: 'KEYWAY',
+            value: line.trim()
+          });
+        }
+        // Condition patterns
+        else if (lowerLine.includes('condition') || lowerLine.includes('oem') || lowerLine.includes('new')) {
+          otherItems.push({
+            label: 'CONDITION',
+            value: line.trim()
+          });
+        }
+        // Default: create a generic field
+        else {
+          otherItems.push({
+            label: 'Additional Info',
+            value: line.trim()
+          });
+        }
+      }
+    });
+    
+    // Create consolidated fields
+    if (vehicleModels.length > 0) {
+      newFields.push({
+        id: `field_${Date.now()}_${Math.random()}`,
+        label: 'WORKS ON THE FOLLOWING MODELS',
+        value: vehicleModels.join('\n')
+      });
+    }
+    
+    if (buttons.length > 0) {
+      newFields.push({
+        id: `field_${Date.now()}_${Math.random()}`,
+        label: 'BUTTONS',
+        value: buttons.join('\n')
+      });
+    }
+    
+    if (oemParts.length > 0) {
+      newFields.push({
+        id: `field_${Date.now()}_${Math.random()}`,
+        label: 'OEM PART #(S)',
+        value: oemParts.join('\n')
+      });
+    }
+    
+    // Add other individual fields
+    otherItems.forEach(item => {
+      newFields.push({
+        id: `field_${Date.now()}_${Math.random()}`,
+        label: item.label,
+        value: item.value
+      });
+    });
+    
+    return newFields;
+  };
+
+  // Auto-detect vehicle compatibility from a specific custom field
+  const detectVehiclesFromField = (fieldId: string) => {
+    const field = formData.customFields.find(f => f.id === fieldId);
+    if (!field || !field.value.trim()) {
+      return;
+    }
+    
+    // Use the field's value for vehicle detection
+    const textToAnalyze = field.value;
+    const detectedVehicles: Array<{ make: string, model: string, yearRange: string }> = [];
+    const detectionLog: string[] = [];
+    
+    // Helper function to check if year ranges overlap
+    const yearRangesOverlap = (range1: string, range2: string): boolean => {
+      const [start1, end1] = range1.split('-').map(y => parseInt(y.trim()));
+      const [start2, end2] = range2.split('-').map(y => parseInt(y.trim()));
+      
+      // Handle single year ranges
+      const endYear1 = end1 || start1;
+      const endYear2 = end2 || start2;
+      
+      // Two ranges overlap if they share any common years
+      const overlaps = start1 <= endYear2 && endYear1 >= start2;
+      return overlaps;
+    };
+
+    // Helper function to find ALL overlapping year ranges from the database
+    const findAllOverlappingRanges = (targetRange: string, availableRanges: string[]): string[] => {
+      const overlappingRanges: string[] = [];
+      
+      availableRanges.forEach(range => {
+        const overlaps = yearRangesOverlap(targetRange, range);
+        if (overlaps) {
+          overlappingRanges.push(range);
+        }
+      });
+      
+      return overlappingRanges;
+    };
+
+    // Helper function to extract vehicle patterns from text
+    const extractVehiclePatterns = (text: string): Array<{make: string, model: string, yearRange: string}> => {
+      const patterns: Array<{make: string, model: string, yearRange: string}> = [];
+      
+      // Split text by lines or common separators to handle multiple vehicles
+      const lines = text.split(/[\n\r*]+/).map(line => line.trim()).filter(line => line.length > 0);
+      
+      lines.forEach(line => {
+        // Clean the line for processing
+        const cleanLine = line.replace(/[*\s]+/g, ' ').trim();
+        detectionLog.push(`Processing line: "${line}"`);
+        
+        // Look for patterns like "BMW 3-Series 2000-2007" or "BMW X5 2019-2023"
+        Object.keys(compatData).forEach(make => {
+          const makeLower = make.toLowerCase();
+          if (cleanLine.toLowerCase().includes(makeLower)) {
+            Object.keys(compatData[make]).forEach(model => {
+              const modelLower = model.toLowerCase();
+              if (cleanLine.toLowerCase().includes(modelLower)) {
+                // Extract year patterns near this make/model combination
+                const yearPattern = /(\d{4})(?:-(\d{4}))?/g;
+                let match;
+                
+                while ((match = yearPattern.exec(cleanLine)) !== null) {
+                  const yearStart = match[1];
+                  const yearEnd = match[2] || yearStart;
+                  const yearRange = `${yearStart}-${yearEnd}`;
+                  
+                  // Check if this year range is available for this make/model
+                  const availableRanges = compatData[make][model];
+                  const overlappingRanges = findAllOverlappingRanges(yearRange, availableRanges);
+                  
+                  if (overlappingRanges.length > 0) {
+                    detectionLog.push(`📅 Found ${overlappingRanges.length} overlapping range(s) for "${yearRange}": ${overlappingRanges.join(', ')}`);
+                    
+                    // Add each overlapping range as a separate entry (only database ranges)
+                    overlappingRanges.forEach(range => {
+                      // Check if this exact combination already exists in patterns
+                      const existingInPatterns = patterns.find(p => 
+                        p.make === make && p.model === model && p.yearRange === range
+                      );
+                      
+                      if (!existingInPatterns) {
+                        patterns.push({
+                          make,
+                          model,
+                          yearRange: range // Only add the database range, not the original text
+                        });
+                      }
+                    });
+                  } else {
+                    detectionLog.push(`❌ No overlapping ranges found for "${yearRange}" in available ranges: ${availableRanges.join(', ')}`);
+                  }
+                }
+              }
+            });
+          }
+        });
+      });
+      
+      return patterns;
+    };
+    
+    // Extract vehicle patterns from the field's text
+    const patterns = extractVehiclePatterns(textToAnalyze);
+    
+    patterns.forEach(pattern => {
+      const existing = detectedVehicles.find(v => 
+        v.make === pattern.make && v.model === pattern.model && v.yearRange === pattern.yearRange
+      );
+      
+      if (!existing) {
+        detectedVehicles.push(pattern);
+        detectionLog.push(`✅ Detected: ${pattern.make} ${pattern.model} (${pattern.yearRange})`);
+      }
+    });
+    
+    // Add detected vehicles to compatibility list
+    if (detectedVehicles.length > 0) {
+      const newCompatibility = [...compatibility];
+      detectedVehicles.forEach(vehicle => {
+        const exists = newCompatibility.some(v => 
+          v.make === vehicle.make && v.model === vehicle.model && v.yearRange === vehicle.yearRange
+        );
+        if (!exists) {
+          newCompatibility.push(vehicle);
+        }
+      });
+      setCompatibility(newCompatibility);
+      
+      // Automatically create separate custom fields for each piece of information
+      // Use the helper function to create custom fields
+      const newFields = createCustomFieldsFromText(textToAnalyze);
+      
+      // Add all new fields to the form
+      if (newFields.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          customFields: [...prev.customFields, ...newFields]
+        }));
+      }
+      
+      // Show success message in console
+      const message = `Detected ${detectedVehicles.length} vehicle range(s) from "${field.label}":\n\n${detectedVehicles.map(v => `• ${v.make} ${v.model} (${v.yearRange})`).join('\n')}\n\n✅ Added to Vehicle Compatibility section!\n✅ Created ${newFields.length} custom fields for product details!`;
+      console.log(message);
+    } else {
+      // Show detection log for debugging in console
+      const debugMessage = `No vehicle compatibility patterns found in "${field.label}".\n\nDetection log:\n${detectionLog.join('\n')}\n\nMake sure to include make, model, and year information in your text.`;
+      console.log(debugMessage);
+    }
+  };
+
   // Auto-detect vehicle compatibility from custom fields
   const detectVehicleCompatibility = () => {
     const detectedVehicles: Array<{ make: string, model: string, yearRange: string }> = [];
@@ -640,31 +934,30 @@ export default function FlexibleProductForm({
       return patterns;
     };
     
-    // Scan all custom fields for vehicle information
-    formData.customFields.forEach(field => {
-      if (field.label && field.value) {
-        const text = field.value; // Use just the value, not the label
-        detectionLog.push(`Scanning field: "${field.label}" with value: "${text}"`);
-        
-        // Extract vehicle patterns from this field
-        const patterns = extractVehiclePatterns(text);
-        
-        patterns.forEach(pattern => {
-          const existing = detectedVehicles.find(v => 
-            v.make === pattern.make && v.model === pattern.model && v.yearRange === pattern.yearRange
-          );
-          
-          if (!existing) {
-            detectedVehicles.push(pattern);
-            detectionLog.push(`✅ Detected: ${pattern.make} ${pattern.model} (${pattern.yearRange})`);
-          }
-        });
-        
-        if (patterns.length === 0) {
-          detectionLog.push(`❌ No vehicle patterns found in: "${text}"`);
-        }
+    // Use the dedicated vehicle detection text input
+    if (!vehicleDetectionText.trim()) {
+      return;
+    }
+    
+    detectionLog.push(`Scanning vehicle detection text: "${vehicleDetectionText}"`);
+    
+    // Extract vehicle patterns from the detection text
+    const patterns = extractVehiclePatterns(vehicleDetectionText);
+    
+    patterns.forEach(pattern => {
+      const existing = detectedVehicles.find(v => 
+        v.make === pattern.make && v.model === pattern.model && v.yearRange === pattern.yearRange
+      );
+      
+      if (!existing) {
+        detectedVehicles.push(pattern);
+        detectionLog.push(`✅ Detected: ${pattern.make} ${pattern.model} (${pattern.yearRange})`);
       }
     });
+    
+    if (patterns.length === 0) {
+      detectionLog.push(`❌ No vehicle patterns found in: "${vehicleDetectionText}"`);
+    }
 
     // Add detected vehicles to compatibility list
     if (detectedVehicles.length > 0) {
@@ -679,17 +972,26 @@ export default function FlexibleProductForm({
       });
       setCompatibility(newCompatibility);
       
-      // Show detailed success message
-      const message = `Detected ${detectedVehicles.length} vehicle range(s):\n\n` +
-        detectedVehicles.map(v => `• ${v.make} ${v.model} (${v.yearRange})`).join('\n') +
-        '\n\nAdded to Vehicle Compatibility section!\n\nThese are the actual database ranges that will be used for filtering. Your original text will be shown in the product description.';
-      alert(message);
+      // Use the helper function to create custom fields
+      const newFields = createCustomFieldsFromText(vehicleDetectionText);
+      
+      // Add all new fields to the form
+      if (newFields.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          customFields: [...prev.customFields, ...newFields]
+        }));
+      }
+      
+      // Show detailed success message in console
+      const message = `Detected ${detectedVehicles.length} vehicle range(s):\n\n${detectedVehicles.map(v => `• ${v.make} ${v.model} (${v.yearRange})`).join('\n')}\n\n✅ Added to Vehicle Compatibility section!\n✅ Created ${newFields.length} custom fields for product details!\n\nThese are the actual database ranges that will be used for filtering. Your original text will be shown in the product description.`;
+      console.log(message);
     } else {
-      // Show detection log for debugging
+      // Show detection log for debugging in console
       const debugMessage = 'No vehicle compatibility patterns found.\n\nDetection log:\n' + 
         detectionLog.join('\n') + 
-        '\n\nMake sure to include make, model, and year information in your custom fields.';
-      alert(debugMessage);
+        '\n\nMake sure to include make, model, and year information in your text.';
+      console.log(debugMessage);
     }
   };
 
@@ -930,6 +1232,18 @@ export default function FlexibleProductForm({
                 value={formData.manufacturer}
                 onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
                 className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">SKU *</label>
+              <input
+                type="text"
+                value={formData.sku}
+                onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                placeholder="Enter SKU (e.g., FORD-F150-3BTN)"
+                required
               />
             </div>
             
@@ -1226,21 +1540,57 @@ export default function FlexibleProductForm({
                     className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm resize-vertical"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeCustomField(field.id)}
-                  className="px-2 py-1.5 sm:py-2 text-red-600 hover:text-red-800 text-sm"
-                  title="Remove field"
-                >
-                  ×
-                </button>
+                <div className="flex flex-col gap-1">
+                  {/* Detect Vehicles Button - Only show for fields that might contain vehicle info */}
+                  {(field.label.toLowerCase().includes('vehicle') || 
+                    field.label.toLowerCase().includes('compatibility') || 
+                    field.label.toLowerCase().includes('model') ||
+                    field.label.toLowerCase().includes('make') ||
+                    field.label.toLowerCase().includes('year')) && (
+                    <button
+                      type="button"
+                      onClick={() => detectVehiclesFromField(field.id)}
+                      disabled={!field.value.trim() || compatLoading}
+                      className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Detect vehicles from this field's text"
+                    >
+                      {compatLoading ? 'Detecting...' : '🚗 Detect Vehicles'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeCustomField(field.id)}
+                    className="px-2 py-1 text-red-600 hover:text-red-800 text-xs"
+                    title="Remove field"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             ))}
             
 
           </div>
           
-
+          {/* Live Preview - How the final product description will look */}
+          {formData.customFields.length > 0 && (
+            <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">📋 Live Preview - Final Product Description</h4>
+              <div className="bg-gray-50 p-3 rounded border text-xs text-gray-700 max-h-60 overflow-y-auto">
+                {formData.customFields.map((field, index) => (
+                  <div key={field.id} className="mb-3 last:mb-0">
+                    <div className="font-semibold text-gray-900 mb-1">{field.label}</div>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {field.value || <span className="text-gray-400 italic">(empty)</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                This is how your product details will appear to customers. Each field becomes a separate section in the product description.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Vehicle Compatibility */}
@@ -1255,6 +1605,33 @@ export default function FlexibleProductForm({
             >
               + Add Vehicle
             </button>
+          </div>
+
+          {/* Automatic Vehicle Detection */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-900 mb-2">🚗 Automatic Vehicle Detection</h4>
+            <p className="text-xs text-blue-700 mb-3">
+              Paste vehicle text here to automatically detect and add vehicle compatibility. 
+              Example: &quot;BMW 3-Series 2000-2007, BMW X3 2004-2010&quot;
+            </p>
+            <div className="flex gap-2">
+              <textarea
+                value={vehicleDetectionText}
+                onChange={(e) => setVehicleDetectionText(e.target.value)}
+                placeholder="Paste vehicle compatibility text here..."
+                rows={3}
+                className="flex-1 px-2 py-1.5 border border-blue-300 rounded text-xs resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={detectVehicleCompatibility}
+                disabled={!vehicleDetectionText.trim() || compatLoading}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {compatLoading ? 'Detecting...' : 'Detect Vehicles'}
+              </button>
+            </div>
+
           </div>
           
 

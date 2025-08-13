@@ -43,12 +43,133 @@ export async function POST(req: NextRequest) {
       logoUrl = '';
     }
 
-    // Email to admin (plain text)
+    // Enhanced admin email focused on supply/inventory needs (no pricing)
+    const adminSubject = `📦 NEW ORDER #${orderId.slice(-8).toUpperCase()} - ${items.length} ITEM${items.length > 1 ? 'S' : ''}`;
+    
+    // Create detailed admin email content for supply team
+    const adminEmailContent = `
+📦 NEW ORDER RECEIVED - READY FOR FULFILLMENT!
+
+📋 ORDER DETAILS:
+Order ID: ${orderId}
+Firestore ID: ${firestoreOrderId || 'N/A'}
+Date: ${new Date().toLocaleString()}
+Total Items: ${items.length}
+
+👤 CUSTOMER INFORMATION:
+Name: ${customer.name}
+Email: ${customer.email}
+Phone: ${customer.phone}
+
+📍 SHIPPING ADDRESS:
+${address.street}
+${address.city}, ${address.state} ${address.zip}
+${address.country}
+
+🛍️ ORDER ITEMS TO FULFILL:
+${items.map((item: any, index: number) => {
+  const skuInfo = item.sku ? `\n     SKU: ${item.sku}` : '';
+  const partNumberInfo = item.partNumber ? `\n     Part Number: ${item.partNumber}` : '';
+  const manufacturerInfo = item.manufacturer ? `\n     Manufacturer: ${item.manufacturer}` : '';
+  const modelInfo = item.model ? `\n     Model: ${item.model}` : '';
+  return `${index + 1}. ${item.title}${skuInfo}${partNumberInfo}${manufacturerInfo}${modelInfo}
+     Quantity: ${item.quantity}`;
+}).join('\n\n')}
+
+🔗 ADMIN LINKS:
+View Order: ${process.env.NEXT_PUBLIC_BASE_URL || 'https://instakeysupply.com'}/admin/orders
+`;
+
+    // Create HTML version of admin email for better formatting
+    const adminHtmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+        .section { margin: 20px 0; padding: 15px; background: white; border-radius: 6px; border-left: 4px solid #2563eb; }
+        .section h3 { margin: 0 0 10px 0; color: #1e40af; font-size: 18px; }
+        .item { margin: 10px 0; padding: 10px; background: #f1f5f9; border-radius: 4px; }
+        .highlight { background: #dbeafe; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .admin-link { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .admin-link:hover { background: #1d4ed8; }
+        .total { font-size: 20px; font-weight: bold; color: #059669; }
+      </style>
+    </head>
+    <body>
+             <div class="header">
+         <h1>📦 NEW ORDER RECEIVED!</h1>
+         <h2>Order #${orderId.slice(-8).toUpperCase()} - ${items.length} ITEM${items.length > 1 ? 'S' : ''}</h2>
+       </div>
+       
+       <div class="content">
+         <div class="section">
+           <h3>📋 ORDER DETAILS</h3>
+           <p><strong>Order ID:</strong> ${orderId}</p>
+           <p><strong>Firestore ID:</strong> ${firestoreOrderId || 'N/A'}</p>
+           <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+           <p><strong>Total Items:</strong> <span class="total">${items.length}</span></p>
+         </div>
+        
+        <div class="section">
+          <h3>👤 CUSTOMER INFORMATION</h3>
+          <p><strong>Name:</strong> ${customer.name}</p>
+          <p><strong>Email:</strong> ${customer.email}</p>
+          <p><strong>Phone:</strong> ${customer.phone}</p>
+        </div>
+        
+        <div class="section">
+          <h3>📍 SHIPPING ADDRESS</h3>
+          <p>${address.street}</p>
+          <p>${address.city}, ${address.state} ${address.zip}</p>
+          <p>${address.country}</p>
+        </div>
+        
+                 <div class="section">
+           <h3>🛍️ ORDER ITEMS TO FULFILL</h3>
+           ${items.map((item: any, index: number) => {
+             const skuInfo = item.sku ? `<br><strong>SKU:</strong> ${item.sku}` : '';
+             const partNumberInfo = item.partNumber ? `<br><strong>Part Number:</strong> ${item.partNumber}` : '';
+             const manufacturerInfo = item.manufacturer ? `<br><strong>Manufacturer:</strong> ${item.manufacturer}` : '';
+             const modelInfo = item.model ? `<br><strong>Model:</strong> ${item.model}` : '';
+             return `
+             <div class="item">
+               <h4>${index + 1}. ${item.title}</h4>
+               ${skuInfo}
+               ${partNumberInfo}
+               ${manufacturerInfo}
+               ${modelInfo}
+               <p><strong>Quantity:</strong> ${item.quantity}</p>
+             </div>`;
+           }).join('')}
+         </div>
+        
+                 <div class="section">
+           <h3>🔗 SUPPLY TEAM ACTIONS</h3>
+           <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://instakeysupply.com'}/admin/orders" class="admin-link">
+             📋 View Order Details in Admin Panel
+           </a>
+           <p style="margin-top: 15px; font-size: 14px; color: #666;">
+             <strong>Next Steps:</strong><br>
+             • Locate items in inventory using SKU/Part Numbers<br>
+             • Verify quantities and item specifications<br>
+             • Prepare for shipping to customer address above
+           </p>
+         </div>
+      </div>
+    </body>
+    </html>
+    `;
+
     const mailOptionsAdmin = {
       from: process.env.OWNER_EMAIL || 'paylocksmith@gmail.com',
       to: process.env.OWNER_EMAIL || 'paylocksmith@gmail.com',
-      subject: 'New Order Received',
-      text: `New order received!\n\nCustomer: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\n\nShipping Address:\n${address.street}\n${address.city}, ${address.state} ${address.zip}, ${address.country}\n\nOrder Items:\n${items.map((item: any) => `${item.title} x ${item.quantity} - $${item.price * item.quantity}`).join('\n')}\n\nTotal: $${total}\n\nOrder ID: ${orderId}\nFirestore ID: ${firestoreOrderId || 'N/A'}`,
+      subject: adminSubject,
+      text: adminEmailContent,
+      html: adminHtmlContent,
     };
 
     // Prepare customer email content
