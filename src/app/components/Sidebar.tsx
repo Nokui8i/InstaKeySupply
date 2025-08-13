@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  HomeIcon, 
   ShoppingBagIcon, 
   UserIcon, 
   HeartIcon, 
@@ -10,12 +9,6 @@ import {
   Bars3Icon,
   XMarkIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  KeyIcon,
-  TruckIcon,
-  WrenchScrewdriverIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from './AuthContext';
@@ -138,47 +131,76 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                   <div className="flex items-center gap-3">
-           <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-             <span className="text-white font-bold text-lg">IK</span>
-           </div>
-           <div>
-             <h2 className="font-bold text-gray-900">InstaKey Supply</h2>
-             {user ? (
-               <div className="space-y-1">
-                 <p className="text-sm text-gray-500">Signed in</p>
-                 <button 
-                   onClick={() => {
-                     logout();
-                     onClose();
-                   }}
-                   className="text-xs text-red-600 hover:text-red-700 font-medium"
-                 >
-                   Logout
-                 </button>
-               </div>
-             ) : (
-               <Link 
-                 href="/login" 
-                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                 onClick={onClose}
-               >
-                 Sign In
-               </Link>
-             )}
-           </div>
-         </div>
-                     <button
-             onClick={onClose}
-             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-             aria-label="Close sidebar"
-           >
-             <XMarkIcon className="w-6 h-6 text-gray-600" />
-           </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">IK</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900">InstaKey Supply</h2>
+              {user ? (
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">Signed in</p>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      onClose();
+                    }}
+                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  onClick={onClose}
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <XMarkIcon className="w-6 h-6 text-gray-600" />
+          </button>
         </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
+          {/* User Profile Section - When Logged In */}
+          {user && (
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-blue-50">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Welcome back, {user.email?.split('@')[0] || 'User'}!
+              </h3>
+              <div className="space-y-2">
+                <Link 
+                  href="/wishlist" 
+                  className="flex items-center gap-3 p-3 text-gray-700 rounded-lg hover:bg-white/50 transition-colors"
+                  onClick={onClose}
+                >
+                  <HeartIcon className="w-5 h-5 text-pink-600" />
+                  <span className="text-sm font-medium">My Wishlist</span>
+                </Link>
+                <button 
+                  onClick={() => {
+                    logout();
+                    onClose();
+                  }}
+                  className="flex items-center gap-3 w-full p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-left"
+                >
+                  <UserIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Sign Out</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Admin Panel Section - Only show if user is admin */}
           {user && (
             <div className="p-4 border-b border-gray-100">
@@ -196,12 +218,42 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           )}
 
+          {/* Quick Actions */}
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Quick Actions
+            </h3>
+            <div className="space-y-2">
+              <Link 
+                href="/cart" 
+                className="flex items-center gap-3 p-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={onClose}
+              >
+                <ShoppingCartIcon className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium">Shopping Cart</span>
+                {cartCount > 0 && (
+                  <span className="ml-auto bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              <Link 
+                href="/wishlist" 
+                className="flex items-center gap-3 p-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={onClose}
+              >
+                <HeartIcon className="w-5 h-5 text-pink-600" />
+                <span className="text-sm font-medium">Wishlist</span>
+              </Link>
+            </div>
+          </div>
+
           {/* Categories */}
           {categories.length > 0 && (
             <div className="p-4 space-y-2 border-t border-gray-100">
-                             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                 Categories
-               </h3>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Categories
+              </h3>
               <div className="space-y-1">
                 {categories
                   .filter(cat => !cat.isSubcategory)
@@ -216,8 +268,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </div>
             </div>
           )}
-          
-
         </div>
       </div>
     </>

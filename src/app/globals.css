@@ -57,6 +57,66 @@ html {
   height: 100%;
 }
 
+/* Mobile navbar optimizations */
+.mobile-search-container {
+  position: fixed !important;
+  top: 64px !important; /* Adjust based on navbar height */
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  /* Ensure it doesn't affect other elements */
+  transform: translateZ(0);
+}
+
+/* Ensure mobile filter dropdown is properly positioned */
+@media (max-width: 1024px) {
+  .mobile-filter-dropdown {
+    position: fixed !important;
+    top: 64px !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    max-width: 90vw;
+    /* Ensure it doesn't get affected by search expansion */
+    transform: translateZ(0);
+  }
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 768px) {
+  .mobile-nav-button {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Ensure navbar elements maintain their position */
+  .navbar-mobile-section {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Prevent body scroll when mobile search is open */
+body.mobile-search-open {
+  overflow: hidden;
+}
+
+/* Ensure mobile search doesn't affect filter button layout */
+@media (max-width: 1024px) {
+  .mobile-search-filter-container {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .mobile-search-expanded {
+    position: fixed;
+    z-index: 9999;
+  }
+}
+
 /* Admin panel specific optimizations */
 .admin-layout {
   will-change: auto;
