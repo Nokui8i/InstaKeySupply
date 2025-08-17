@@ -430,9 +430,10 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         value={selectedMake}
                         onChange={(e) => setSelectedMake(e.target.value)}
+                        disabled={loadingVehicleData}
                       >
-                        <option value="">Select Make</option>
-                        {Object.keys(vehicleData).map(make => (
+                        <option value="">{loadingVehicleData ? 'Loading...' : 'Select Make'}</option>
+                        {!loadingVehicleData && Object.keys(vehicleData).map(make => (
                           <option key={make} value={make}>{make}</option>
                         ))}
                       </select>
@@ -453,11 +454,16 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
+                        disabled={!selectedMake || !selectedModel}
                       >
-                        <option value="">Select Year</option>
-                        {Array.from({length: 25}, (_, i) => 2024 - i).map(year => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
+                        <option value="">Select Year Range</option>
+                        {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].length > 0 ? (
+                          vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
+                            <option key={yearRange} value={yearRange}>{yearRange}</option>
+                          ))
+                        ) : selectedMake && selectedModel ? (
+                          <option value="" disabled>No year ranges available</option>
+                        ) : null}
                       </select>
                       
                       <button 
@@ -515,16 +521,17 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         </button>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <select 
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          value={selectedMake}
-                          onChange={(e) => setSelectedMake(e.target.value)}
-                        >
-                          <option value="">Make</option>
-                          {Object.keys(vehicleData).map(make => (
-                            <option key={make} value={make}>{make}</option>
-                          ))}
-                        </select>
+                                              <select 
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        value={selectedMake}
+                        onChange={(e) => setSelectedMake(e.target.value)}
+                        disabled={loadingVehicleData}
+                      >
+                        <option value="">{loadingVehicleData ? 'Loading...' : 'Make'}</option>
+                        {!loadingVehicleData && Object.keys(vehicleData).map(make => (
+                          <option key={make} value={make}>{make}</option>
+                        ))}
+                      </select>
                         <select 
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           value={selectedModel}
@@ -535,16 +542,21 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                             <option key={model} value={model}>{model}</option>
                           ))}
                         </select>
-                        <select 
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          value={selectedYear}
-                          onChange={(e) => setSelectedYear(e.target.value)}
-                        >
-                          <option value="">Year</option>
-                          {Array.from({length: 25}, (_, i) => 2024 - i).map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
+                                              <select 
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        disabled={!selectedMake || !selectedModel}
+                      >
+                        <option value="">Year Range</option>
+                        {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].length > 0 ? (
+                          vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
+                            <option key={yearRange} value={yearRange}>{yearRange}</option>
+                          ))
+                        ) : selectedMake && selectedModel ? (
+                          <option value="" disabled>No year ranges available</option>
+                        ) : null}
+                      </select>
                         <button 
                           className="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors active:scale-95"
                           onClick={() => {

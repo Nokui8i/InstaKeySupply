@@ -119,9 +119,15 @@ function HomeContent() {
           // 3. Universal year: brand=make AND model=model AND (yearStart="" OR yearRange matches)
           // 4. Universal both: brand=make AND model="" AND (yearStart="" OR yearRange matches)
           
+          // Parse the year range filter (e.g., "2015-2020" -> start: 2015, end: 2020)
+          const yearRangeParts = filters.yearRange.split('-');
+          const filterYearStart = parseInt(yearRangeParts[0]);
+          const filterYearEnd = parseInt(yearRangeParts[1] || yearRangeParts[0]);
+          
           const yearMatches = !compatibility.yearStart || 
-                             (filters.yearRange && compatibility.yearStart && compatibility.yearEnd &&
-                              filters.yearRange >= compatibility.yearStart && filters.yearRange <= compatibility.yearEnd);
+                             (compatibility.yearStart && compatibility.yearEnd &&
+                              filterYearStart <= parseInt(compatibility.yearEnd) && 
+                              filterYearEnd >= parseInt(compatibility.yearStart));
           
           return compatibility.brand === filters.make && 
                  (compatibility.model === filters.model || compatibility.model === "") &&
@@ -445,7 +451,7 @@ function HomeContent() {
         <section className="mb-12 sm:mb-16">
           <div className="relative mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-blue-600 drop-shadow text-center">
-              {activeFilters ? `Filtered Products for: ${activeFilters.make}` : 'All Products'}
+              {activeFilters ? `Filtered Products for: ${activeFilters.make}${activeFilters.model ? ` ${activeFilters.model}` : ''}${activeFilters.yearRange ? ` (${activeFilters.yearRange})` : ''}` : 'All Products'}
             </h2>
             
             {/* Category Filter Display */}

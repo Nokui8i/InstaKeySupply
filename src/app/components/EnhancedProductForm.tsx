@@ -960,15 +960,14 @@ export default function EnhancedProductForm({
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category * ({categories.length} available)
+                Category ({categories.length} available)
               </label>
               <select
                 value={formData.categoryId || ''}
                 onChange={(e) => setFormData({...formData, categoryId: e.target.value, category: categories.find(cat => cat.id === e.target.value)?.name || ''})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
               >
-                <option value="">Select a category</option>
+                <option value="">Select a category (optional)</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}

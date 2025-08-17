@@ -1249,15 +1249,14 @@ export default function FlexibleProductForm({
             
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Main Category * ({categories.filter(cat => !cat.parentId).length} available)
+                Main Category ({categories.filter(cat => !cat.parentId).length} available)
               </label>
               <select
                 value={selectedMainCategory}
                 onChange={(e) => handleMainCategoryChange(e.target.value)}
                 className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
-                required
               >
-                <option value="">Select a main category</option>
+                <option value="">Select a main category (optional)</option>
                 {categories.filter(cat => !cat.parentId).map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -1278,15 +1277,14 @@ export default function FlexibleProductForm({
               {subcategories.length > 0 ? (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Subcategory * ({subcategories.length} available)
+                    Subcategory ({subcategories.length} available)
                   </label>
                   <select
                     value={formData.categoryId || ''}
                     onChange={(e) => handleSubcategoryChange(e.target.value)}
                     className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
-                    required
                   >
-                    <option value="">Select a subcategory</option>
+                    <option value="">Select a subcategory (optional)</option>
                     {subcategories.map((subcategory) => (
                       <option key={subcategory.id} value={subcategory.id}>
                         {subcategory.name}
