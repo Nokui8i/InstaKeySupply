@@ -17,6 +17,7 @@ interface FlexibleProductFormProps {
   initialData?: any;
   isEditing?: boolean;
   uploading?: boolean;
+  nextAvailableSKU?: number;
 }
 
 // Image Editor Component (same as EnhancedProductForm)
@@ -305,7 +306,8 @@ export default function FlexibleProductForm({
   onCancel, 
   initialData, 
   isEditing = false, 
-  uploading = false 
+  uploading = false,
+  nextAvailableSKU
 }: FlexibleProductFormProps) {
   const [formData, setFormData] = useState({
     title: "",
@@ -313,7 +315,7 @@ export default function FlexibleProductForm({
     category: "",
     categoryId: "",
     shortDescription: "",
-    sku: "",
+    sku: nextAvailableSKU ? nextAvailableSKU.toString() : "",
     partNumber: "",
     manufacturer: "",
     stock: "",
@@ -345,6 +347,9 @@ export default function FlexibleProductForm({
   
   // Vehicle detection state
   const [vehicleDetectionText, setVehicleDetectionText] = useState('');
+  
+  // SKU validation state
+  const [skuError, setSkuError] = useState<string>('');
 
   // Load initial data if editing
   useEffect(() => {
@@ -461,6 +466,55 @@ export default function FlexibleProductForm({
       ...prev,
       customFields: prev.customFields.filter(f => f.id !== id)
     }));
+  };
+
+  // Validate SKU uniqueness
+  const validateSKU = async (sku: string) => {
+    if (!sku.trim()) {
+      setSkuError('SKU is required');
+      return false;
+    }
+    
+    if (isEditing && sku === initialData?.sku) {
+      setSkuError(''); // Same SKU for editing is fine
+      return true;
+    }
+    
+    try {
+      const response = await fetch(`/api/check-sku?sku=${encodeURIComponent(sku)}`);
+      if (response.ok) {
+        const { isAvailable } = await response.json();
+        if (!isAvailable) {
+          setSkuError('SKU already exists. Please choose a different one.');
+          return false;
+        } else {
+          setSkuError('');
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking SKU:', error);
+      setSkuError('Error checking SKU availability');
+      return false;
+    }
+    
+    setSkuError('');
+    return true;
+  };
+
+  // Generate next available SKU
+  const generateNextSKU = async () => {
+    try {
+      const response = await fetch('/api/next-available-sku');
+      if (response.ok) {
+        const { nextSKU } = await response.json();
+        setFormData(prev => ({ ...prev, sku: nextSKU.toString() }));
+        setSkuError('');
+      }
+    } catch (error) {
+      console.error('Error generating next SKU:', error);
+      setSkuError('Error generating next SKU');
+    }
   };
 
   const handleMainCategoryChange = (categoryId: string) => {
@@ -1096,6 +1150,12 @@ export default function FlexibleProductForm({
       return;
     }
 
+    // Validate SKU
+    const isSKUValid = await validateSKU(formData.sku);
+    if (!isSKUValid) {
+      return;
+    }
+
     // Category selection is now optional
 
     // Generate selectedCompatibility from compatibility
@@ -1255,14 +1315,56 @@ export default function FlexibleProductForm({
 
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">SKU *</label>
-              <input
-                type="text"
-                value={formData.sku}
-                onChange={(e) => setFormData({...formData, sku: e.target.value})}
-                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
-                placeholder="Enter SKU (e.g., FORD-F150-3BTN)"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={formData.sku}
+                  onChange={(e) => {
+                    setFormData({...formData, sku: e.target.value});
+                    setSkuError(''); // Clear error when typing
+                  }}
+                  onBlur={() => validateSKU(formData.sku)}
+                  className={`flex-1 px-2 sm:px-3 py-1.5 sm:py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm ${
+                    skuError ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder={`Next available: ${nextAvailableSKU || 'Enter SKU'}`}
+                  required
+                />
+                {!isEditing && nextAvailableSKU && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, sku: nextAvailableSKU.toString() }));
+                      setSkuError('');
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition"
+                    title="Use next available SKU"
+                  >
+                    {nextAvailableSKU}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={generateNextSKU}
+                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition"
+                  title="Generate next available SKU"
+                >
+                  Generate
+                </button>
+              </div>
+              {skuError && (
+                <p className="text-red-500 text-xs mt-1">{skuError}</p>
+              )}
+              {!isEditing && nextAvailableSKU && (
+                <p className="text-blue-600 text-xs mt-1">
+                  💡 Next available SKU: {nextAvailableSKU} (click button to auto-fill)
+                </p>
+              )}
+              {isEditing && (
+                <p className="text-gray-600 text-xs mt-1">
+                  📝 Editing existing product. Current SKU: {initialData?.sku}
+                </p>
+              )}
             </div>
             
             <div>

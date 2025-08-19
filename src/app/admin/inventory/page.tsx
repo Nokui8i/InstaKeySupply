@@ -135,6 +135,8 @@ function AdminInventoryContent() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20);
+  const [sortField, setSortField] = useState<'title' | 'sku' | 'price' | 'stock' | 'status'>('title');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [formData, setFormData] = useState({
     title: "",
     model: "",
@@ -287,6 +289,27 @@ function AdminInventoryContent() {
     return category ? category.name : "Unknown Category";
   };
 
+  // Helper function to get next available SKU number
+  const getNextAvailableSKU = () => {
+    const existingSKUs = products
+      .map(p => parseInt(p.sku))
+      .filter(sku => !isNaN(sku))
+      .sort((a, b) => a - b);
+    
+    if (existingSKUs.length === 0) return 1;
+    
+    // Find the first gap in the sequence, or use the next number after the highest
+    let nextSKU = 1;
+    for (const sku of existingSKUs) {
+      if (sku !== nextSKU) {
+        break;
+      }
+      nextSKU++;
+    }
+    
+    return nextSKU;
+  };
+
   useEffect(() => { 
     if (isAuthenticated) {
       fetchProducts();
@@ -304,16 +327,44 @@ function AdminInventoryContent() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // Sort filtered products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    // Handle SKU sorting (convert to numbers for proper numeric sorting)
+    if (sortField === 'sku') {
+      aValue = parseInt(aValue) || 0;
+      bValue = parseInt(bValue) || 0;
+    }
+    // Handle price sorting (convert to numbers)
+    else if (sortField === 'price') {
+      aValue = parseFloat(aValue) || 0;
+      bValue = parseFloat(bValue) || 0;
+    }
+    // Handle stock sorting (convert to numbers)
+    else if (sortField === 'stock') {
+      aValue = aValue || 0;
+      bValue = bValue || 0;
+    }
+
+    if (sortDirection === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
 
   // Reset to first page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedStatus]);
+  }, [searchTerm, selectedCategory, selectedStatus, sortField, sortDirection]);
 
   const goToPage = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -328,6 +379,16 @@ function AdminInventoryContent() {
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Handle column sorting
+  const handleSort = (field: 'title' | 'sku' | 'price' | 'stock' | 'status') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
     }
   };
 
@@ -1261,10 +1322,10 @@ function AdminInventoryContent() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                 <div>
                   <h1 className="text-lg sm:text-2xl lg:text-3xl font-medium sm:font-semibold text-gray-900">Inventory Management</h1>
-                  <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-0.5 sm:mt-1">
-                    Total: {filteredProducts.length} products
-                    {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
-                  </p>
+                                     <p className="text-gray-500 text-xs sm:text-sm lg:text-base mt-0.5 sm:mt-1">
+                     Total: {sortedProducts.length} products
+                     {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 w-full sm:w-auto">
                   <button 
@@ -1387,14 +1448,62 @@ function AdminInventoryContent() {
                           style={{ pointerEvents: 'auto', zIndex: 1000 }}
                         />
                       </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Image</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Product</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">SKU</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Category</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Price</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Stock</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Status</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Actions</th>
+                                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Image</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Product</th>
+                       <th 
+                         className="px-3 py-2 text-left text-xs font-medium text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                         onClick={() => handleSort('sku')}
+                       >
+                         <div className="flex items-center gap-1">
+                           SKU
+                           {sortField === 'sku' && (
+                             <span className="text-blue-600">
+                               {sortDirection === 'asc' ? '↑' : '↓'}
+                             </span>
+                           )}
+                         </div>
+                       </th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Category</th>
+                       <th 
+                         className="px-3 py-2 text-left text-xs font-medium text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                         onClick={() => handleSort('price')}
+                       >
+                         <div className="flex items-center gap-1">
+                           Price
+                           {sortField === 'price' && (
+                             <span className="text-blue-600">
+                               {sortDirection === 'asc' ? '↑' : '↓'}
+                             </span>
+                           )}
+                         </div>
+                       </th>
+                       <th 
+                         className="px-3 py-2 text-left text-xs font-medium text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                         onClick={() => handleSort('stock')}
+                       >
+                         <div className="flex items-center gap-1">
+                           Stock
+                           {sortField === 'stock' && (
+                             <span className="text-blue-600">
+                               {sortDirection === 'asc' ? '↑' : '↓'}
+                             </span>
+                           )}
+                         </div>
+                       </th>
+                       <th 
+                         className="px-3 py-2 text-left text-xs font-medium text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                         onClick={() => handleSort('status')}
+                       >
+                         <div className="flex items-center gap-1">
+                           Status
+                           {sortField === 'status' && (
+                             <span className="text-blue-600">
+                               {sortDirection === 'asc' ? '↑' : '↓'}
+                             </span>
+                           )}
+                         </div>
+                       </th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -1626,6 +1735,7 @@ function AdminInventoryContent() {
                   initialData={editingProduct}
                   isEditing={true}
                   uploading={uploading}
+                  nextAvailableSKU={getNextAvailableSKU()}
                 />
               </div>
             </div>
@@ -1639,6 +1749,7 @@ function AdminInventoryContent() {
                   onSubmit={handleFlexibleUploadAndAdd}
                   onCancel={() => setShowFlexibleUploadModal(false)}
                   uploading={uploading}
+                  nextAvailableSKU={getNextAvailableSKU()}
                 />
               </div>
             </div>
