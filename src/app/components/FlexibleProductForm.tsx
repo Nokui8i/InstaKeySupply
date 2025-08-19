@@ -467,6 +467,17 @@ export default function FlexibleProductForm({
     console.log('Main category changed to:', categoryId);
     setSelectedMainCategory(categoryId);
     
+    // If no category is selected, clear all category data
+    if (!categoryId) {
+      setSubcategories([]);
+      setFormData(prev => ({
+        ...prev,
+        categoryId: '',
+        category: ''
+      }));
+      return;
+    }
+    
     // Find subcategories for the selected main category
     const mainCategorySubcategories = categories.filter(cat => cat.parentId === categoryId);
     setSubcategories(mainCategorySubcategories);
@@ -495,6 +506,17 @@ export default function FlexibleProductForm({
 
   const handleSubcategoryChange = (subcategoryId: string) => {
     console.log('Subcategory changed to:', subcategoryId);
+    
+    // If no subcategory is selected, clear category data
+    if (!subcategoryId) {
+      setFormData(prev => ({
+        ...prev,
+        categoryId: '',
+        category: ''
+      }));
+      return;
+    }
+    
     const selectedSubcategory = subcategories.find(sub => sub.id === subcategoryId);
     console.log('Selected subcategory:', selectedSubcategory);
     setFormData(prev => ({
@@ -1074,11 +1096,7 @@ export default function FlexibleProductForm({
       return;
     }
 
-    // Validate category selection
-    if (!formData.categoryId) {
-      alert('Please select a category');
-      return;
-    }
+    // Category selection is now optional
 
     // Generate selectedCompatibility from compatibility
     const selectedCompatibility = (compatibility || []).map((comp: any) => {
@@ -1249,7 +1267,7 @@ export default function FlexibleProductForm({
             
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Main Category ({categories.filter(cat => !cat.parentId).length} available)
+                Main Category (optional) - {categories.filter(cat => !cat.parentId).length} available
               </label>
               <select
                 value={selectedMainCategory}
@@ -1277,14 +1295,14 @@ export default function FlexibleProductForm({
               {subcategories.length > 0 ? (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Subcategory ({subcategories.length} available)
+                    Subcategory (optional) - {subcategories.length} available
                   </label>
-                  <select
-                    value={formData.categoryId || ''}
-                    onChange={(e) => handleSubcategoryChange(e.target.value)}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
-                  >
-                    <option value="">Select a subcategory (optional)</option>
+              <select
+                value={formData.categoryId || ''}
+                onChange={(e) => handleSubcategoryChange(e.target.value)}
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+              >
+                <option value="">Select a subcategory (optional)</option>
                     {subcategories.map((subcategory) => (
                       <option key={subcategory.id} value={subcategory.id}>
                         {subcategory.name}

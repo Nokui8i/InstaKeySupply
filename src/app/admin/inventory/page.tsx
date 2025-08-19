@@ -282,8 +282,9 @@ function AdminInventoryContent() {
 
   // Helper function to get category name by ID
   const getCategoryName = (categoryId: string) => {
+    if (!categoryId) return "No Category";
     const category = availableCategories.find(cat => cat.id === categoryId);
-    return category ? category.name : "Car Keys";
+    return category ? category.name : "Unknown Category";
   };
 
   useEffect(() => { 
