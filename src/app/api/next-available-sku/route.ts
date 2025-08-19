@@ -12,9 +12,9 @@ export async function GET() {
     const existingSKUs = snapshot.docs
       .map(doc => {
         const data = doc.data();
-        return parseInt(data.sku);
+        return data.sku ? parseInt(data.sku) : null;
       })
-      .filter(sku => !isNaN(sku))
+      .filter((sku): sku is number => sku !== null && !isNaN(sku))
       .sort((a, b) => a - b);
     
     if (existingSKUs.length === 0) {

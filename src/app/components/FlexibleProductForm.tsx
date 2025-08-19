@@ -470,7 +470,7 @@ export default function FlexibleProductForm({
 
   // Validate SKU uniqueness
   const validateSKU = async (sku: string) => {
-    if (!sku.trim()) {
+    if (!sku || !sku.trim()) {
       setSkuError('SKU is required');
       return false;
     }
@@ -1151,6 +1151,11 @@ export default function FlexibleProductForm({
     }
 
     // Validate SKU
+    if (!formData.sku || !formData.sku.trim()) {
+      setSkuError('SKU is required');
+      return;
+    }
+    
     const isSKUValid = await validateSKU(formData.sku);
     if (!isSKUValid) {
       return;
@@ -1323,7 +1328,11 @@ export default function FlexibleProductForm({
                     setFormData({...formData, sku: e.target.value});
                     setSkuError(''); // Clear error when typing
                   }}
-                  onBlur={() => validateSKU(formData.sku)}
+                  onBlur={() => {
+                    if (formData.sku) {
+                      validateSKU(formData.sku);
+                    }
+                  }}
                   className={`flex-1 px-2 sm:px-3 py-1.5 sm:py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm ${
                     skuError ? 'border-red-500' : 'border-gray-300'
                   }`}

@@ -292,8 +292,8 @@ function AdminInventoryContent() {
   // Helper function to get next available SKU number
   const getNextAvailableSKU = () => {
     const existingSKUs = products
-      .map(p => parseInt(p.sku))
-      .filter(sku => !isNaN(sku))
+      .map(p => p.sku ? parseInt(p.sku) : null)
+      .filter((sku): sku is number => sku !== null && !isNaN(sku))
       .sort((a, b) => a - b);
     
     if (existingSKUs.length === 0) return 1;
@@ -334,18 +334,18 @@ function AdminInventoryContent() {
 
     // Handle SKU sorting (convert to numbers for proper numeric sorting)
     if (sortField === 'sku') {
-      aValue = parseInt(aValue) || 0;
-      bValue = parseInt(bValue) || 0;
+      aValue = aValue ? parseInt(aValue) || 0 : 0;
+      bValue = bValue ? parseInt(bValue) || 0 : 0;
     }
     // Handle price sorting (convert to numbers)
     else if (sortField === 'price') {
-      aValue = parseFloat(aValue) || 0;
-      bValue = parseFloat(bValue) || 0;
+      aValue = aValue ? parseFloat(aValue) || 0 : 0;
+      bValue = bValue ? parseFloat(bValue) || 0 : 0;
     }
     // Handle stock sorting (convert to numbers)
     else if (sortField === 'stock') {
-      aValue = aValue || 0;
-      bValue = bValue || 0;
+      aValue = aValue !== undefined && aValue !== null ? aValue : 0;
+      bValue = bValue !== undefined && bValue !== null ? bValue : 0;
     }
 
     if (sortDirection === 'asc') {
