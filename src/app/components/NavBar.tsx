@@ -7,7 +7,7 @@ import { useCart } from './CartContext';
 import Link from 'next/link';
 import { useAuth } from './AuthContext';
 import UserAuthDropdown from './UserAuthModal';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { 
   Bars3Icon, 
@@ -43,6 +43,7 @@ interface NavBarProps {
 
 export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, onSidebarToggle, sidebarOpen }: NavBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -186,7 +187,18 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Logo */}
               <div className="flex items-center">
-                <Link href="/" className="hover:opacity-80 transition-opacity duration-200">
+                <button 
+                  onClick={() => {
+                    // Clear vehicle filters when logo is clicked
+                    setSelectedMake('');
+                    setSelectedModel('');
+                    setSelectedYear('');
+                    onClearVehicleFilters?.();
+                    // Also navigate to home
+                    router.push('/');
+                  }}
+                  className="hover:opacity-80 transition-opacity duration-200"
+                >
                   <Image 
                     src="/Untitled design.png" 
                     alt="InstaKey Logo" 
@@ -195,7 +207,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     className="object-contain w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20"
                     priority
                   />
-                </Link>
+                </button>
               </div>
 
               {/* Home Button - Hidden on mobile */}
@@ -506,20 +518,6 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200/50 backdrop-blur-xl z-50">
                     <div className="p-4">
-                      {/* Clear All Button */}
-                      <div className="mb-3">
-                        <button 
-                          className="w-full px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors active:scale-95"
-                          onClick={() => {
-                            setSelectedMake('');
-                            setSelectedModel('');
-                            setSelectedYear('');
-                            onClearVehicleFilters?.();
-                          }}
-                        >
-                          Clear All Filters
-                        </button>
-                      </div>
                       <div className="grid grid-cols-2 gap-3">
                                               <select 
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"

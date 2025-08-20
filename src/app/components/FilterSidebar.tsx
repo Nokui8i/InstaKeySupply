@@ -43,14 +43,8 @@ export default function FilterSidebar({ vehicleData, onFiltersChange, onClearFil
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-sm">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Vehicle Filter</h3>
-        <button
-          onClick={handleClearFilters}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-        >
-          Clear All
-        </button>
       </div>
 
       <div className="space-y-4">

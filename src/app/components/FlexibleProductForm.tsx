@@ -350,6 +350,10 @@ export default function FlexibleProductForm({
   
   // SKU validation state
   const [skuError, setSkuError] = useState<string>('');
+  
+
+
+
 
   // Load initial data if editing
   useEffect(() => {
@@ -467,6 +471,8 @@ export default function FlexibleProductForm({
       customFields: prev.customFields.filter(f => f.id !== id)
     }));
   };
+
+
 
   // Validate SKU uniqueness
   const validateSKU = async (sku: string) => {
@@ -591,131 +597,262 @@ export default function FlexibleProductForm({
     const oemParts: string[] = [];
     const otherItems: Array<{label: string, value: string}> = [];
     
-    lines.forEach(line => {
+    // Parse text with proper label-value grouping
+    let currentLabel = '';
+    let currentValues: string[] = [];
+    
+    console.log('🔍 Parsing text lines:', lines);
+    
+    lines.forEach((line, index) => {
       // Skip empty lines
       if (!line.trim()) return;
       
+      console.log(`📝 Processing line ${index}: "${line}"`);
+      
       // Check if line contains a colon (label: value format)
       if (line.includes(':')) {
-        const [label, ...valueParts] = line.split(':');
-        const value = valueParts.join(':').trim();
+        console.log(`🏷️  Found label: "${line}"`);
         
-        if (label.trim() && value) {
-          otherItems.push({
-            label: label.trim(),
-            value: value
-          });
-        }
-      } else {
-        // If no colon, try to detect common patterns
-        const lowerLine = line.toLowerCase();
-        
-        // Vehicle compatibility patterns - detect Lexus, BMW, Ford, etc. models
-        if (lowerLine.includes('lexus') || lowerLine.includes('bmw') || lowerLine.includes('ford') || 
-            lowerLine.includes('toyota') || lowerLine.includes('honda') || lowerLine.includes('mercedes') ||
-            lowerLine.includes('audi') || lowerLine.includes('volkswagen') || lowerLine.includes('nissan') ||
-            lowerLine.includes('chevrolet') || lowerLine.includes('dodge') || lowerLine.includes('jeep') ||
-            lowerLine.includes('hyundai') || lowerLine.includes('kia') || lowerLine.includes('mazda') ||
-            lowerLine.includes('subaru') || lowerLine.includes('volvo') || lowerLine.includes('jaguar') ||
-            lowerLine.includes('land rover') || lowerLine.includes('porsche') || lowerLine.includes('ferrari') ||
-            lowerLine.includes('lamborghini') || lowerLine.includes('maserati') || lowerLine.includes('alfa romeo')) {
+        // If we have a previous label with values, save it
+        if (currentLabel && currentValues.length > 0) {
+          const value = currentValues.join('\n');
+          console.log(`💾 Saving previous label "${currentLabel}" with values:`, currentValues);
           
-          vehicleModels.push(line.trim());
+          // Check if this is a special category that should be grouped
+          const lowerLabel = currentLabel.toLowerCase();
+          
+          if (lowerLabel.includes('button') || lowerLabel === 'buttons' || lowerLabel === 'buttong' || lowerLabel.includes('btn')) {
+            // Add to buttons array for consolidation
+            currentValues.forEach(val => buttons.push(val));
+            console.log(`🔘 Added to buttons array:`, currentValues);
+          } else if (lowerLabel.includes('model') || lowerLabel.includes('compatibility') || lowerLabel.includes('works on')) {
+            // Add to vehicle models array for consolidation
+            currentValues.forEach(val => vehicleModels.push(val));
+            console.log(`🚗 Added to vehicle models array:`, currentValues);
+          } else if (lowerLabel.includes('oem') || lowerLabel.includes('part') || lowerLabel.includes('part #')) {
+            // Add to OEM parts array for consolidation
+            currentValues.forEach(val => oemParts.push(val));
+            console.log(`🔧 Added to OEM parts array:`, currentValues);
+          } else {
+            // Add as individual field
+            otherItems.push({
+              label: currentLabel,
+              value: value
+            });
+            console.log(`📋 Added as individual field: "${currentLabel}" = "${value}"`);
+          }
         }
-        // Button patterns
-        else if (lowerLine.includes('lock') || lowerLine.includes('unlock') || lowerLine.includes('trunk') || lowerLine.includes('panic')) {
-          buttons.push(line.trim());
-        }
-        // OEM Part patterns
-        else if (lowerLine.includes('oem') || lowerLine.includes('part') || /^\d{5}-\d{2}[A-Z]\d{2}$/.test(line.trim())) {
-          oemParts.push(line.trim());
-        }
-        // FCC ID patterns
-        else if (lowerLine.includes('fcc') || lowerLine.includes('hyq')) {
-          otherItems.push({
-            label: 'FCC ID',
-            value: line.trim()
-          });
-        }
-        // Chip patterns
-        else if (lowerLine.includes('chip') || lowerLine.includes('texas') || lowerLine.includes('h-8a')) {
-          otherItems.push({
-            label: 'CHIP',
-            value: line.trim()
-          });
-        }
-        // Frequency patterns
-        else if (lowerLine.includes('mhz') || lowerLine.includes('frequency')) {
-          otherItems.push({
-            label: 'FREQUENCY',
-            value: line.trim()
-          });
-        }
-        // Battery patterns
-        else if (lowerLine.includes('cr') || lowerLine.includes('battery')) {
-          otherItems.push({
-            label: 'BATTERY',
-            value: line.trim()
-          });
-        }
-        // Keyway patterns
-        else if (lowerLine.includes('keyway') || lowerLine.includes('lxp')) {
-          otherItems.push({
-            label: 'KEYWAY',
-            value: line.trim()
-          });
-        }
-        // Condition patterns
-        else if (lowerLine.includes('condition') || lowerLine.includes('oem') || lowerLine.includes('new')) {
-          otherItems.push({
-            label: 'CONDITION',
-            value: line.trim()
-          });
-        }
-        // Default: create a generic field
-        else {
-          otherItems.push({
-            label: 'Additional Info',
-            value: line.trim()
-          });
+        
+        // Start new label
+        const [label, ...valueParts] = line.split(':');
+        currentLabel = label.trim();
+        // If there's a value on the same line, add it; otherwise start with empty array
+        const inlineValue = valueParts.join(':').trim();
+        currentValues = inlineValue ? [inlineValue] : [];
+        console.log(`🆕 New label: "${currentLabel}", inline value: "${inlineValue}", currentValues:`, currentValues);
+      } else {
+        // This line is a value for the current label
+        if (currentLabel) {
+          currentValues.push(line.trim());
+          console.log(`➕ Added value "${line.trim()}" to label "${currentLabel}", currentValues:`, currentValues);
+        } else {
+          // No current label, try to detect common patterns
+          const lowerLine = line.toLowerCase();
+          console.log(`🔍 No current label, detecting pattern for: "${line}"`);
+          
+          // Vehicle compatibility patterns - detect Lexus, BMW, Ford, etc. models
+          if (lowerLine.includes('lexus') || lowerLine.includes('bmw') || lowerLine.includes('ford') || 
+              lowerLine.includes('toyota') || lowerLine.includes('honda') || lowerLine.includes('mercedes') ||
+              lowerLine.includes('audi') || lowerLine.includes('volkswagen') || lowerLine.includes('nissan') ||
+              lowerLine.includes('chevrolet') || lowerLine.includes('dodge') || lowerLine.includes('jeep') ||
+              lowerLine.includes('hyundai') || lowerLine.includes('kia') || lowerLine.includes('mazda') ||
+              lowerLine.includes('subaru') || lowerLine.includes('volvo') || lowerLine.includes('jaguar') ||
+              lowerLine.includes('land rover') || lowerLine.includes('porsche') || lowerLine.includes('ferrari') ||
+              lowerLine.includes('lamborghini') || lowerLine.includes('maserati') || lowerLine.includes('alfa romeo')) {
+            
+            vehicleModels.push(line.trim());
+            console.log(`🚗 Added to vehicle models: "${line.trim()}"`);
+          }
+          // Button patterns
+          else if (lowerLine.includes('lock') || lowerLine.includes('unlock') || lowerLine.includes('trunk') || lowerLine.includes('panic')) {
+            buttons.push(line.trim());
+            console.log(`🔘 Added to buttons: "${line.trim()}"`);
+          }
+          // OEM Part patterns
+          else if (lowerLine.includes('oem') || lowerLine.includes('part') || /^\d{5}-\d{2}[A-Z]\d{2}$/.test(line.trim())) {
+            oemParts.push(line.trim());
+            console.log(`🔧 Added to OEM parts: "${line.trim()}"`);
+          }
+          // FCC ID patterns
+          else if (lowerLine.includes('fcc') || lowerLine.includes('hyq')) {
+            otherItems.push({
+              label: 'FCC ID',
+              value: line.trim()
+            });
+            console.log(`📡 Added as FCC ID: "${line.trim()}"`);
+          }
+          // Chip patterns
+          else if (lowerLine.includes('chip') || lowerLine.includes('texas') || lowerLine.includes('h-8a')) {
+            otherItems.push({
+              label: 'CHIP',
+              value: line.trim()
+            });
+            console.log(`🧩 Added as CHIP: "${line.trim()}"`);
+          }
+          // Frequency patterns
+          else if (lowerLine.includes('mhz') || lowerLine.includes('frequency')) {
+            otherItems.push({
+              label: 'FREQUENCY',
+              value: line.trim()
+            });
+            console.log(`📡 Added as FREQUENCY: "${line.trim()}"`);
+          }
+          // Battery patterns
+          else if (lowerLine.includes('cr') || lowerLine.includes('battery')) {
+            otherItems.push({
+              label: 'BATTERY',
+              value: line.trim()
+            });
+            console.log(`🔋 Added as BATTERY: "${line.trim()}"`);
+          }
+          // Keyway patterns
+          else if (lowerLine.includes('keyway') || lowerLine.includes('lxp')) {
+            otherItems.push({
+              label: 'KEYWAY',
+              value: line.trim()
+            });
+            console.log(`🔑 Added as KEYWAY: "${line.trim()}"`);
+          }
+          // Condition patterns
+          else if (lowerLine.includes('condition') || lowerLine.includes('oem') || lowerLine.includes('new')) {
+            otherItems.push({
+              label: 'CONDITION',
+              value: line.trim()
+            });
+            console.log(`🏷️  Added as CONDITION: "${line.trim()}"`);
+          }
+          // Default: create a generic field
+          else {
+            otherItems.push({
+              label: 'Additional Info',
+              value: line.trim()
+            });
+            console.log(`❓ Added as Additional Info: "${line.trim()}"`);
+          }
         }
       }
     });
     
-    // Create consolidated fields
+    // Don't forget to process the last label-value group
+    if (currentLabel && currentValues.length > 0) {
+      const value = currentValues.join('\n');
+      console.log(`💾 Processing final label "${currentLabel}" with values:`, currentValues);
+      
+      // Check if this is a special category that should be grouped
+      const lowerLabel = currentLabel.toLowerCase();
+      
+      if (lowerLabel.includes('button') || lowerLabel === 'buttons' || lowerLabel === 'buttong') {
+        // Add to buttons array for consolidation
+        currentValues.forEach(val => buttons.push(val));
+        console.log(`🔘 Final: Added to buttons array:`, currentValues);
+      } else if (lowerLabel.includes('model') || lowerLabel.includes('compatibility') || lowerLabel.includes('works on')) {
+        // Add to vehicle models array for consolidation
+        currentValues.forEach(val => vehicleModels.push(val));
+        console.log(`🚗 Final: Added to vehicle models array:`, currentValues);
+      } else if (lowerLabel.includes('part') || lowerLabel.includes('part #')) {
+        // Add to OEM parts array for consolidation
+        currentValues.forEach(val => oemParts.push(val));
+        console.log(`🔧 Final: Added to OEM parts array:`, currentValues);
+      } else {
+        // Add as individual field
+        otherItems.push({
+          label: currentLabel,
+          value: value
+        });
+        console.log(`📋 Final: Added as individual field: "${currentLabel}" = "${value}"`);
+      }
+    }
+    
+    // Helper function to check if a field with similar label already exists and merge values if needed
+    const findOrCreateField = (label: string, value: string) => {
+      // Find existing field with similar label (case-insensitive)
+      const existingField = formData.customFields.find(existingField => 
+        existingField.label.toLowerCase() === label.toLowerCase()
+      );
+      
+      if (existingField) {
+        // Field exists, merge the new values into the existing field
+        const existingValues = existingField.value.split(/[\n\r]+/).map(v => v.trim()).filter(v => v.length > 0);
+        const newValues = value.split(/[\n\r]+/).map(v => v.trim()).filter(v => v.length > 0);
+        
+        // Combine and deduplicate values
+        const allValues = [...new Set([...existingValues, ...newValues])];
+        const mergedValue = allValues.join('\n');
+        
+        // Update the existing field with merged values
+        setFormData(prev => ({
+          ...prev,
+          customFields: prev.customFields.map(f => 
+            f.id === existingField.id ? { ...f, value: mergedValue } : f
+          )
+        }));
+        
+        console.log(`✅ Merged "${value}" into existing "${existingField.label}" field. New value: ${mergedValue}`);
+        
+        return null; // Don't create a new field
+      } else {
+        // Field doesn't exist, create new one
+        return {
+          id: `field_${Date.now()}_${Math.random()}`,
+          label: label,
+          value: value
+        };
+      }
+    };
+    
+    console.log('📊 Final arrays created:');
+    console.log('🚗 Vehicle Models:', vehicleModels);
+    console.log('🔘 Buttons:', buttons);
+    console.log('🔧 OEM Parts:', oemParts);
+    console.log('📋 Other Items:', otherItems);
+    
+    // Create consolidated fields using the merge logic
     if (vehicleModels.length > 0) {
-      newFields.push({
-        id: `field_${Date.now()}_${Math.random()}`,
-        label: 'WORKS ON THE FOLLOWING MODELS',
-        value: vehicleModels.join('\n')
-      });
+      const label = 'WORKS ON THE FOLLOWING MODELS';
+      const value = vehicleModels.join('\n');
+      const newField = findOrCreateField(label, value);
+      if (newField) {
+        newFields.push(newField);
+      }
     }
     
     if (buttons.length > 0) {
-      newFields.push({
-        id: `field_${Date.now()}_${Math.random()}`,
-        label: 'BUTTONS',
-        value: buttons.join('\n')
-      });
+      const label = 'BUTTONS';
+      const value = buttons.join('\n');
+      const newField = findOrCreateField(label, value);
+      if (newField) {
+        newFields.push(newField);
+      }
     }
     
     if (oemParts.length > 0) {
-      newFields.push({
-        id: `field_${Date.now()}_${Math.random()}`,
-        label: 'OEM PART #(S)',
-        value: oemParts.join('\n')
-      });
+      const label = 'OEM PART #(S)';
+      const value = oemParts.join('\n');
+      const newField = findOrCreateField(label, value);
+      if (newField) {
+        newFields.push(newField);
+      }
     }
     
-    // Add other individual fields
+    // Add other individual fields using the merge logic
     otherItems.forEach(item => {
-      newFields.push({
-        id: `field_${Date.now()}_${Math.random()}`,
-        label: item.label,
-        value: item.value
-      });
+      const newField = findOrCreateField(item.label, item.value);
+      if (newField) {
+        newFields.push(newField);
+      }
     });
     
+    console.log('🎯 Final newFields:', newFields);
     return newFields;
   };
 
@@ -1641,8 +1778,11 @@ export default function FlexibleProductForm({
               >
                 + Add Field
               </button>
+
             </div>
           </div>
+          
+
 
 
           
@@ -1884,4 +2024,4 @@ export default function FlexibleProductForm({
       )}
     </div>
   );
-} 
+}
