@@ -114,8 +114,8 @@ export default function PromoModal({ open, onClose }: { open: boolean; onClose: 
 
   if (!open || loading || !content.enabled) return null;
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-4 md:pt-6">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-20">
+      <div className="absolute inset-0 bg-white/20 backdrop-blur-md" onClick={handleClose} />
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm md:max-w-md p-4 md:p-6 animate-scale-in overflow-y-auto max-h-[90vh] md:max-h-[90vh] flex flex-col items-center">
         <button onClick={handleClose} className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-xl font-bold rounded-full w-8 h-8 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200">×</button>
         <h2 className="text-center text-blue-700 font-extrabold text-xl md:text-2xl mb-1 tracking-wide">{content.headline}</h2>

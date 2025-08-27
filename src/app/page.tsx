@@ -330,25 +330,21 @@ function HomeContent() {
 
     fetchData();
 
-    // Promo modal logic: show every 4th visit (4, 8, 12, ...) on main page, with debug logging
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('promoModalDismissed');
-      const shownCount = parseInt(localStorage.getItem('promoModalShownCount') || '0', 10);
-      console.log('[PROMO POPUP] dismissed:', dismissed, 'shownCount:', shownCount);
-      if (!dismissed) {
-        const newCount = shownCount + 1;
-        localStorage.setItem('promoModalShownCount', newCount.toString());
-        console.log('[PROMO POPUP] incremented count to', newCount);
-        if (newCount % 4 === 0) {
-          setTimeout(() => {
-            setShowPromo(true);
-            console.log('[PROMO POPUP] Showing popup on count', newCount);
-          }, 1200);
-        }
-      } else {
-        console.log('[PROMO POPUP] Popup dismissed, will not show');
-      }
-    }
+         // Promo modal logic: show on every refresh for testing
+     if (typeof window !== 'undefined') {
+       const shownCount = parseInt(localStorage.getItem('promoModalShownCount') || '0', 10);
+       const newCount = shownCount + 1;
+       localStorage.setItem('promoModalShownCount', newCount.toString());
+       console.log('[PROMO POPUP] incremented count to', newCount);
+       
+                               // Show popup every 4th refresh
+         if (newCount % 4 === 0) {
+         setTimeout(() => {
+           setShowPromo(true);
+           console.log('[PROMO POPUP] Showing popup on count', newCount);
+         }, 1200);
+       }
+     }
   }, []);
 
 
