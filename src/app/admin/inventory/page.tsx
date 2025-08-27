@@ -124,7 +124,8 @@ function AdminInventoryContent() {
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFlexibleUploadModal, setShowFlexibleUploadModal] = useState(false);
-  const [showSampleConfirmation, setShowSampleConfirmation] = useState(false);
+  const [showExportConfirmation, setShowExportConfirmation] = useState(false);
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -310,6 +311,83 @@ function AdminInventoryContent() {
     return nextSKU;
   };
 
+  // Export products to Excel/CSV
+  const exportToExcel = () => {
+    try {
+      // Prepare data for export - reordered fields with actual images
+      const exportData = sortedProducts.map(product => ({
+        'Image': product.imageUrl || '',
+        'Product Name': product.title || '',
+        'Price': product.price || '',
+        'SKU': product.sku || ''
+      }));
+
+      // Create HTML table with images
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Inventory Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            img { max-width: 100px; max-height: 100px; object-fit: contain; }
+            .image-cell { width: 120px; text-align: center; }
+            .name-cell { width: 300px; }
+            .price-cell { width: 100px; text-align: center; }
+            .sku-cell { width: 100px; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <h1>Inventory Export - ${new Date().toLocaleDateString()}</h1>
+          <table>
+            <thead>
+              <tr>
+                <th class="image-cell">Image</th>
+                <th class="name-cell">Product Name</th>
+                <th class="price-cell">Price</th>
+                <th class="sku-cell">SKU</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${exportData.map(row => `
+                <tr>
+                  <td class="image-cell">
+                    <img src="${row.Image}" alt="${row['Product Name']}" onerror="this.style.display='none'">
+                  </td>
+                  <td class="name-cell">${row['Product Name']}</td>
+                  <td class="price-cell">${row['Price']}</td>
+                  <td class="sku-cell">${row['SKU']}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      // Create and download HTML file
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `inventory_export_${new Date().toISOString().split('T')[0]}.html`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showNotification('success', `Exported ${exportData.length} products to HTML with images`);
+    } catch (error) {
+      console.error('Export error:', error);
+      showNotification('error', 'Failed to export products');
+    }
+  };
+
   useEffect(() => { 
     if (isAuthenticated) {
       fetchProducts();
@@ -318,53 +396,89 @@ function AdminInventoryContent() {
   }, [isAuthenticated]);
 
   // Filter products based on search and filters
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || product.categoryId === selectedCategory;
-    const matchesStatus = !selectedStatus || product.status === selectedStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const filteredProducts = (() => {
+    try {
+      return (products || []).filter(product => {
+        // Ensure product exists and has required properties
+        if (!product) return false;
+        
+        // Ensure searchTerm is a string and handle empty search
+        const searchLower = (searchTerm || '').toLowerCase();
+        
+        const matchesSearch = searchLower === '' || 
+                             (product.title && product.title.toLowerCase().includes(searchLower)) ||
+                             (product.model && product.model.toLowerCase().includes(searchLower)) ||
+                             (product.sku && product.sku.toLowerCase().includes(searchLower));
+        const matchesCategory = !selectedCategory || product.categoryId === selectedCategory;
+        const matchesStatus = !selectedStatus || product.status === selectedStatus;
+        return matchesSearch && matchesCategory && matchesStatus;
+      });
+    } catch (error) {
+      console.error('Error filtering products:', error);
+      return [];
+    }
+  })();
 
   // Sort filtered products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
+  const sortedProducts = (() => {
+    try {
+      return [...filteredProducts].sort((a, b) => {
+        // Ensure both products exist
+        if (!a || !b) return 0;
+        
+        let aValue: any = a[sortField];
+        let bValue: any = b[sortField];
 
-    // Handle SKU sorting (convert to numbers for proper numeric sorting)
-    if (sortField === 'sku') {
-      aValue = aValue ? parseInt(aValue) || 0 : 0;
-      bValue = bValue ? parseInt(bValue) || 0 : 0;
-    }
-    // Handle price sorting (convert to numbers)
-    else if (sortField === 'price') {
-      aValue = aValue ? parseFloat(aValue) || 0 : 0;
-      bValue = bValue ? parseFloat(bValue) || 0 : 0;
-    }
-    // Handle stock sorting (convert to numbers)
-    else if (sortField === 'stock') {
-      aValue = aValue !== undefined && aValue !== null ? aValue : 0;
-      bValue = bValue !== undefined && bValue !== null ? bValue : 0;
-    }
+        // Handle SKU sorting (convert to numbers for proper numeric sorting)
+        if (sortField === 'sku') {
+          aValue = aValue ? parseInt(aValue) || 0 : 0;
+          bValue = bValue ? parseInt(bValue) || 0 : 0;
+        }
+        // Handle price sorting (convert to numbers)
+        else if (sortField === 'price') {
+          aValue = aValue ? parseFloat(aValue) || 0 : 0;
+          bValue = bValue ? parseFloat(bValue) || 0 : 0;
+        }
+        // Handle stock sorting (convert to numbers)
+        else if (sortField === 'stock') {
+          aValue = aValue !== undefined && aValue !== null ? aValue : 0;
+          bValue = bValue !== undefined && bValue !== null ? bValue : 0;
+        }
+        // Handle string sorting (title, status, etc.)
+        else {
+          aValue = aValue || '';
+          bValue = bValue || '';
+        }
 
-    if (sortDirection === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
+        if (sortDirection === 'asc') {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
+    } catch (error) {
+      console.error('Error sorting products:', error);
+      return filteredProducts || [];
     }
-  });
+  })();
 
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
+  const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct) || [];
+  const totalPages = Math.max(1, Math.ceil((sortedProducts?.length || 0) / productsPerPage));
 
   // Reset to first page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedStatus, sortField, sortDirection]);
+
+  // Ensure currentPage is valid when products change
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   const goToPage = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -1328,15 +1442,14 @@ function AdminInventoryContent() {
                    </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 w-full sm:w-auto">
-                  <button 
-                    onClick={() => setShowSampleConfirmation(true)}
-                    disabled={loading}
-                    className="w-full sm:w-auto bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded text-xs disabled:opacity-50 flex items-center justify-center gap-1"
+                  <button
+                    onClick={() => setShowExportConfirmation(true)}
+                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center justify-center gap-1 text-xs font-medium"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    {loading ? "Adding..." : "Add Sample"}
+                    Export to Excel
                   </button>
                   <button
                     onClick={() => setShowFlexibleUploadModal(true)}
@@ -1755,31 +1868,30 @@ function AdminInventoryContent() {
             </div>
           )}
 
-          {/* Sample Products Confirmation Modal */}
-          {showSampleConfirmation && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setShowSampleConfirmation(false)} style={{ pointerEvents: 'auto' }}>
+          {/* Export Confirmation Modal */}
+          {showExportConfirmation && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setShowExportConfirmation(false)} style={{ pointerEvents: 'auto' }}>
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6" onClick={e => e.stopPropagation()}>
                 <div className="text-center">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Add Sample Products?</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Export Inventory Data?</h3>
                   <p className="text-sm sm:text-base text-gray-600 mb-6">
-                    This will add 6 sample products to your inventory for testing purposes. Are you sure you want to continue?
+                    This will export {sortedProducts.length} products to an HTML file with Image, Product Name, Price, and SKU. The file will include actual product images. Do you want to continue?
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                     <button
-                      onClick={() => setShowSampleConfirmation(false)}
+                      onClick={() => setShowExportConfirmation(false)}
                       className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded text-sm transition-colors"
                     >
                       No, Cancel
                     </button>
                     <button
                       onClick={() => {
-                        setShowSampleConfirmation(false);
-                        addSampleProducts();
+                        setShowExportConfirmation(false);
+                        exportToExcel();
                       }}
-                      disabled={loading}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded text-sm transition-colors disabled:opacity-50"
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded text-sm transition-colors"
                     >
-                      {loading ? "Adding..." : "Yes, Add Samples"}
+                      Yes, Export
                     </button>
                   </div>
                 </div>

@@ -3,10 +3,12 @@ import React, { useEffect, useState, Suspense, useCallback } from "react";
 import CarouselBanner from "./components/CarouselBanner";
 import ProductCarousel from "./components/ProductCarousel";
 import ProductCard from "./components/ProductCard";
+import LogoCarousel from "./components/LogoCarousel";
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import PromoModal from './components/PromoModal';
 import { useSearchParams } from 'next/navigation';
+import { carLogos } from "@/data/carLogos";
 
 const sampleProducts = [
   {
@@ -64,82 +66,64 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const [banners, setBanners] = useState<{ src: string; alt: string }[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  
+  // Shuffled product arrays for different carousels
+  const [shuffledProducts, setShuffledProducts] = useState<{
+    featured: any[];
+    bestSellers: any[];
+    newArrivals: any[];
+    allProducts: any[];
+  }>({ featured: [], bestSellers: [], newArrivals: [], allProducts: [] });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPromo, setShowPromo] = useState(false);
   
-  // NEW: Vehicle compatibility and filter state
-  const [activeFilters, setActiveFilters] = useState<{
-    make: string;
-    model: string;
-    yearRange: string;
-  } | null>(null);
 
 
 
-  // NEW: Vehicle compatibility filter logic
-  const handleVehicleFiltersChange = useCallback((filters: {
-    make: string;
-    model: string;
-    yearRange: string;
-  }) => {
-    setActiveFilters(filters);
-    
-    // Filter products based on vehicle compatibility
-    const filtered = products.filter(product => {
-      if (!product.selectedCompatibility || !Array.isArray(product.selectedCompatibility)) {
-        return false;
-      }
+
+  // Function to shuffle products for carousels
+  const shuffleProducts = useCallback((productsArray: any[]) => {
+    if (!productsArray || productsArray.length === 0) return [];
+    return [...productsArray].sort(() => Math.random() - 0.5);
+  }, []);
+
+
+
+  // Periodically reshuffle products for variety
+  useEffect(() => {
+    if (products.length > 0) {
+      const reshuffleInterval = setInterval(() => {
+        setShuffledProducts({
+          featured: shuffleProducts(products),
+          bestSellers: shuffleProducts(products),
+          newArrivals: shuffleProducts(products),
+          allProducts: shuffleProducts(products)
+        });
+      }, 300000); // Reshuffle every 5 minutes
+
+      return () => clearInterval(reshuffleInterval);
+    }
+  }, [products, shuffleProducts]);
+
+  // Preload important images for faster loading
+  useEffect(() => {
+    if (products.length > 0) {
+      // Preload first 12 product images (2 rows of 6)
+      const imagesToPreload = products.slice(0, 12).map(product => 
+        product.images?.[0] || product.imageUrl
+      ).filter(Boolean);
       
-      return product.selectedCompatibility.some((compatibility: any) => {
-        // If only make is selected, show all products for that make
-        if (filters.make && !filters.model && !filters.yearRange) {
-          return compatibility.brand === filters.make;
+      imagesToPreload.forEach(imageUrl => {
+        if (imageUrl && imageUrl !== '/sample-key-1.png') {
+          const img = new Image();
+          img.src = imageUrl;
         }
-        
-        // If make and model are selected, show all products for that make/model
-        if (filters.make && filters.model && !filters.yearRange) {
-          // Check if product is compatible with this make/model combination
-          // Product is compatible if:
-          // 1. Exact match: brand=make AND model=model
-          // 2. Universal model: brand=make AND model="" (empty = all models)
-          return compatibility.brand === filters.make && 
-                 (compatibility.model === filters.model || compatibility.model === "");
-        }
-        
-        // If all three are selected, show specific products
-        if (filters.make && filters.model && filters.yearRange) {
-          // Check if product is compatible with this make/model/year combination
-          // Product is compatible if:
-          // 1. Exact match: brand=make AND model=model AND yearRange matches
-          // 2. Universal model: brand=make AND model="" AND yearRange matches
-          // 3. Universal year: brand=make AND model=model AND (yearStart="" OR yearRange matches)
-          // 4. Universal both: brand=make AND model="" AND (yearStart="" OR yearRange matches)
-          
-          // Parse the year range filter (e.g., "2015-2020" -> start: 2015, end: 2020)
-          const yearRangeParts = filters.yearRange.split('-');
-          const filterYearStart = parseInt(yearRangeParts[0]);
-          const filterYearEnd = parseInt(yearRangeParts[1] || yearRangeParts[0]);
-          
-          const yearMatches = !compatibility.yearStart || 
-                             (compatibility.yearStart && compatibility.yearEnd &&
-                              filterYearStart <= parseInt(compatibility.yearEnd) && 
-                              filterYearEnd >= parseInt(compatibility.yearStart));
-          
-          return compatibility.brand === filters.make && 
-                 (compatibility.model === filters.model || compatibility.model === "") &&
-                 yearMatches;
-        }
-        
-        return false;
       });
-    });
-    
-    setFilteredProducts(filtered);
-  }, [products]); // Add products to dependency array
+    }
+  }, [products]);
 
   useEffect(() => {
     async function fetchData() {
@@ -173,7 +157,20 @@ function HomeContent() {
           ...doc.data()
         }));
         setProducts(fetchedProducts);
-        setFilteredProducts(fetchedProducts);
+        
+        // Create shuffled arrays for different carousels
+        const shuffledFeatured = shuffleProducts(fetchedProducts);
+        const shuffledBestSellers = shuffleProducts(fetchedProducts);
+        const shuffledNewArrivals = shuffleProducts(fetchedProducts);
+        const shuffledAllProducts = shuffleProducts(fetchedProducts);
+        
+        setShuffledProducts({
+          featured: shuffledFeatured,
+          bestSellers: shuffledBestSellers,
+          newArrivals: shuffledNewArrivals,
+          allProducts: shuffledAllProducts
+        });
+        
         console.log('Products fetched:', fetchedProducts.length);
 
         // Fetch categories
@@ -316,10 +313,8 @@ function HomeContent() {
             }
           ];
           setProducts(sampleProducts);
-          setFilteredProducts(sampleProducts);
         } else {
           setProducts(fetchedProducts);
-          setFilteredProducts(fetchedProducts);
         }
         
       } catch (err) {
@@ -327,7 +322,6 @@ function HomeContent() {
         // Don't show error, just set empty arrays to allow page to load
         setBanners([]);
         setProducts([]);
-        setFilteredProducts([]);
       } finally {
         setLoading(false);
         console.log('Data fetching completed');
@@ -357,59 +351,33 @@ function HomeContent() {
     }
   }, []);
 
-  // Handle category filtering from URL parameter
-  useEffect(() => {
-    const categoryId = searchParams.get('category');
-    
-    if (categoryId && products.length > 0) {
-      // Filter products by categoryId
-      const filtered = products.filter(product => product.categoryId === categoryId);
-      setFilteredProducts(filtered);
-      console.log(`Filtered products for category ${categoryId}:`, filtered.length);
-    } else if (products.length > 0) {
-      // Show all products if no category filter
-      setFilteredProducts(products);
-    }
-  }, [searchParams, products]);
 
-  // NEW: Listen for filter events from navbar
-  useEffect(() => {
-    const handleNavbarVehicleFiltersChange = (event: CustomEvent) => {
-      const filters = event.detail;
-      handleVehicleFiltersChange(filters);
-    };
 
-    const handleNavbarClearVehicleFilters = () => {
-      setActiveFilters(null);
-      setFilteredProducts([...products]); // Use current products state
-    };
 
-    window.addEventListener('vehicle-filters-change', handleNavbarVehicleFiltersChange as EventListener);
-    window.addEventListener('clear-vehicle-filters', handleNavbarClearVehicleFilters);
 
-    return () => {
-      window.removeEventListener('vehicle-filters-change', handleNavbarVehicleFiltersChange as EventListener);
-      window.removeEventListener('clear-vehicle-filters', handleNavbarClearVehicleFilters);
-    };
-  }, [products, handleVehicleFiltersChange]); // Add products and handleVehicleFiltersChange to dependency array
 
-  const handleFiltersChange = (filtered: any[]) => {
-    setFilteredProducts(filtered);
-  };
 
-  const handleClearFilters = () => {
-    setActiveFilters(null);
-    setFilteredProducts([...products]); // Use spread operator to ensure we get a fresh copy
-  };
-
-  // Show loading state
+  // Show loading state with website icon
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-blue-200 text-lg">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+        <div className="text-center -mt-32 sm:-mt-40">
+          {/* Website Icon/Logo */}
+          <div className="mb-8">
+            <div className="w-48 h-48 mx-auto mb-6 flex items-center justify-center animate-pulse">
+              <img 
+                src="/Untitled design.png" 
+                alt="INSTAKEY Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+          
+          {/* Loading Animation */}
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
           </div>
         </div>
       </div>
@@ -436,22 +404,20 @@ function HomeContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
+    <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12 animate-fade-in">
       <PromoModal open={showPromo} onClose={() => setShowPromo(false)} />
       
       {/* Hero Section - Carousel Banner */}
-      {!activeFilters && (
-        <section className="mb-12 sm:mb-16 mt-0">
-          <CarouselBanner images={banners} />
-        </section>
-      )}
+      <section className="mb-12 sm:mb-16 mt-0">
+        <CarouselBanner images={banners} />
+      </section>
 
       {/* Products Section */}
       {products.length > 0 && (
         <section className="mb-12 sm:mb-16">
           <div className="relative mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-blue-600 drop-shadow text-center">
-              {activeFilters ? `Filtered Products for: ${activeFilters.make}${activeFilters.model ? ` ${activeFilters.model}` : ''}${activeFilters.yearRange ? ` (${activeFilters.yearRange})` : ''}` : 'All Products'}
+              All Products
             </h2>
             
             {/* Category Filter Display */}
@@ -466,7 +432,7 @@ function HomeContent() {
                   </div>
                   <a 
                     href="/" 
-                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="text-sm text-blue-600 hover:text-blue-300 underline"
                   >
                     View All Products
                   </a>
@@ -478,28 +444,12 @@ function HomeContent() {
           
           {/* Products Display */}
           <div className="w-full">
-            {activeFilters && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Filtered for:</strong> {activeFilters.make}
-                {activeFilters.model && ` ${activeFilters.model}`}
-                {activeFilters.yearRange && ` (${activeFilters.yearRange})`}
-                </p>
-                <p className="text-xs text-blue-600 mt-1 break-words">
-                  Showing {filteredProducts.length} compatible product{filteredProducts.length !== 1 ? 's' : ''}
-                  {activeFilters.make && !activeFilters.model && ' for all ' + activeFilters.make + ' models'}
-                  {activeFilters.make && activeFilters.model && !activeFilters.yearRange && ' for all ' + activeFilters.make + ' ' + activeFilters.model + ' years'}
-                  {activeFilters.make && activeFilters.model && activeFilters.yearRange && ' for ' + activeFilters.make + ' ' + activeFilters.model + ' ' + activeFilters.yearRange}
-                </p>
-              </div>
-            )}
-            
-            {filteredProducts.length > 0 ? (
+            {products.length > 0 ? (
               <>
                 {/* Mobile: 2 cards per row */}
                 <div className="md:hidden">
                   <div className="grid grid-cols-2 gap-3 px-3">
-                    {filteredProducts.slice(0, 8).map((product) => (
+                    {shuffledProducts.allProducts.slice(0, 8).map((product) => (
                       <ProductCard
                         key={product.id}
                         id={product.id}
@@ -514,7 +464,7 @@ function HomeContent() {
                 </div>
                 {/* Desktop: Carousel */}
                 <div className="hidden md:block">
-                  <ProductCarousel products={filteredProducts} />
+                  <ProductCarousel products={shuffledProducts.allProducts} />
                 </div>
               </>
             ) : (
@@ -522,24 +472,16 @@ function HomeContent() {
                 <p className="text-gray-400 text-base sm:text-lg px-4">
                   {searchParams.get('category') 
                     ? `No products found in "${categories.find(cat => cat.id === searchParams.get('category'))?.name || 'this category'}"`
-                    : activeFilters 
-                      ? `No products found for ${activeFilters.make}${activeFilters.model ? ` ${activeFilters.model}` : ''}${activeFilters.yearRange ? ` (${activeFilters.yearRange})` : ''}`
-                      : 'No products available.'
+                    : 'No products available.'
                   }
                 </p>
-                {(activeFilters || searchParams.get('category')) && (
-                  <button
-                    onClick={() => {
-                      if (searchParams.get('category')) {
-                        window.location.href = '/';
-                      } else {
-                        handleClearFilters();
-                      }
-                    }}
-                    className="mt-4 text-blue-400 hover:text-blue-300 underline text-sm sm:text-base"
+                {searchParams.get('category') && (
+                  <a 
+                    href="/" 
+                    className="mt-4 inline-block text-blue-400 hover:text-blue-300 underline text-sm sm:text-base"
                   >
-                    {searchParams.get('category') ? 'View All Products' : 'Clear filters'}
-                  </button>
+                    View All Products
+                  </a>
                 )}
               </div>
             )}
@@ -547,15 +489,20 @@ function HomeContent() {
         </section>
       )}
 
+      {/* Logo Carousel - Trusted Brands */}
+      <section className="mb-12 sm:mb-16">
+        <LogoCarousel logos={carLogos} />
+      </section>
+
       {/* Featured Product Carousels */}
-      {products.length > 0 && !activeFilters && (
+      {products.length > 0 && shuffledProducts.featured.length > 0 && (
         <>
           <section className="mt-0 mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
               <div className="grid grid-cols-2 gap-3 px-3">
-                {products.slice(0, 6).map((product) => (
+                {shuffledProducts.featured.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -570,7 +517,7 @@ function HomeContent() {
             </div>
             {/* Desktop: Carousel */}
             <div className="hidden md:block">
-              <ProductCarousel products={products.slice(0, 6)} />
+              <ProductCarousel products={shuffledProducts.featured} />
             </div>
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
@@ -578,7 +525,7 @@ function HomeContent() {
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
               <div className="grid grid-cols-2 gap-3 px-3">
-                {products.slice(0, 6).map((product) => (
+                {shuffledProducts.bestSellers.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -593,7 +540,7 @@ function HomeContent() {
             </div>
             {/* Desktop: Carousel */}
             <div className="hidden md:block">
-              <ProductCarousel products={products.slice(0, 6)} />
+              <ProductCarousel products={shuffledProducts.bestSellers} />
             </div>
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
@@ -601,7 +548,7 @@ function HomeContent() {
             {/* Mobile: 2 cards per row */}
             <div className="md:hidden">
               <div className="grid grid-cols-2 gap-3 px-3">
-                {products.slice(0, 6).map((product) => (
+                {shuffledProducts.newArrivals.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.id}
@@ -616,7 +563,7 @@ function HomeContent() {
             </div>
             {/* Desktop: Carousel */}
             <div className="hidden md:block">
-              <ProductCarousel products={products.slice(0, 6)} />
+              <ProductCarousel products={shuffledProducts.newArrivals} />
             </div>
           </section>
         </>

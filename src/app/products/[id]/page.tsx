@@ -104,7 +104,8 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAllCompatibility, setShowAllCompatibility] = useState(false);
-  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [showImageModal, setShowImageModal] = useState(false);
   const { addToCart } = useCart();
   const [notification, setNotification] = useState<string | null>(null);
   const { user } = useAuth();
@@ -190,9 +191,9 @@ export default function ProductDetail() {
     fetchProduct();
   }, [params.id]);
 
-  // Fetch random products (always show sample products for now)
+  // Fetch all related products for the carousel
   useEffect(() => {
-    async function fetchRandomProducts() {
+    async function fetchRelatedProducts() {
       try {
         // Fetch real products from Firestore
         const productsRef = collection(db, 'products');
@@ -218,24 +219,20 @@ export default function ProductDetail() {
           console.log('Available products after filtering:', availableProducts.length);
           console.log('Product statuses:', allProducts.map(p => ({ id: p.id, status: p.status, visibility: p.visibility })));
           
-          // Shuffle the array to get random products
-          const shuffled = availableProducts.sort(() => 0.5 - Math.random());
-          // Take first 6 random products
-          const randomProducts = shuffled.slice(0, 6);
-          
-          console.log('Random products for carousel:', randomProducts.length, randomProducts);
-          setBestSellers(randomProducts);
+          // Use all available products for the carousel (not just 6 random ones)
+          console.log('All available products for carousel:', availableProducts.length);
+          setRelatedProducts(availableProducts);
         } else {
           console.log('No products found in database');
-          setBestSellers([]);
+          setRelatedProducts([]);
         }
       } catch (err) {
-        console.error('Error fetching random products:', err);
-        setBestSellers([]);
+        console.error('Error fetching related products:', err);
+        setRelatedProducts([]);
       }
     }
     
-    fetchRandomProducts();
+    fetchRelatedProducts();
   }, [params.id]);
 
   const handleQuantityChange = (newQuantity: number) => {
@@ -335,9 +332,9 @@ export default function ProductDetail() {
   let isOnSale = false;
   let discountPercentage = 0;
 
-  // Debug: log best sellers
+  // Debug: log related products
   if (typeof window !== 'undefined') {
-    console.log('Best Sellers for carousel:', bestSellers);
+    console.log('Related products for carousel:', relatedProducts);
   }
 
   if (loading) {
@@ -403,7 +400,7 @@ export default function ProductDetail() {
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative mx-auto bg-white rounded-xl overflow-hidden shadow-2xl max-w-xs h-72 flex items-center justify-center">
+            <div className="relative mx-auto bg-white rounded-xl overflow-hidden shadow-2xl max-w-xs h-72 flex items-center justify-center cursor-pointer" onClick={() => setShowImageModal(true)}>
               <Image
                 src={getProductImage(product)}
                 alt={product.title}
@@ -724,11 +721,11 @@ export default function ProductDetail() {
             </div>
           )}
         </div>
-        {/* Random Products Carousel (moved to bottom) */}
+        {/* Related Products Carousel */}
         <section className="mt-16 mb-12">
           <h2 className="text-xl sm:text-2xl font-bold mb-6 text-blue-600 text-center drop-shadow">You Might Also Like</h2>
-          {bestSellers.length > 0 ? (
-            <ProductCarousel products={bestSellers} />
+          {relatedProducts.length > 0 ? (
+            <ProductCarousel products={relatedProducts} />
           ) : (
             <div className="text-center text-gray-400 py-8">No products available.</div>
           )}
@@ -747,6 +744,47 @@ export default function ProductDetail() {
       {shareMsg && (
         <div className="fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg bg-blue-600 text-white text-xs font-semibold">
           {shareMsg}
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowImageModal(false)}>
+          <div className="relative max-w-5xl max-h-[95vh] bg-white overflow-hidden">
+            {/* Main image */}
+            <div className="relative w-full h-full p-8 cursor-pointer" onClick={() => setShowImageModal(false)}>
+              <Image
+                src={getProductImage(product)}
+                alt={product.title}
+                width={1000}
+                height={800}
+                className="w-full h-auto object-contain"
+                priority
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/sample-key-1.png';
+                }}
+              />
+            </div>
+            
+            {/* Image navigation if multiple images */}
+            {product.images && product.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-white/80 rounded-full px-4 py-2 shadow-lg">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                      selectedImage === index 
+                        ? 'bg-blue-600 scale-125' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

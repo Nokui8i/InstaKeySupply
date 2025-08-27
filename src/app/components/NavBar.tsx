@@ -202,9 +202,9 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   <Image 
                     src="/Untitled design.png" 
                     alt="InstaKey Logo" 
-                    width={80} 
-                    height={80}
-                    className="object-contain w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20"
+                    width={170} 
+                    height={170}
+                    className="object-contain w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 -ml-2"
                     priority
                   />
                 </button>
@@ -482,11 +482,14 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         className="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => {
                           if (selectedMake) {
-                            onVehicleFiltersChange?.({
-                              make: selectedMake,
-                              model: selectedModel || '',
-                              yearRange: selectedYear || ''
-                            });
+                            // Build URL for filter results page
+                            const params = new URLSearchParams();
+                            params.set('make', selectedMake);
+                            if (selectedModel) params.set('model', selectedModel);
+                            if (selectedYear) params.set('yearRange', selectedYear);
+                            
+                            // Navigate to filter results page
+                            window.location.href = `/filter-results?${params.toString()}`;
                             setFilterOpen(false);
                           }
                         }}
@@ -560,11 +563,14 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                           onClick={() => {
                             // Apply filters only when button is clicked
                             if (selectedMake) {
-                              onVehicleFiltersChange?.({
-                                make: selectedMake,
-                                model: selectedModel || '',
-                                yearRange: selectedYear || ''
-                              });
+                              // Build URL for filter results page
+                              const params = new URLSearchParams();
+                              params.set('make', selectedMake);
+                              if (selectedModel) params.set('model', selectedModel);
+                              if (selectedYear) params.set('yearRange', selectedYear);
+                              
+                              // Navigate to filter results page
+                              window.location.href = `/filter-results?${params.toString()}`;
                               setFilterOpen(false);
                             }
                           }}

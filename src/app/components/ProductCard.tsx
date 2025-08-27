@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ProductCardProps {
@@ -122,6 +122,7 @@ export default function ProductCard({
   discountInfo,
 }: ProductCardProps) {
   const router = useRouter();
+  const [imageLoading, setImageLoading] = useState(true);
 
   const handleCardClick = () => {
     router.push(`/products/${id}`);
@@ -137,17 +138,27 @@ export default function ProductCard({
     >
       {/* Badges */}
       {/* Product Image */}
-      <div className="w-full aspect-square rounded-md overflow-hidden bg-gray-50 flex items-center justify-center mb-2 sm:mb-3 border border-gray-100">
+      <div className="w-full aspect-square rounded-md overflow-hidden bg-gray-50 flex items-center justify-center mb-2 sm:mb-3 border border-gray-100 relative">
+        {imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
+            <div className="w-5 h-5 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
         <Image 
           src={imageUrl} 
           alt={title} 
           width={160} 
           height={160} 
-          className="object-contain p-2"
+          className={`object-contain p-2 transition-all duration-500 ${imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+          priority={true}
+          loading="eager"
+          placeholder="empty"
+          onLoad={() => setImageLoading(false)}
           onError={(e) => {
             // Fallback to sample image if main image fails
             const target = e.target as HTMLImageElement;
             target.src = '/sample-key-1.png';
+            setImageLoading(false);
           }}
         />
       </div>

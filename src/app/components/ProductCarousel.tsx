@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProductCard from "./ProductCard";
 
@@ -89,14 +89,83 @@ interface ProductCarouselProps {
 }
 
 export default function ProductCarousel({ products }: ProductCarouselProps) {
-  const [start, setStart] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const perPage = 6;
-  const maxStart = Math.max(0, products.length - perPage);
+  
+  // Fallback products if none provided
+  const fallbackProducts = [
+    {
+      id: 'fallback-1',
+      title: 'Sample Key 1',
+      model: 'Universal',
+      price: '$9.99',
+      image: '/sample-key-1.png'
+    },
+    {
+      id: 'fallback-2',
+      title: 'Sample Key 2',
+      model: 'Universal',
+      price: '$12.99',
+      image: '/sample-key-2.png'
+    },
+    {
+      id: 'fallback-3',
+      title: 'Sample Key 3',
+      model: 'Universal',
+      price: '$8.99',
+      image: '/sample-key-3.png'
+    },
+    {
+      id: 'fallback-4',
+      title: 'Sample Key 4',
+      model: 'Universal',
+      price: '$11.99',
+      image: '/sample-key-4.png'
+    },
+    {
+      id: 'fallback-5',
+      title: 'Sample Key 5',
+      model: 'Universal',
+      price: '$10.99',
+      image: '/sample-key-5.png'
+    },
+    {
+      id: 'fallback-6',
+      title: 'Sample Key 6',
+      model: 'Universal',
+      price: '$13.99',
+      image: '/sample-key-6.png'
+    }
+  ];
+  
+  // Use fallback products if no products provided or if products array is empty
+  const displayProducts = products && products.length > 0 ? products : fallbackProducts;
+  
+  // Navigation functions with true infinite scrolling
+  const prev = () => {
+    setCurrentIndex((current) => {
+      if (current === 0) {
+        // If at beginning, loop to the end
+        return displayProducts.length - perPage;
+      }
+      return Math.max(0, current - perPage);
+    });
+  };
+  
+  const next = () => {
+    setCurrentIndex((current) => {
+      if (current >= displayProducts.length - perPage) {
+        // If at end, loop back to beginning
+        return 0;
+      }
+      return current + perPage;
+    });
+  };
 
-  const prev = () => setStart((s) => Math.max(0, s - perPage));
-  const next = () => setStart((s) => Math.min(maxStart, s + perPage));
-
-  console.log('ProductCarousel received products:', products.length, products);
+  // Reset carousel position when products change
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [displayProducts]);
 
   // Helper function to get the best available image
   const getProductImage = (product: Product): string => {
@@ -113,8 +182,10 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
     return '/sample-key-1.png'; // Fallback image
   };
 
-  // If no products, show a message
-  if (!products || products.length === 0) {
+
+
+  // If no products and no fallbacks, show a message
+  if (!displayProducts || displayProducts.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-400 text-lg">No products available.</p>
@@ -124,31 +195,36 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
 
   return (
     <div className="relative w-full">
-      {/* Mobile: show all products in a responsive grid */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 md:hidden">
-        {products.map((p, i) => (
-          <ProductCard 
-            key={p.id || i} 
-            {...p} 
-            image={getProductImage(p)}
-            vehicleCompatibility={p.vehicleCompatibility}
-          />
-        ))}
-      </div>
-      {/* Desktop: carousel with 6 items per page */}
-      <div className="hidden md:flex items-center justify-center">
-        {/* Left Arrow */}
-        <button
-          onClick={prev}
-          disabled={start === 0}
-          className="mr-4 bg-transparent text-blue-700 text-3xl font-bold p-2 rounded hover:text-blue-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
-          aria-label="Previous products"
-        >
-          {'<'}
-        </button>
-        {/* Product Cards */}
-        <div className="grid grid-cols-6 gap-4 flex-1 max-w-6xl">
-          {products.slice(start, start + perPage).map((p, i) => (
+      {/* Fallback indicator only */}
+      {products.length === 0 && (
+        <div className="text-center mb-4">
+          <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
+            Showing sample products
+          </p>
+        </div>
+      )}
+      
+      {/* Mobile: show products with pagination */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={prev}
+            className="bg-white/90 backdrop-blur-sm text-blue-700 text-2xl font-bold p-2 rounded-full shadow-lg hover:text-blue-900 hover:bg-white transition-all duration-200 cursor-pointer"
+            aria-label="Previous products"
+          >
+            ‹
+          </button>
+
+          <button
+            onClick={next}
+            className="bg-white/90 backdrop-blur-sm text-blue-700 text-2xl font-bold p-2 rounded-full shadow-lg hover:text-blue-900 hover:bg-white transition-all duration-200 cursor-pointer"
+            aria-label="Next products"
+          >
+            ›
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          {displayProducts.slice(currentIndex, currentIndex + perPage).map((p, i) => (
             <ProductCard 
               key={p.id || i} 
               {...p} 
@@ -157,16 +233,44 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
             />
           ))}
         </div>
+      </div>
+      {/* Desktop: carousel with 6 items per page */}
+      <div className="hidden md:flex items-center justify-center">
+        {/* Left Arrow */}
+        <button
+          onClick={prev}
+          className="mr-4 bg-white/90 backdrop-blur-sm text-blue-700 text-3xl font-bold p-3 rounded-full shadow-lg hover:text-blue-900 hover:bg-white transition-all duration-200 z-10 cursor-pointer"
+          aria-label="Previous products"
+        >
+          ‹
+        </button>
+        
+        {/* Product Cards Container */}
+        <div className="flex-1 max-w-6xl overflow-hidden">
+          <div className="grid grid-cols-6 gap-4">
+            {displayProducts.slice(currentIndex, currentIndex + perPage).map((p, i) => (
+              <ProductCard 
+                key={p.id || i} 
+                {...p} 
+                image={getProductImage(p)}
+                vehicleCompatibility={p.vehicleCompatibility}
+              />
+            ))}
+          </div>
+
+        </div>
+        
         {/* Right Arrow */}
         <button
           onClick={next}
-          disabled={start >= maxStart}
-          className="ml-4 bg-transparent text-blue-700 text-3xl font-bold p-2 rounded hover:text-blue-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          className="ml-4 bg-white/90 backdrop-blur-sm text-blue-700 text-3xl font-bold p-3 rounded-full shadow-lg hover:text-blue-900 hover:bg-white transition-all duration-200 z-10 cursor-pointer"
           aria-label="Next products"
         >
-          {'>'}
+          ›
         </button>
       </div>
+      
+
     </div>
   );
 } 
