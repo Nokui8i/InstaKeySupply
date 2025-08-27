@@ -4,6 +4,7 @@ import ProductCard from "../components/ProductCard";
 import { useSearchParams } from 'next/navigation';
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import Image from 'next/image';
 
 function FilterResultsContent() {
   const searchParams = useSearchParams();
@@ -136,11 +137,14 @@ function FilterResultsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
         <div className="text-center">
-          <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center animate-pulse">
-            <img 
+          <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 flex items-center justify-center animate-pulse">
+            <Image 
               src="/Untitled design.png" 
               alt="INSTAKEY Logo" 
+              width={128}
+              height={128}
               className="w-full h-full object-contain"
+              priority
             />
           </div>
           <div className="flex items-center justify-center space-x-2">
@@ -170,22 +174,20 @@ function FilterResultsContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* Page Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-blue-600 mb-4">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3 sm:mb-4">
           {make ? `Filtered Products for: ${make}` : 'All Products'}
         </h1>
-        
-        
       </div>
 
              {/* Sort By Dropdown */}
-       <div className="flex justify-end mb-6">
+       <div className="flex justify-end mb-4 sm:mb-6">
          <select
            value={sortBy}
            onChange={(e) => setSortBy(e.target.value)}
-           className="bg-white border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-36"
+           className="bg-white border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-28 sm:w-36"
          >
            <option value="name">Sort by Name (A-Z)</option>
            <option value="name-desc">Sort by Name (Z-A)</option>
@@ -207,7 +209,7 @@ function FilterResultsContent() {
            </div>
 
            {/* Products Grid - Responsive */}
-           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
              {currentProducts.map((product) => (
                <ProductCard
                  key={product.id}
@@ -223,23 +225,23 @@ function FilterResultsContent() {
 
            {/* Pagination Controls */}
            {totalPages > 1 && (
-             <div className="flex justify-center items-center space-x-2 mt-8">
+             <div className="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-2 mt-6 sm:mt-8">
                <button
                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                  disabled={currentPage === 1}
-                 className="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                 className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                >
                  Previous
                </button>
                
-               <span className="px-4 py-2 text-sm text-gray-600">
+               <span className="px-4 py-2 text-sm text-gray-600 text-center">
                  Page {currentPage} of {totalPages}
                </span>
                
                <button
                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                  disabled={currentPage === totalPages}
-                 className="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                 className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                >
                  Next
                </button>

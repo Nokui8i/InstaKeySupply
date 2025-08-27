@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Performance optimizations
+  compress: true,
+  swcMinify: true,
+  poweredByHeader: false,
+  
+  // Bundle analyzer (optional - remove in production)
+  // bundleAnalyzer: process.env.ANALYZE === 'true',
+  
   images: {
     remotePatterns: [
       {
