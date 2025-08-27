@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import ProductCard from "../components/ProductCard";
 import { useSearchParams } from 'next/navigation';
 import { db } from "@/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
-export default function FilterResultsPage() {
+function FilterResultsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -276,5 +276,20 @@ export default function FilterResultsPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function FilterResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading filters...</p>
+        </div>
+      </div>
+    }>
+      <FilterResultsContent />
+    </Suspense>
   );
 }

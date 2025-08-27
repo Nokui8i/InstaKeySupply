@@ -229,7 +229,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
               key={p.id || i} 
               {...p} 
               image={getProductImage(p)}
-              vehicleCompatibility={p.vehicleCompatibility}
+              vehicleCompatibility={(p as any).vehicleCompatibility}
             />
           ))}
         </div>
@@ -253,7 +253,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
                 key={p.id || i} 
                 {...p} 
                 image={getProductImage(p)}
-                vehicleCompatibility={p.vehicleCompatibility}
+                vehicleCompatibility={(p as any).vehicleCompatibility}
               />
             ))}
           </div>
