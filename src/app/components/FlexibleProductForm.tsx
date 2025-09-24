@@ -471,7 +471,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
 
 
   // Validate SKU uniqueness
-  const validateSKU = async (sku: string) => {
+  const validateSKU = useCallback(async (sku: string) => {
     if (!sku || !sku.trim()) {
       setSkuError('SKU is required');
       return false;
@@ -502,7 +502,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
     
     setSkuError('');
     return true;
-  };
+  }, [isEditing, initialData?.sku]);
 
   // Generate next available SKU
   const generateNextSKU = async () => {
@@ -814,35 +814,6 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
     return newFields;
   }, [formData.customFields]);
 
-  // Function to generate watermark preview - memoized for performance
-  const generateWatermarkPreview = useCallback(async () => {
-    if (formData.images.length === 0 || !watermarkText.trim()) {
-      setWatermarkPreview(null);
-      return;
-    }
-    
-    try {
-      const preview = await addWatermarkToImage(formData.images[0], watermarkText, watermarkPosition);
-      setWatermarkPreview(preview);
-    } catch (error) {
-      console.error('Error generating watermark preview:', error);
-    }
-  }, [formData.images, watermarkText, watermarkPosition, addWatermarkToImage]);
-
-  // Update preview when watermark settings change - optimized with useCallback
-  const generateWatermarkPreviewCallback = useCallback(() => {
-    if (addWatermark && formData.images.length > 0) {
-      generateWatermarkPreview();
-    } else {
-      setWatermarkPreview(null);
-    }
-  }, [addWatermark, formData.images.length, generateWatermarkPreview]);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(generateWatermarkPreviewCallback, 500); // Debounce
-    return () => clearTimeout(timeoutId);
-  }, [generateWatermarkPreviewCallback]);
-
   // Function to add watermark to image - memoized for performance
   const addWatermarkToImage = useCallback((imageSrc: string, watermarkText: string, position: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -947,6 +918,35 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
       img.src = imageSrc;
     });
   }, []);
+
+  // Function to generate watermark preview - memoized for performance
+  const generateWatermarkPreview = useCallback(async () => {
+    if (formData.images.length === 0 || !watermarkText.trim()) {
+      setWatermarkPreview(null);
+      return;
+    }
+    
+    try {
+      const preview = await addWatermarkToImage(formData.images[0], watermarkText, watermarkPosition);
+      setWatermarkPreview(preview);
+    } catch (error) {
+      console.error('Error generating watermark preview:', error);
+    }
+  }, [formData.images, watermarkText, watermarkPosition, addWatermarkToImage]);
+
+  // Update preview when watermark settings change - optimized with useCallback
+  const generateWatermarkPreviewCallback = useCallback(() => {
+    if (addWatermark && formData.images.length > 0) {
+      generateWatermarkPreview();
+    } else {
+      setWatermarkPreview(null);
+    }
+  }, [addWatermark, formData.images.length, generateWatermarkPreview]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(generateWatermarkPreviewCallback, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [generateWatermarkPreviewCallback]);
 
   // Auto-detect vehicle compatibility from a specific custom field - memoized for performance
   const detectVehiclesFromField = useCallback((fieldId: string) => {
