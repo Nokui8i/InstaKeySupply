@@ -578,7 +578,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
   };
 
     // Helper function to create custom fields from text
-  const createCustomFieldsFromText = (text: string) => {
+  const createCustomFieldsFromText = useCallback((text: string) => {
     const lines = text.split(/[\n\r]+/).map(line => line.trim()).filter(line => line.length > 0);
     const newFields: Array<{id: string, label: string, value: string}> = [];
     
@@ -812,7 +812,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
     });
     
     return newFields;
-  };
+  }, [formData.customFields]);
 
   // Function to generate watermark preview - memoized for performance
   const generateWatermarkPreview = useCallback(async () => {
@@ -827,7 +827,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
     } catch (error) {
       console.error('Error generating watermark preview:', error);
     }
-  }, [formData.images, watermarkText, watermarkPosition]);
+  }, [formData.images, watermarkText, watermarkPosition, addWatermarkToImage]);
 
   // Update preview when watermark settings change - optimized with useCallback
   const generateWatermarkPreviewCallback = useCallback(() => {
@@ -836,7 +836,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
     } else {
       setWatermarkPreview(null);
     }
-  }, [addWatermark, formData.images.length, watermarkText, watermarkPosition, generateWatermarkPreview]);
+  }, [addWatermark, formData.images.length, generateWatermarkPreview]);
 
   useEffect(() => {
     const timeoutId = setTimeout(generateWatermarkPreviewCallback, 500); // Debounce
@@ -1415,7 +1415,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
       compatibility: compatibility, // Pass the raw compatibility array with original text
       selectedCompatibility, // Pass the mapped selectedCompatibility array for filtering
     });
-  }, [formData, addWatermark, watermarkText, watermarkPosition, compatibility, onSubmit]);
+  }, [formData, addWatermark, watermarkText, watermarkPosition, addWatermarkToImage, generateDescription, validateSKU, compatibility, onSubmit]);
 
   const parseSpecificationTable = () => {
     const pasteArea = document.getElementById('specTablePaste') as HTMLTextAreaElement;
@@ -1862,7 +1862,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
                       ))}
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Showing preview of first {Math.min(2, formData.images.length)} image(s) with "{watermarkText}" watermark
+                      Showing preview of first {Math.min(2, formData.images.length)} image(s) with &quot;{watermarkText}&quot; watermark
                     </p>
                   </div>
                 )}
