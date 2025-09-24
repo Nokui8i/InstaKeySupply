@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, Suspense, useCallback } from "react";
+import React, { useEffect, useState, Suspense, useCallback, memo } from "react";
 import CarouselBanner from "./components/CarouselBanner";
 import ProductCarousel from "./components/ProductCarousel";
 import ProductCard from "./components/ProductCard";
@@ -62,7 +62,7 @@ const sampleProducts = [
   },
 ];
 
-function HomeContent() {
+const HomeContent = memo(function HomeContent() {
   const searchParams = useSearchParams();
   const [banners, setBanners] = useState<{ src: string; alt: string }[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -92,17 +92,26 @@ function HomeContent() {
 
 
 
-  // Periodically reshuffle products for variety
+  // Periodically reshuffle products for variety - optimized
   useEffect(() => {
     if (products.length > 0) {
+      // Initial shuffle
+      setShuffledProducts({
+        featured: shuffleProducts(products),
+        bestSellers: shuffleProducts(products),
+        newArrivals: shuffleProducts(products),
+        allProducts: shuffleProducts(products)
+      });
+
+      // Only reshuffle every 30 minutes instead of 5 minutes
       const reshuffleInterval = setInterval(() => {
-        setShuffledProducts({
+        setShuffledProducts(prev => ({
           featured: shuffleProducts(products),
           bestSellers: shuffleProducts(products),
           newArrivals: shuffleProducts(products),
           allProducts: shuffleProducts(products)
-        });
-      }, 300000); // Reshuffle every 5 minutes
+        }));
+      }, 1800000); // Reshuffle every 30 minutes
 
       return () => clearInterval(reshuffleInterval);
     }
@@ -579,7 +588,7 @@ function HomeContent() {
       </section>
     </div>
   );
-}
+});
 
 export default function Home() {
   return (

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { db } from "@/firebase";
 import {
   collection,
@@ -212,7 +212,6 @@ function AdminInventoryContent() {
 
   // Helper function to format price consistently
   const formatPrice = (price: string | number): string => {
-    console.log('formatPrice called with:', price, 'type:', typeof price);
     if (typeof price === 'string') {
       if (price.startsWith('$')) {
         return price;
@@ -253,16 +252,8 @@ function AdminInventoryContent() {
       const snap = await getDocs(q);
       const fetchedProducts = snap.docs.map(doc => {
         const data = doc.data();
-        console.log('Product compatibility data for', data.title, ':', data.compatibility);
         return { id: doc.id, ...data } as Product;
       });
-      console.log('Fetched products from Firebase:', fetchedProducts);
-      console.log('Product images data:', fetchedProducts.map(p => ({
-        id: p.id,
-        title: p.title,
-        imageUrl: p.imageUrl,
-        images: p.images
-      })));
       setProducts(fetchedProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -395,8 +386,8 @@ function AdminInventoryContent() {
     }
   }, [isAuthenticated]);
 
-  // Filter products based on search and filters
-  const filteredProducts = (() => {
+  // Filter products based on search and filters - memoized for performance
+  const filteredProducts = useMemo(() => {
     try {
       return (products || []).filter(product => {
         // Ensure product exists and has required properties
@@ -417,10 +408,10 @@ function AdminInventoryContent() {
       console.error('Error filtering products:', error);
       return [];
     }
-  })();
+  }, [products, searchTerm, selectedCategory, selectedStatus]);
 
-  // Sort filtered products
-  const sortedProducts = (() => {
+  // Sort filtered products - memoized for performance
+  const sortedProducts = useMemo(() => {
     try {
       return [...filteredProducts].sort((a, b) => {
         // Ensure both products exist
@@ -460,13 +451,24 @@ function AdminInventoryContent() {
       console.error('Error sorting products:', error);
       return filteredProducts || [];
     }
-  })();
+  }, [filteredProducts, sortField, sortDirection]);
 
-  // Pagination logic
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct) || [];
-  const totalPages = Math.max(1, Math.ceil((sortedProducts?.length || 0) / productsPerPage));
+  // Pagination logic - memoized for performance
+  const paginationData = useMemo(() => {
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct) || [];
+    const totalPages = Math.max(1, Math.ceil((sortedProducts?.length || 0) / productsPerPage));
+    
+    return {
+      currentProducts,
+      totalPages,
+      indexOfFirstProduct,
+      indexOfLastProduct
+    };
+  }, [sortedProducts, currentPage, productsPerPage]);
+
+  const { currentProducts, totalPages } = paginationData;
 
   // Reset to first page when search or filters change
   useEffect(() => {
@@ -496,15 +498,15 @@ function AdminInventoryContent() {
     }
   };
 
-  // Handle column sorting
-  const handleSort = (field: 'title' | 'sku' | 'price' | 'stock' | 'status') => {
+  // Handle column sorting - memoized for performance
+  const handleSort = useCallback((field: 'title' | 'sku' | 'price' | 'stock' | 'status') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
-  };
+  }, [sortField, sortDirection]);
 
   // Handle drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -611,14 +613,11 @@ function AdminInventoryContent() {
       
       // Upload multiple images to Firebase Storage
       if (formData.images && formData.images.length > 0) {
-        console.log('Uploading images to Firebase:', formData.images.length, 'images');
         for (let i = 0; i < formData.images.length; i++) {
           const image = formData.images[i];
-          console.log(`Processing image ${i + 1}:`, image.substring(0, 50) + '...');
           
           // If it's a base64 image (including edited images), upload it to Firebase Storage
           if (image.startsWith('data:')) {
-            console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
             try {
               // Convert base64 to blob directly without using fetch
               const base64Response = image.split(',')[1];
@@ -633,7 +632,6 @@ function AdminInventoryContent() {
               const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
               await uploadBytes(storageRef, blob);
               const downloadUrl = await getDownloadURL(storageRef);
-              console.log(`Image ${i + 1} uploaded successfully:`, downloadUrl);
               imageUrls.push(downloadUrl);
             } catch (uploadError) {
               console.error(`Error uploading image ${i + 1}:`, uploadError);
@@ -644,7 +642,6 @@ function AdminInventoryContent() {
             }
           } else if (image.startsWith('http')) {
             // If it's already a URL, keep it
-            console.log(`Image ${i + 1} is already a URL:`, image);
             imageUrls.push(image);
           } else {
             console.warn(`Skipping invalid image ${i + 1}:`, image.substring(0, 50) + '...');
@@ -652,15 +649,7 @@ function AdminInventoryContent() {
         }
       }
       
-      console.log('Final imageUrls array:', imageUrls);
       
-      // Debug: log price before saving
-      console.log('Price before saving to Firestore:', {
-        originalPrice: formData.price,
-        originalPriceType: typeof formData.price,
-        parsedPrice: parseFloat(formData.price),
-        parsedPriceType: typeof parseFloat(formData.price)
-      });
       
       // Save to Firestore with flexible fields
       await addDoc(collection(db, "products"), {
@@ -738,14 +727,11 @@ function AdminInventoryContent() {
       
       // Upload multiple images to Firebase Storage
       if (formData.images && formData.images.length > 0) {
-        console.log('Uploading images to Firebase:', formData.images.length, 'images');
         for (let i = 0; i < formData.images.length; i++) {
           const image = formData.images[i];
-          console.log(`Processing image ${i + 1}:`, image.substring(0, 50) + '...');
           
           // If it's a base64 image (including edited images), upload it to Firebase Storage
           if (image.startsWith('data:')) {
-            console.log(`Uploading base64 image ${i + 1} to Firebase Storage...`);
             try {
               // Convert base64 to blob directly without using fetch
               const base64Response = image.split(',')[1];
@@ -760,7 +746,6 @@ function AdminInventoryContent() {
               const storageRef = ref(storage, `products/${Date.now()}_${i}_product.jpg`);
               await uploadBytes(storageRef, blob);
               const downloadUrl = await getDownloadURL(storageRef);
-              console.log(`Image ${i + 1} uploaded successfully:`, downloadUrl);
               imageUrls.push(downloadUrl);
             } catch (uploadError) {
               console.error(`Error uploading image ${i + 1}:`, uploadError);
@@ -771,7 +756,6 @@ function AdminInventoryContent() {
             }
           } else if (image.startsWith('http')) {
             // If it's already a URL, keep it
-            console.log(`Image ${i + 1} is already a URL:`, image);
             imageUrls.push(image);
           } else {
             console.warn(`Skipping invalid image ${i + 1}:`, image.substring(0, 50) + '...');
@@ -779,9 +763,7 @@ function AdminInventoryContent() {
         }
       }
       
-      console.log('Final imageUrls array:', imageUrls);
       
-      console.log('Saving product with compatibility data:', formData.compatibility);
       
       // Save to Firestore with all fields
       await addDoc(collection(db, "products"), {
@@ -952,7 +934,6 @@ function AdminInventoryContent() {
         }
       }
       
-      console.log('Updating product with compatibility data:', formData.compatibility);
       
       const updateData: any = {
         title: formData.title,
@@ -982,7 +963,6 @@ function AdminInventoryContent() {
 
       await updateDoc(doc(db, "products", editingProduct.id), updateData);
       
-      console.log("Product updated successfully");
       setShowEditModal(false);
       setEditingProduct(null);
       setSelectedFile(null);
@@ -1138,18 +1118,18 @@ function AdminInventoryContent() {
     }
   };
 
-  // Toggle product selection
-  const toggleProductSelection = (productId: string) => {
+  // Toggle product selection - memoized for performance
+  const toggleProductSelection = useCallback((productId: string) => {
     setSelectedProducts(prev => {
       const newSelection = prev.includes(productId) 
         ? prev.filter(id => id !== productId)
         : [...prev, productId];
       return newSelection;
     });
-  };
+  }, []);
 
-  // Toggle select all products
-  const toggleSelectAll = () => {
+  // Toggle select all products - memoized for performance
+  const toggleSelectAll = useCallback(() => {
     const allSelected = currentProducts.every(p => selectedProducts.includes(p.id));
     if (allSelected) {
       // If all are selected, clear selection
@@ -1158,7 +1138,7 @@ function AdminInventoryContent() {
       // If not all are selected, select all
       setSelectedProducts(currentProducts.map(p => p.id));
     }
-  };
+  }, [currentProducts, selectedProducts]);
 
   // Clear selection
   const clearSelection = () => {
@@ -1545,7 +1525,7 @@ function AdminInventoryContent() {
             )}
 
             {/* Product Table - Desktop */}
-            <div className="hidden lg:block bg-white border border-gray-200 overflow-hidden">
+            <div className="hidden lg:block bg-white border border-gray-200 overflow-hidden admin-table">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -1621,7 +1601,7 @@ function AdminInventoryContent() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {currentProducts.map(product => (
-                      <tr key={product.id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-gray-50 admin-table-row">
                         <td className="px-3 py-2">
                           <input
                             type="checkbox"
@@ -1840,8 +1820,8 @@ function AdminInventoryContent() {
 
           {/* Add/Edit Product Modal */}
           {showEditModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" onClick={handleCloseModal} style={{ pointerEvents: 'auto' }}>
-              <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-1 sm:p-2 admin-modal" onClick={handleCloseModal} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-lg shadow-2xl w-full h-full max-w-7xl max-h-[98vh] overflow-hidden admin-form animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
                 <FlexibleProductForm
                   onSubmit={handleUpdate}
                   onCancel={handleCloseModal}
@@ -1856,8 +1836,8 @@ function AdminInventoryContent() {
 
           {/* Flexible Add Product Modal */}
           {showFlexibleUploadModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" onClick={() => setShowFlexibleUploadModal(false)} style={{ pointerEvents: 'auto' }}>
-              <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-1 sm:p-2 admin-modal" onClick={() => setShowFlexibleUploadModal(false)} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-lg shadow-2xl w-full h-full max-w-7xl max-h-[98vh] overflow-hidden admin-form animate-scale-in flex flex-col" onClick={e => e.stopPropagation()} style={{ willChange: 'auto', contain: 'layout style paint' }}>
                 <FlexibleProductForm
                   onSubmit={handleFlexibleUploadAndAdd}
                   onCancel={() => setShowFlexibleUploadModal(false)}

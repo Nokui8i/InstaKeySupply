@@ -99,20 +99,21 @@ html {
   }
 }
 
-/* Loading animations */
+/* Loading animations - optimized for performance */
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translate3d(0, 20px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
+  will-change: opacity, transform;
 }
 
 /* Prevent body scroll when mobile search is open */
@@ -138,18 +139,87 @@ body.mobile-search-open {
   will-change: auto;
   transform: translateZ(0);
   backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .admin-content {
   will-change: auto;
   transform: translateZ(0);
   backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 /* Prevent flickering on admin pages */
 .admin-page {
   will-change: auto;
   transform: translateZ(0);
+  contain: layout style paint;
+}
+
+/* Optimize admin tables for smooth scrolling */
+.admin-table {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+}
+
+.admin-table-row {
+  will-change: auto;
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+/* Optimize admin forms */
+.admin-form {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+}
+
+/* Optimize admin modals */
+.admin-modal {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+}
+
+/* Optimize form performance */
+.form-container {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Optimize modal performance */
+.admin-modal {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Optimize form scrolling */
+.admin-form {
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.form-field {
+  will-change: auto;
+  backface-visibility: hidden;
+}
+
+/* Optimize scroll performance in forms */
+.form-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  contain: layout style paint;
 }
 
 /* Additional admin table optimizations */
@@ -328,6 +398,35 @@ nav a:hover {
   }
 }
 
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize scrolling performance */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduce repaints on scroll */
+body {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Logo Carousel Scrollbar Hiding */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -335,4 +434,158 @@ nav a:hover {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Modal animations */
+@keyframes scale-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Checkbox Design - From Uiverse.io by SharpTH */
+.cbx {
+  -webkit-perspective: 20;
+  perspective: 20;
+  position: relative;
+  display: inline-block;
+  margin: -12px;
+  border: 2px solid #e8e8eb;
+  background: #e8e8eb;
+  border-radius: 4px;
+  transform: translate3d(0, 0, 0);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 20px;
+  height: 20px;
+}
+
+.cbx:hover {
+  border-color: #0b76ef;
+}
+
+.flip {
+  display: block;
+  transition: all 0.4s ease;
+  transform-style: preserve-3d;
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.cbx input[type="checkbox"] {
+  display: none;
+}
+
+.cbx input[type="checkbox"]:checked + .flip {
+  transform: rotateY(180deg);
+}
+
+.cbx input[type="checkbox"]:checked {
+  border-color: #0b76ef;
+}
+
+.front,
+.back {
+  backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.front {
+  background: #fff;
+  z-index: 1;
+}
+
+.back {
+  transform: rotateY(180deg);
+  background: #0b76ef;
+  text-align: center;
+  color: #fff;
+  line-height: 20px;
+  box-shadow: 0 0 0 1px #0b76ef;
+}
+
+.back svg {
+  margin-top: 3px;
+  fill: none;
+}
+
+.back svg path {
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Performance optimizations for modal forms */
+.modal-form-container {
+  will-change: auto;
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.modal-form-content {
+  will-change: auto;
+  contain: layout style paint;
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.modal-form-section {
+  will-change: auto;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* Optimize form inputs for performance */
+.form-input-optimized {
+  will-change: auto;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* Optimize image previews */
+.image-preview-optimized {
+  will-change: auto;
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize custom fields */
+.custom-field-optimized {
+  will-change: auto;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* Optimize vehicle compatibility */
+.vehicle-compat-optimized {
+  will-change: auto;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* Optimize watermark preview */
+.watermark-preview-optimized {
+  will-change: auto;
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }

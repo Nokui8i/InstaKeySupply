@@ -5,13 +5,7 @@ import PasswordResetModal from './PasswordResetModal';
 
 export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: boolean; onClose: () => void; anchorRef: React.RefObject<HTMLButtonElement> }) {
   const { login, register, loading, user, logout, signInWithGoogle, isAdmin } = useAuth();
-  const [tab, setTab] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   // Only close when explicitly requested - no click-outside detection
@@ -61,6 +55,13 @@ export default function UserAuthDropdown({ open, onClose, anchorRef }: { open: b
 
   // Desktop content component
   function AuthContent() {
+    const [tab, setTab] = useState<'login' | 'register'>('login');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
+
     if (!user) {
       return (
         <div className="space-y-4">

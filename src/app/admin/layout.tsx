@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import { useAdminAuth } from "./context/AdminAuthContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { AdminSidebarProvider, useAdminSidebar } from "./context/AdminSidebarContext";
@@ -10,7 +10,7 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-function AdminLayoutContent({ children }: AdminLayoutProps) {
+const AdminLayoutContent = memo(function AdminLayoutContent({ children }: AdminLayoutProps) {
   const { sidebarOpen, setSidebarOpen, toggleSidebar } = useAdminSidebar();
   const { isAuthenticated, isLoading } = useAdminAuth();
 
@@ -93,7 +93,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       </div>
     </div>
   );
-}
+});
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (

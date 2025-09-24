@@ -26,26 +26,32 @@ export default function LogoCarousel({
   useEffect(() => {
     if (!autoScroll || !scrollRef.current) return;
 
-    let intervalId: NodeJS.Timeout;
+    let animationId: number;
     let currentTranslateX = 0;
+    let lastTime = 0;
 
-    const scroll = () => {
-      currentTranslateX -= 2; // Faster movement per frame
-      
-      // Reset when we've scrolled through one set of logos
-      if (Math.abs(currentTranslateX) >= (logos.length * 120)) { // Approximate width per logo
-        currentTranslateX = 0;
+    const scroll = (currentTime: number) => {
+      if (currentTime - lastTime >= 16) { // ~60fps, only update every 16ms
+        currentTranslateX -= 1; // Slower, smoother movement
+        
+        // Reset when we've scrolled through one set of logos
+        if (Math.abs(currentTranslateX) >= (logos.length * 120)) {
+          currentTranslateX = 0;
+        }
+        
+        setTranslateX(currentTranslateX);
+        lastTime = currentTime;
       }
       
-      setTranslateX(currentTranslateX);
+      animationId = requestAnimationFrame(scroll);
     };
 
-    // Use setInterval for better mobile compatibility
-    intervalId = setInterval(scroll, 30); // 33fps for faster movement
+    // Use requestAnimationFrame for better performance
+    animationId = requestAnimationFrame(scroll);
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
       }
     };
   }, [autoScroll, speed, logos.length]);
@@ -76,8 +82,8 @@ export default function LogoCarousel({
            ref={scrollRef}
            className="flex items-center space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-12"
            style={{ 
-             transform: `translateX(${translateX}px)`,
-             transition: 'transform 0.05s linear',
+             transform: `translate3d(${translateX}px, 0, 0)`,
+             willChange: 'transform',
              touchAction: 'none',
              userSelect: 'none'
            }}

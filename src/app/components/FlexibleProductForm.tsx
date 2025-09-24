@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import Dropzone from 'react-dropzone';
@@ -110,7 +110,6 @@ function ImageEditor({
     try {
       // Try direct export first
       const editedImage = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Saving edited image, size:', editedImage.length);
       onSave(editedImage);
     } catch (error) {
       console.error('Error saving edited image:', error);
@@ -140,7 +139,6 @@ function ImageEditor({
         
         // Now export from the new canvas
         const editedImage = newCanvas.toDataURL('image/jpeg', 0.8);
-        console.log('Saving edited image via imageData, size:', editedImage.length);
         onSave(editedImage);
         
       } catch (fallbackError) {
@@ -165,11 +163,9 @@ function ImageEditor({
             
             // Apply the same drawing operations that were done on the original canvas
             // This is a simplified approach - we'll just return the original for now
-            console.log('Returning original image as fallback');
             onSave(imageSrc);
           };
           img.onerror = () => {
-            console.log('Returning original image as fallback');
             onSave(imageSrc);
           };
           img.src = imageSrc;
@@ -301,7 +297,7 @@ function ImageEditor({
   );
 }
 
-export default function FlexibleProductForm({ 
+const FlexibleProductForm = memo(function FlexibleProductForm({ 
   onSubmit, 
   onCancel, 
   initialData, 
@@ -333,6 +329,10 @@ export default function FlexibleProductForm({
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const [editingImageSrc, setEditingImageSrc] = useState<string>('');
+  const [addWatermark, setAddWatermark] = useState(false);
+  const [watermarkText, setWatermarkText] = useState('OEM');
+  const [watermarkPosition, setWatermarkPosition] = useState<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('top-left');
+  const [watermarkPreview, setWatermarkPreview] = useState<string | null>(null);
   
   // Vehicle compatibility master data (from API) - same as EnhancedProductForm
   const [compatData, setCompatData] = useState<any>({});
@@ -406,43 +406,39 @@ export default function FlexibleProductForm({
     }
   }, [categories, initialData]);
 
-  // Debug: monitor formData changes
-  useEffect(() => {
-    console.log('FormData changed:', formData);
-  }, [formData]);
 
-  // Fetch categories and vehicle data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch categories
-        const categoriesQuery = query(collection(db, "categories"), orderBy("name"));
-        const snapshot = await getDocs(categoriesQuery);
-        const categoriesData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setCategories(categoriesData);
+  // Fetch categories and vehicle data - memoized for performance
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch categories
+      const categoriesQuery = query(collection(db, "categories"), orderBy("name"));
+      const snapshot = await getDocs(categoriesQuery);
+      const categoriesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCategories(categoriesData);
 
-        // Fetch vehicle compatibility data
-        const response = await fetch('/api/vehicle-compatibility/makes-models');
-        if (response.ok) {
-          const data = await response.json();
-          setCompatData(data);
-          setCompatLoading(false);
-        } else {
-          setCompatError('Failed to fetch vehicle compatibility data');
-          setCompatLoading(false);
-        }
-      } catch (error) {
-        setCompatError('Error fetching vehicle compatibility data');
+      // Fetch vehicle compatibility data
+      const response = await fetch('/api/vehicle-compatibility/makes-models');
+      if (response.ok) {
+        const data = await response.json();
+        setCompatData(data);
         setCompatLoading(false);
-        console.error('Error fetching vehicle compatibility data:', error);
+      } else {
+        setCompatError('Failed to fetch vehicle compatibility data');
+        setCompatLoading(false);
       }
-    };
-
-    fetchData();
+    } catch (error) {
+      setCompatError('Error fetching vehicle compatibility data');
+      setCompatLoading(false);
+      console.error('Error fetching vehicle compatibility data:', error);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const addCustomField = () => {
     const newField: CustomField = {
@@ -524,7 +520,6 @@ export default function FlexibleProductForm({
   };
 
   const handleMainCategoryChange = (categoryId: string) => {
-    console.log('Main category changed to:', categoryId);
     setSelectedMainCategory(categoryId);
     
     // If no category is selected, clear all category data
@@ -541,7 +536,6 @@ export default function FlexibleProductForm({
     // Find subcategories for the selected main category
     const mainCategorySubcategories = categories.filter(cat => cat.parentId === categoryId);
     setSubcategories(mainCategorySubcategories);
-    console.log('Found subcategories:', mainCategorySubcategories);
     
     // Clear the selected category if it's not a subcategory of the new main category
     if (formData.categoryId && !mainCategorySubcategories.find(sub => sub.id === formData.categoryId)) {
@@ -555,7 +549,6 @@ export default function FlexibleProductForm({
     // If no subcategories exist for this main category, set it as the category directly
     if (mainCategorySubcategories.length === 0) {
       const selectedCategory = categories.find(cat => cat.id === categoryId);
-      console.log('No subcategories, setting main category as category:', selectedCategory);
       setFormData(prev => ({
         ...prev,
         categoryId: categoryId,
@@ -565,7 +558,6 @@ export default function FlexibleProductForm({
   };
 
   const handleSubcategoryChange = (subcategoryId: string) => {
-    console.log('Subcategory changed to:', subcategoryId);
     
     // If no subcategory is selected, clear category data
     if (!subcategoryId) {
@@ -578,7 +570,6 @@ export default function FlexibleProductForm({
     }
     
     const selectedSubcategory = subcategories.find(sub => sub.id === subcategoryId);
-    console.log('Selected subcategory:', selectedSubcategory);
     setFormData(prev => ({
       ...prev,
       categoryId: subcategoryId,
@@ -601,22 +592,18 @@ export default function FlexibleProductForm({
     let currentLabel = '';
     let currentValues: string[] = [];
     
-    console.log('🔍 Parsing text lines:', lines);
     
     lines.forEach((line, index) => {
       // Skip empty lines
       if (!line.trim()) return;
       
-      console.log(`📝 Processing line ${index}: "${line}"`);
       
       // Check if line contains a colon (label: value format)
       if (line.includes(':')) {
-        console.log(`🏷️  Found label: "${line}"`);
         
         // If we have a previous label with values, save it
         if (currentLabel && currentValues.length > 0) {
           const value = currentValues.join('\n');
-          console.log(`💾 Saving previous label "${currentLabel}" with values:`, currentValues);
           
           // Check if this is a special category that should be grouped
           const lowerLabel = currentLabel.toLowerCase();
@@ -624,22 +611,18 @@ export default function FlexibleProductForm({
           if (lowerLabel.includes('button') || lowerLabel === 'buttons' || lowerLabel === 'buttong' || lowerLabel.includes('btn')) {
             // Add to buttons array for consolidation
             currentValues.forEach(val => buttons.push(val));
-            console.log(`🔘 Added to buttons array:`, currentValues);
           } else if (lowerLabel.includes('model') || lowerLabel.includes('compatibility') || lowerLabel.includes('works on')) {
             // Add to vehicle models array for consolidation
             currentValues.forEach(val => vehicleModels.push(val));
-            console.log(`🚗 Added to vehicle models array:`, currentValues);
           } else if (lowerLabel.includes('oem') || lowerLabel.includes('part') || lowerLabel.includes('part #')) {
             // Add to OEM parts array for consolidation
             currentValues.forEach(val => oemParts.push(val));
-            console.log(`🔧 Added to OEM parts array:`, currentValues);
           } else {
             // Add as individual field
             otherItems.push({
               label: currentLabel,
               value: value
             });
-            console.log(`📋 Added as individual field: "${currentLabel}" = "${value}"`);
           }
         }
         
@@ -649,16 +632,13 @@ export default function FlexibleProductForm({
         // If there's a value on the same line, add it; otherwise start with empty array
         const inlineValue = valueParts.join(':').trim();
         currentValues = inlineValue ? [inlineValue] : [];
-        console.log(`🆕 New label: "${currentLabel}", inline value: "${inlineValue}", currentValues:`, currentValues);
       } else {
         // This line is a value for the current label
         if (currentLabel) {
           currentValues.push(line.trim());
-          console.log(`➕ Added value "${line.trim()}" to label "${currentLabel}", currentValues:`, currentValues);
         } else {
           // No current label, try to detect common patterns
           const lowerLine = line.toLowerCase();
-          console.log(`🔍 No current label, detecting pattern for: "${line}"`);
           
           // Vehicle compatibility patterns - detect Lexus, BMW, Ford, etc. models
           if (lowerLine.includes('lexus') || lowerLine.includes('bmw') || lowerLine.includes('ford') || 
@@ -671,17 +651,14 @@ export default function FlexibleProductForm({
               lowerLine.includes('lamborghini') || lowerLine.includes('maserati') || lowerLine.includes('alfa romeo')) {
             
             vehicleModels.push(line.trim());
-            console.log(`🚗 Added to vehicle models: "${line.trim()}"`);
           }
           // Button patterns
           else if (lowerLine.includes('lock') || lowerLine.includes('unlock') || lowerLine.includes('trunk') || lowerLine.includes('panic')) {
             buttons.push(line.trim());
-            console.log(`🔘 Added to buttons: "${line.trim()}"`);
           }
           // OEM Part patterns
           else if (lowerLine.includes('oem') || lowerLine.includes('part') || /^\d{5}-\d{2}[A-Z]\d{2}$/.test(line.trim())) {
             oemParts.push(line.trim());
-            console.log(`🔧 Added to OEM parts: "${line.trim()}"`);
           }
           // FCC ID patterns
           else if (lowerLine.includes('fcc') || lowerLine.includes('hyq')) {
@@ -689,7 +666,6 @@ export default function FlexibleProductForm({
               label: 'FCC ID',
               value: line.trim()
             });
-            console.log(`📡 Added as FCC ID: "${line.trim()}"`);
           }
           // Chip patterns
           else if (lowerLine.includes('chip') || lowerLine.includes('texas') || lowerLine.includes('h-8a')) {
@@ -697,7 +673,6 @@ export default function FlexibleProductForm({
               label: 'CHIP',
               value: line.trim()
             });
-            console.log(`🧩 Added as CHIP: "${line.trim()}"`);
           }
           // Frequency patterns
           else if (lowerLine.includes('mhz') || lowerLine.includes('frequency')) {
@@ -705,7 +680,6 @@ export default function FlexibleProductForm({
               label: 'FREQUENCY',
               value: line.trim()
             });
-            console.log(`📡 Added as FREQUENCY: "${line.trim()}"`);
           }
           // Battery patterns
           else if (lowerLine.includes('cr') || lowerLine.includes('battery')) {
@@ -713,7 +687,6 @@ export default function FlexibleProductForm({
               label: 'BATTERY',
               value: line.trim()
             });
-            console.log(`🔋 Added as BATTERY: "${line.trim()}"`);
           }
           // Keyway patterns
           else if (lowerLine.includes('keyway') || lowerLine.includes('lxp')) {
@@ -721,7 +694,6 @@ export default function FlexibleProductForm({
               label: 'KEYWAY',
               value: line.trim()
             });
-            console.log(`🔑 Added as KEYWAY: "${line.trim()}"`);
           }
           // Condition patterns
           else if (lowerLine.includes('condition') || lowerLine.includes('oem') || lowerLine.includes('new')) {
@@ -729,7 +701,6 @@ export default function FlexibleProductForm({
               label: 'CONDITION',
               value: line.trim()
             });
-            console.log(`🏷️  Added as CONDITION: "${line.trim()}"`);
           }
           // Default: create a generic field
           else {
@@ -737,7 +708,6 @@ export default function FlexibleProductForm({
               label: 'Additional Info',
               value: line.trim()
             });
-            console.log(`❓ Added as Additional Info: "${line.trim()}"`);
           }
         }
       }
@@ -746,7 +716,6 @@ export default function FlexibleProductForm({
     // Don't forget to process the last label-value group
     if (currentLabel && currentValues.length > 0) {
       const value = currentValues.join('\n');
-      console.log(`💾 Processing final label "${currentLabel}" with values:`, currentValues);
       
       // Check if this is a special category that should be grouped
       const lowerLabel = currentLabel.toLowerCase();
@@ -754,22 +723,18 @@ export default function FlexibleProductForm({
       if (lowerLabel.includes('button') || lowerLabel === 'buttons' || lowerLabel === 'buttong') {
         // Add to buttons array for consolidation
         currentValues.forEach(val => buttons.push(val));
-        console.log(`🔘 Final: Added to buttons array:`, currentValues);
       } else if (lowerLabel.includes('model') || lowerLabel.includes('compatibility') || lowerLabel.includes('works on')) {
         // Add to vehicle models array for consolidation
         currentValues.forEach(val => vehicleModels.push(val));
-        console.log(`🚗 Final: Added to vehicle models array:`, currentValues);
       } else if (lowerLabel.includes('part') || lowerLabel.includes('part #')) {
         // Add to OEM parts array for consolidation
         currentValues.forEach(val => oemParts.push(val));
-        console.log(`🔧 Final: Added to OEM parts array:`, currentValues);
       } else {
         // Add as individual field
         otherItems.push({
           label: currentLabel,
           value: value
         });
-        console.log(`📋 Final: Added as individual field: "${currentLabel}" = "${value}"`);
       }
     }
     
@@ -797,7 +762,6 @@ export default function FlexibleProductForm({
           )
         }));
         
-        console.log(`✅ Merged "${value}" into existing "${existingField.label}" field. New value: ${mergedValue}`);
         
         return null; // Don't create a new field
       } else {
@@ -810,11 +774,6 @@ export default function FlexibleProductForm({
       }
     };
     
-    console.log('📊 Final arrays created:');
-    console.log('🚗 Vehicle Models:', vehicleModels);
-    console.log('🔘 Buttons:', buttons);
-    console.log('🔧 OEM Parts:', oemParts);
-    console.log('📋 Other Items:', otherItems);
     
     // Create consolidated fields using the merge logic
     if (vehicleModels.length > 0) {
@@ -852,12 +811,145 @@ export default function FlexibleProductForm({
       }
     });
     
-    console.log('🎯 Final newFields:', newFields);
     return newFields;
   };
 
-  // Auto-detect vehicle compatibility from a specific custom field
-  const detectVehiclesFromField = (fieldId: string) => {
+  // Function to generate watermark preview - memoized for performance
+  const generateWatermarkPreview = useCallback(async () => {
+    if (formData.images.length === 0 || !watermarkText.trim()) {
+      setWatermarkPreview(null);
+      return;
+    }
+    
+    try {
+      const preview = await addWatermarkToImage(formData.images[0], watermarkText, watermarkPosition);
+      setWatermarkPreview(preview);
+    } catch (error) {
+      console.error('Error generating watermark preview:', error);
+    }
+  }, [formData.images, watermarkText, watermarkPosition]);
+
+  // Update preview when watermark settings change - optimized with useCallback
+  const generateWatermarkPreviewCallback = useCallback(() => {
+    if (addWatermark && formData.images.length > 0) {
+      generateWatermarkPreview();
+    } else {
+      setWatermarkPreview(null);
+    }
+  }, [addWatermark, formData.images.length, watermarkText, watermarkPosition, generateWatermarkPreview]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(generateWatermarkPreviewCallback, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [generateWatermarkPreviewCallback]);
+
+  // Function to add watermark to image - memoized for performance
+  const addWatermarkToImage = useCallback((imageSrc: string, watermarkText: string, position: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // Set high DPI canvas for crisp rendering
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        canvas.width = img.width * devicePixelRatio;
+        canvas.height = img.height * devicePixelRatio;
+        canvas.style.width = img.width + 'px';
+        canvas.style.height = img.height + 'px';
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        // Scale context for high DPI
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+        
+        // Draw the original image
+        ctx.drawImage(img, 0, 0);
+        
+        // Set watermark properties
+        const fontSize = Math.max(22, img.width * 0.05); // Responsive font size - increased
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Calculate position based on selected position
+        let x, y;
+        const padding = 35; // Increased padding
+        
+        switch (position) {
+          case 'top-left':
+            x = padding + (ctx.measureText(watermarkText).width / 2);
+            y = padding + fontSize / 2;
+            break;
+          case 'top-right':
+            x = img.width - padding - (ctx.measureText(watermarkText).width / 2);
+            y = padding + fontSize / 2;
+            break;
+          case 'bottom-left':
+            x = padding + (ctx.measureText(watermarkText).width / 2);
+            y = img.height - padding - fontSize / 2;
+            break;
+          case 'bottom-right':
+            x = img.width - padding - (ctx.measureText(watermarkText).width / 2);
+            y = img.height - padding - fontSize / 2;
+            break;
+          default:
+            x = padding + (ctx.measureText(watermarkText).width / 2);
+            y = padding + fontSize / 2;
+        }
+        
+        // Draw premium background with solid color for better quality
+        const textWidth = ctx.measureText(watermarkText).width;
+        const textHeight = fontSize;
+        const rectPadding = 16; // Increased padding for larger text
+        const rectX = x - textWidth / 2 - rectPadding;
+        const rectY = y - textHeight / 2 - rectPadding;
+        const rectWidth = textWidth + rectPadding * 2;
+        const rectHeight = textHeight + rectPadding * 2;
+        
+        // Create gradient background like Buy Now button
+        const gradient = ctx.createLinearGradient(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
+        gradient.addColorStop(0, 'rgba(147, 51, 234, 0.9)'); // Purple-600
+        gradient.addColorStop(1, 'rgba(219, 39, 119, 0.9)'); // Pink-600
+        
+        // Draw gradient background
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(rectX, rectY, rectWidth, rectHeight, 8);
+        ctx.fill();
+        
+        // Draw subtle border for definition
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Reset shadow and draw crisp white text
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(watermarkText, x, y);
+        
+        // Convert to data URL with high quality
+        const watermarkedImage = canvas.toDataURL('image/jpeg', 0.95);
+        resolve(watermarkedImage);
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Could not load image'));
+      };
+      
+      img.src = imageSrc;
+    });
+  }, []);
+
+  // Auto-detect vehicle compatibility from a specific custom field - memoized for performance
+  const detectVehiclesFromField = useCallback((fieldId: string) => {
     const field = formData.customFields.find(f => f.id === fieldId);
     if (!field || !field.value.trim()) {
       return;
@@ -1006,10 +1098,10 @@ export default function FlexibleProductForm({
       const debugMessage = `No vehicle compatibility patterns found in "${field.label}".\n\nDetection log:\n${detectionLog.join('\n')}\n\nMake sure to include make, model, and year information in your text.`;
       console.log(debugMessage);
     }
-  };
+  }, [formData.customFields, compatData, compatibility, createCustomFieldsFromText]);
 
-  // Auto-detect vehicle compatibility from custom fields
-  const detectVehicleCompatibility = () => {
+  // Auto-detect vehicle compatibility from custom fields - memoized for performance
+  const detectVehicleCompatibility = useCallback(() => {
     const detectedVehicles: Array<{ make: string, model: string, yearRange: string }> = [];
     const detectionLog: string[] = [];
     
@@ -1028,15 +1120,6 @@ export default function FlexibleProductForm({
       // They overlap if: start1 <= endYear2 AND endYear1 >= start2
       const overlaps = start1 <= endYear2 && endYear1 >= start2;
       
-      // Debug logging for BMW Z4
-      if (range1.includes('2003-2008') || range2.includes('2003-2008')) {
-        console.log(`Overlap check: "${range1}" vs "${range2}"`);
-        console.log(`  Range1: ${start1} to ${endYear1}`);
-        console.log(`  Range2: ${start2} to ${endYear2}`);
-        console.log(`  start1 <= end2: ${start1} <= ${endYear2} = ${start1 <= endYear2}`);
-        console.log(`  end1 >= start2: ${endYear1} >= ${start2} = ${endYear1 >= start2}`);
-        console.log(`  Result: ${overlaps}`);
-      }
       
       return overlaps;
     };
@@ -1045,30 +1128,17 @@ export default function FlexibleProductForm({
     const findAllOverlappingRanges = (targetRange: string, availableRanges: string[]): string[] => {
       const overlappingRanges: string[] = [];
       
-      // Debug logging for BMW Z4
-      if (targetRange.includes('2003-2008')) {
-        console.log(`=== Overlap Detection for "${targetRange}" ===`);
-        console.log(`Available ranges: ${availableRanges.join(', ')}`);
-      }
       
       // Only add ranges that actually exist in the database
       availableRanges.forEach(range => {
         const overlaps = yearRangesOverlap(targetRange, range);
         
-        // Debug logging for BMW Z4
-        if (targetRange.includes('2003-2008')) {
-          console.log(`Checking "${targetRange}" vs "${range}": ${overlaps}`);
-        }
         
         if (overlaps) {
           overlappingRanges.push(range);
         }
       });
       
-      // Debug logging for BMW Z4
-      if (targetRange.includes('2003-2008')) {
-        console.log(`Final overlapping ranges: ${overlappingRanges.join(', ')}`);
-      }
       
       return overlappingRanges;
     };
@@ -1103,7 +1173,6 @@ export default function FlexibleProductForm({
                   
                   // Debug logging for BMW Z4
                   if (cleanLine.toLowerCase().includes('z4')) {
-                    console.log(`Found year pattern: "${yearRange}" in line: "${cleanLine}"`);
                   }
                   
                   // Check if this year range is available for this make/model
@@ -1113,11 +1182,6 @@ export default function FlexibleProductForm({
                   if (overlappingRanges.length > 0) {
                     detectionLog.push(`📅 Found ${overlappingRanges.length} overlapping range(s) for "${yearRange}": ${overlappingRanges.join(', ')}`);
                     
-                    // Debug logging for BMW Z4
-                    if (cleanLine.toLowerCase().includes('z4')) {
-                      console.log(`Available ranges for ${make} ${model}: ${availableRanges.join(', ')}`);
-                      console.log(`Overlapping ranges for "${yearRange}": ${overlappingRanges.join(', ')}`);
-                    }
                     
                     // Add each overlapping range as a separate entry (only database ranges)
                     overlappingRanges.forEach(range => {
@@ -1206,10 +1270,10 @@ export default function FlexibleProductForm({
         '\n\nMake sure to include make, model, and year information in your text.';
       console.log(debugMessage);
     }
-  };
+  }, [vehicleDetectionText, compatData, compatibility, createCustomFieldsFromText]);
 
-  // Vehicle compatibility functions
-  const addVehicleCompatibility = () => {
+  // Vehicle compatibility functions - memoized for performance
+  const addVehicleCompatibility = useCallback(() => {
     if (compatSelectedMake) {
       const newCompatibility = {
         make: compatSelectedMake,
@@ -1231,13 +1295,13 @@ export default function FlexibleProductForm({
         setCompatSelectedYear('');
       }
     }
-  };
+  }, [compatSelectedMake, compatSelectedModel, compatSelectedYear, compatibility]);
 
-  const removeVehicleCompatibility = (index: number) => {
+  const removeVehicleCompatibility = useCallback((index: number) => {
     setCompatibility(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const generateDescription = () => {
+  const generateDescription = useCallback(() => {
     const lines: string[] = [];
     
     // Add custom fields to description
@@ -1278,9 +1342,9 @@ export default function FlexibleProductForm({
     // The structured compatibility data is only used for filtering
 
     return lines.join('\n');
-  };
+  }, [formData.customFields, compatibility]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.images.length === 0) {
       alert('Please upload at least one product image');
@@ -1296,6 +1360,24 @@ export default function FlexibleProductForm({
     const isSKUValid = await validateSKU(formData.sku);
     if (!isSKUValid) {
       return;
+    }
+
+    // Process images with watermark if enabled
+    let processedImages = [...formData.images];
+    if (addWatermark && watermarkText.trim()) {
+      try {
+        processedImages = await Promise.all(
+          formData.images.map(async (imageSrc) => {
+            if (imageSrc.startsWith('data:')) {
+              return await addWatermarkToImage(imageSrc, watermarkText, watermarkPosition);
+            }
+            return imageSrc; // Skip watermarking for URLs
+          })
+        );
+      } catch (error) {
+        console.error('Error adding watermarks:', error);
+        alert('Error adding watermarks. Proceeding without watermarks.');
+      }
     }
 
     // Category selection is now optional
@@ -1323,32 +1405,17 @@ export default function FlexibleProductForm({
     const description = generateDescription();
 
     // Debug: log the form data being submitted
-    console.log('Submitting form data:', {
-      ...formData,
-      description,
-      stock: formData.stock ? parseInt(formData.stock) : 0,
-      price: parseFloat(formData.price),
-      compatibility: compatibility,
-      selectedCompatibility,
-    });
-    
-    // Debug: log price details
-    console.log('Price debugging:', {
-      originalPrice: formData.price,
-      originalPriceType: typeof formData.price,
-      parsedPrice: parseFloat(formData.price),
-      parsedPriceType: typeof parseFloat(formData.price)
-    });
 
     onSubmit({
       ...formData,
+      images: processedImages, // Use processed images with watermarks
       description,
       stock: formData.stock ? parseInt(formData.stock) : 0,
       price: parseFloat(formData.price),
       compatibility: compatibility, // Pass the raw compatibility array with original text
       selectedCompatibility, // Pass the mapped selectedCompatibility array for filtering
     });
-  };
+  }, [formData, addWatermark, watermarkText, watermarkPosition, compatibility, onSubmit]);
 
   const parseSpecificationTable = () => {
     const pasteArea = document.getElementById('specTablePaste') as HTMLTextAreaElement;
@@ -1413,23 +1480,37 @@ export default function FlexibleProductForm({
 
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 max-w-4xl mx-auto">
-      <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-6">
-        {isEditing ? 'Edit Product' : 'Add New Product (Flexible)'}
-      </h2>
+    <div className="h-full flex flex-col form-container modal-form-container">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 bg-white modal-form-section">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            {isEditing ? 'Edit Product' : 'Add New Product (Flexible)'}
+          </h2>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50 modal-form-content">
+
+      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
         {/* Basic Product Information */}
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Basic Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 modal-form-section">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Product Title *</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm form-input-optimized"
                 required
               />
             </div>
@@ -1578,9 +1659,9 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Product Images */}
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Images *</h3>
-          <div className="space-y-3 sm:space-y-4">
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 modal-form-section">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3">Product Images *</h3>
+          <div className="space-y-2 sm:space-y-3">
             
             {/* Drag & Drop Zone */}
             <Dropzone
@@ -1598,7 +1679,6 @@ export default function FlexibleProductForm({
 
                 // Handle dropped URLs or data from websites
                 rejectedFiles.forEach(file => {
-                  console.log('Dropped content:', file);
                 });
               }}
               onDropAccepted={(files) => {
@@ -1623,7 +1703,7 @@ export default function FlexibleProductForm({
               {({getRootProps, getInputProps, isDragActive, isDragReject}) => (
                 <div
                   {...getRootProps()}
-                  className={`w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                  className={`w-full h-24 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
                     isDragActive 
                       ? 'border-blue-500 bg-blue-50' 
                       : isDragReject 
@@ -1700,14 +1780,104 @@ export default function FlexibleProductForm({
               )}
             </Dropzone>
 
+            {/* Watermark Controls */}
+            <div className="bg-white border border-gray-200 rounded-lg p-3 modal-form-section">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddWatermark(!addWatermark);
+                    }}
+                    className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-all duration-200 ${
+                      addWatermark 
+                        ? 'bg-blue-600 border-blue-600 shadow-sm' 
+                        : 'bg-white border-gray-300 hover:border-blue-300 hover:bg-blue-50'
+                    }`}
+                  >
+                    {addWatermark && (
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                  <label className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Add watermark to images
+                  </label>
+                </div>
+                
+                {addWatermark && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Watermark Text</label>
+                      <input
+                        type="text"
+                        value={watermarkText}
+                        onChange={(e) => setWatermarkText(e.target.value)}
+                        placeholder="e.g., OEM, NEW, SALE"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Position</label>
+                      <select
+                        value={watermarkPosition}
+                        onChange={(e) => setWatermarkPosition(e.target.value as any)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      >
+                        <option value="top-left">Top Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="bottom-right">Bottom Right</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Watermark Preview */}
+                {addWatermark && formData.images.length > 0 && (
+                  <div className="mt-4 watermark-preview-optimized">
+                    <h5 className="text-xs font-medium text-gray-700 mb-2">Watermark Preview:</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {formData.images.slice(0, 2).map((image, index) => (
+                        <div key={index} className="relative">
+                          <img 
+                            src={image} 
+                            alt={`Watermark Preview ${index + 1}`} 
+                            className="w-full h-48 object-contain rounded border image-preview-optimized"
+                          />
+                          <div className={`absolute text-white text-sm px-4 py-2 rounded-lg font-bold shadow-2xl border border-white/20 ${
+                            watermarkPosition === 'top-left' ? 'top-3 left-3' :
+                            watermarkPosition === 'top-right' ? 'top-3 right-3' :
+                            watermarkPosition === 'bottom-left' ? 'bottom-3 left-3' :
+                            'bottom-3 right-3'
+                          }`} style={{
+                            background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.9) 0%, rgba(219, 39, 119, 0.9) 100%)',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                            letterSpacing: '0.5px'
+                          }}>
+                            {watermarkText}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Showing preview of first {Math.min(2, formData.images.length)} image(s) with "{watermarkText}" watermark
+                    </p>
+                  </div>
+                )}
+                
+              </div>
+            </div>
+
             {/* Display uploaded images */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {formData.images?.map((image, index) => (
                 <div key={index} className="relative">
                   <img 
                     src={image} 
                     alt={`Product ${index + 1}`} 
-                    className="w-full h-20 sm:h-24 object-cover rounded border"
+                    className="w-full h-16 sm:h-20 object-cover rounded border image-preview-optimized"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder-image.png';
                       console.error('Failed to load image:', image);
@@ -1750,8 +1920,8 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Pricing */}
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Pricing</h3>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3">Pricing</h3>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Price *</label>
             <input
@@ -1767,9 +1937,9 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Custom Fields - Dynamic Description */}
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Product Details (Custom Fields)</h3>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 modal-form-section">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 sm:mb-3 gap-2 sm:gap-0">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900">Product Details (Custom Fields)</h3>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -1786,16 +1956,16 @@ export default function FlexibleProductForm({
 
 
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             {formData.customFields.map((field) => (
-              <div key={field.id} className="flex flex-col sm:flex-row gap-2 items-start">
+              <div key={field.id} className="flex flex-col sm:flex-row gap-2 items-start custom-field-optimized">
                 <div className="flex-1">
                   <input
                     type="text"
                     value={field.label}
                     onChange={(e) => updateCustomField(field.id, 'label', e.target.value)}
                     placeholder="Field name (e.g., Material, Size, Color)"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm form-input-optimized"
                   />
                 </div>
                 <div className="flex-1">
@@ -1804,7 +1974,7 @@ export default function FlexibleProductForm({
                     onChange={(e) => updateCustomField(field.id, 'value', e.target.value)}
                     placeholder="Enter each item on a separate line&#10;Example:&#10;BMW 3-Series 2000-2007&#10;BMW X3 2004-2010&#10;Or:&#10;Lock&#10;Unlock&#10;Trunk"
                     rows={3}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm resize-vertical"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm resize-vertical form-input-optimized"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -1843,7 +2013,7 @@ export default function FlexibleProductForm({
           {formData.customFields.length > 0 && (
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg">
               <h4 className="text-sm font-medium text-gray-900 mb-3">📋 Live Preview - Final Product Description</h4>
-              <div className="bg-gray-50 p-3 rounded border text-xs text-gray-700 max-h-60 overflow-y-auto">
+              <div className="bg-gray-50 p-3 rounded border text-xs text-gray-700 max-h-60 overflow-y-auto form-scroll">
                 {formData.customFields.map((field, index) => (
                   <div key={field.id} className="mb-3 last:mb-0">
                     <div className="font-semibold text-gray-900 mb-1">{field.label}</div>
@@ -1861,9 +2031,9 @@ export default function FlexibleProductForm({
         </div>
 
         {/* Vehicle Compatibility */}
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Vehicle Compatibility (Optional)</h3>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 modal-form-section">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 sm:mb-3 gap-2 sm:gap-0">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900">Vehicle Compatibility (Optional)</h3>
             <button
               type="button"
               onClick={addVehicleCompatibility}
@@ -1957,7 +2127,7 @@ export default function FlexibleProductForm({
               </div>
               
               {/* Display added vehicles */}
-              <div className="space-y-2">
+              <div className="space-y-1 vehicle-compat-optimized">
                 {compatibility.map((vehicle, index) => (
                   <div key={index} className="flex justify-between items-center p-2 sm:p-3 bg-white rounded border">
                     <span className="text-xs sm:text-sm font-medium">
@@ -1983,40 +2153,47 @@ export default function FlexibleProductForm({
           )}
         </div>
                                     
-        {/* Form Actions */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 sm:px-6 py-1.5 sm:py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors text-xs sm:text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={uploading}
-            className="px-4 sm:px-6 py-1.5 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-xs sm:text-sm"
-          >
-            {uploading ? 'Saving...' : (isEditing ? 'Update Product' : 'Add Product')}
-          </button>
-        </div>
       </form>
+      </div>
+
+      {/* Fixed Footer with Action Buttons */}
+      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 bg-white shadow-lg">
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            {formData.images?.length || 0} images • {formData.customFields.length} custom fields
+          </div>
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={uploading}
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {uploading ? 'Saving...' : (isEditing ? 'Update Product' : 'Add Product')}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Image Editor Modal */}
       {editingImageIndex !== null && (
         <ImageEditor
           imageSrc={editingImageSrc}
           onSave={(editedImage) => {
-            console.log('Image editor saved, updating image at index:', editingImageIndex);
             const currentImages = [...formData.images];
             currentImages[editingImageIndex] = editedImage;
             setFormData({ ...formData, images: currentImages });
             setEditingImageIndex(null);
             setEditingImageSrc('');
-            console.log('Updated formData.images:', currentImages.length, 'images');
           }}
           onCancel={() => {
-            console.log('Image editor cancelled');
             setEditingImageIndex(null);
             setEditingImageSrc('');
           }}
@@ -2024,4 +2201,6 @@ export default function FlexibleProductForm({
       )}
     </div>
   );
-}
+});
+
+export default FlexibleProductForm;
