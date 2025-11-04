@@ -365,7 +365,7 @@ const HomeContent = memo(function HomeContent() {
   // Show loading state with website icon
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white w-full overflow-x-hidden">
         <div className="text-center -mt-32 sm:-mt-40">
           {/* Website Icon/Logo */}
           <div className="mb-8">
@@ -392,7 +392,7 @@ const HomeContent = memo(function HomeContent() {
   // Show error state
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12 w-full overflow-x-hidden">
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <p className="text-red-400 text-lg mb-4">{error}</p>
@@ -409,7 +409,7 @@ const HomeContent = memo(function HomeContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-2 sm:pt-4 pb-8 sm:pb-12 animate-fade-in w-full overflow-x-hidden">
       <PromoModal open={showPromo} onClose={() => setShowPromo(false)} />
       
       {/* Hero Section - Carousel Banner */}
@@ -451,9 +451,9 @@ const HomeContent = memo(function HomeContent() {
           <div className="w-full">
             {products.length > 0 ? (
               <>
-                {/* Mobile: 2 cards per row */}
-                <div className="md:hidden">
-                  <div className="grid grid-cols-2 gap-3 px-3">
+                {/* Mobile: 3 cards per row */}
+                <div className="md:hidden w-full overflow-x-hidden">
+                  <div className="grid grid-cols-3 gap-2 px-2 w-full max-w-full">
                     {shuffledProducts.allProducts.slice(0, 8).map((product) => (
                       <ProductCard
                         key={product.id}
@@ -463,6 +463,7 @@ const HomeContent = memo(function HomeContent() {
                         model={product.model}
                         price={product.price}
                         oldPrice={product.oldPrice}
+                        isOem={product.isOem}
                       />
                     ))}
                   </div>
@@ -504,9 +505,9 @@ const HomeContent = memo(function HomeContent() {
         <>
           <section className="mt-0 mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Featured Car Keys</h2>
-            {/* Mobile: 2 cards per row */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-3">
+            {/* Mobile: 3 cards per row */}
+            <div className="md:hidden w-full overflow-x-hidden">
+              <div className="grid grid-cols-3 gap-2 px-2 w-full max-w-full">
                 {shuffledProducts.featured.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
@@ -527,9 +528,9 @@ const HomeContent = memo(function HomeContent() {
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">Best Sellers</h2>
-            {/* Mobile: 2 cards per row */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-3">
+            {/* Mobile: 3 cards per row */}
+            <div className="md:hidden w-full overflow-x-hidden">
+              <div className="grid grid-cols-3 gap-2 px-2 w-full max-w-full">
                 {shuffledProducts.bestSellers.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}
@@ -550,9 +551,9 @@ const HomeContent = memo(function HomeContent() {
           </section>
           <section className="mb-8 sm:mb-12 md:mb-16">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 text-blue-600 text-center drop-shadow px-4">New Arrivals</h2>
-            {/* Mobile: 2 cards per row */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-2 gap-3 px-3">
+            {/* Mobile: 3 cards per row */}
+            <div className="md:hidden w-full overflow-x-hidden">
+              <div className="grid grid-cols-3 gap-2 px-2 w-full max-w-full">
                 {shuffledProducts.newArrivals.slice(0, 6).map((product) => (
                   <ProductCard
                     key={product.id}

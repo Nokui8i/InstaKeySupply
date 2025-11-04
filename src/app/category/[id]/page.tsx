@@ -285,15 +285,23 @@ export default function CategoryPage() {
     switch (sortBy) {
       case "price-high-to-low":
         filtered.sort((a, b) => {
-          const priceA = parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0;
-          const priceB = parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0;
+          const priceA = typeof a.price === 'string' 
+            ? parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0
+            : typeof a.price === 'number' ? a.price : 0;
+          const priceB = typeof b.price === 'string'
+            ? parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0
+            : typeof b.price === 'number' ? b.price : 0;
           return priceB - priceA;
         });
         break;
       case "price-low-to-high":
         filtered.sort((a, b) => {
-          const priceA = parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0;
-          const priceB = parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0;
+          const priceA = typeof a.price === 'string'
+            ? parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0
+            : typeof a.price === 'number' ? a.price : 0;
+          const priceB = typeof b.price === 'string'
+            ? parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0
+            : typeof b.price === 'number' ? b.price : 0;
           return priceA - priceB;
         });
         break;

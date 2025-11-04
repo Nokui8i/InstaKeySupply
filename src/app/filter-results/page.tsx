@@ -174,7 +174,7 @@ function FilterResultsContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8 w-full overflow-x-hidden">
       {/* Page Header */}
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3 sm:mb-4">
@@ -209,7 +209,7 @@ function FilterResultsContent() {
            </div>
 
            {/* Products Grid - Responsive */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+           <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 lg:gap-6 px-2 sm:px-0 w-full max-w-full overflow-x-hidden">
              {currentProducts.map((product) => (
                <ProductCard
                  key={product.id}
@@ -219,6 +219,7 @@ function FilterResultsContent() {
                  model={product.model}
                  price={product.price}
                  oldPrice={product.oldPrice}
+                 isOem={product.isOem}
                />
              ))}
            </div>

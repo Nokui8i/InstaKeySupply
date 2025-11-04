@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useCart } from './CartContext';
@@ -56,6 +57,20 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
   const userIconRef = useRef<HTMLButtonElement>(null);
   const [adminSidebarOpenState, setAdminSidebarOpenState] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<'make' | 'model' | 'year' | null>(null);
+  const makeDropdownRef = useRef<HTMLDivElement>(null);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const isFilterButtonClick = useRef(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Track if component is mounted for portal rendering
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Listen for admin sidebar state changes
   useEffect(() => {
@@ -149,7 +164,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
     window.location.href = `/products/${productId}`;
   };
 
-  // Close mobile search when clicking outside
+  // Close mobile search and filter when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileSearchOpen && !(event.target as Element).closest('.mobile-search-container')) {
@@ -157,67 +172,107 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
         setSearchTerm("");
         setSearchResults([]);
       }
+      
+      // Skip if this is a filter button click (handled by button's onClick)
+      if (isFilterButtonClick.current) {
+        isFilterButtonClick.current = false;
+        return;
+      }
+      
+      // Close dropdowns when clicking outside (check this first before closing filter)
+      if (openDropdown && 
+          !(event.target as Element).closest('.custom-dropdown-trigger') &&
+          !(event.target as Element).closest('.custom-dropdown-menu')) {
+        setOpenDropdown(null);
+        setDropdownPosition(null);
+      }
+      
+      // Close mobile filter when clicking outside (but not when clicking the filter button itself or dropdowns)
+      // IMPORTANT: Check for dropdown menus first since they're portaled to document.body
+      const target = event.target as Element;
+      const isClickOnDropdown = target.closest('.custom-dropdown-menu');
+      const isClickOnDropdownTrigger = target.closest('.custom-dropdown-trigger');
+      const isClickInFilter = target.closest('.mobile-filter-container');
+      const isClickOnFilterButton = filterButtonRef.current && filterButtonRef.current.contains(target as Node);
+      
+      if (mobileFilterOpen && 
+          !isClickOnDropdown &&
+          !isClickOnDropdownTrigger &&
+          !isClickInFilter &&
+          !isClickOnFilterButton) {
+        setMobileFilterOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileSearchOpen]);
+  }, [mobileSearchOpen, mobileFilterOpen, openDropdown]);
 
-  // Prevent body scroll when mobile search is open
+  // Prevent body scroll when mobile search or filter is open
   useEffect(() => {
     if (mobileSearchOpen) {
       document.body.classList.add('mobile-search-open');
+      document.body.classList.remove('mobile-filter-open');
+    } else if (mobileFilterOpen) {
+      document.body.classList.add('mobile-filter-open');
+      document.body.classList.remove('mobile-search-open');
     } else {
       document.body.classList.remove('mobile-search-open');
+      document.body.classList.remove('mobile-filter-open');
     }
 
     return () => {
       document.body.classList.remove('mobile-search-open');
+      document.body.classList.remove('mobile-filter-open');
     };
-  }, [mobileSearchOpen]);
+  }, [mobileSearchOpen, mobileFilterOpen]);
+
+  // Calculate dropdown position dynamically for mobile filter
+  useEffect(() => {
+    if (!openDropdown || !mobileFilterOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+
+    const calculatePosition = () => {
+      let ref: React.RefObject<HTMLDivElement> | null = null;
+      if (openDropdown === 'make') ref = makeDropdownRef;
+      else if (openDropdown === 'model') ref = modelDropdownRef;
+      else if (openDropdown === 'year') ref = yearDropdownRef;
+
+      if (ref?.current) {
+        const rect = ref.current.getBoundingClientRect();
+        const buttonRect = ref.current.querySelector('.custom-dropdown-trigger')?.getBoundingClientRect();
+        if (buttonRect) {
+          setDropdownPosition({
+            top: buttonRect.bottom + 4,
+            left: buttonRect.left,
+            width: buttonRect.width
+          });
+        }
+      }
+    };
+
+    // Calculate on mount and window resize
+    calculatePosition();
+    window.addEventListener('resize', calculatePosition);
+    window.addEventListener('scroll', calculatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', calculatePosition);
+      window.removeEventListener('scroll', calculatePosition, true);
+    };
+  }, [openDropdown, mobileFilterOpen]);
 
   return (
     <>
       {/* Modern Navigation Bar */}
       <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className="flex items-center justify-between h-16 lg:h-20 relative">
             
-            {/* Logo Section */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Logo */}
-              <div className="flex items-center">
-                <button 
-                  onClick={() => {
-                    // Clear vehicle filters when logo is clicked
-                    setSelectedMake('');
-                    setSelectedModel('');
-                    setSelectedYear('');
-                    onClearVehicleFilters?.();
-                    // Also navigate to home
-                    router.push('/');
-                  }}
-                  className="hover:opacity-80 transition-opacity duration-200"
-                >
-                  <Image 
-                    src="/Untitled design.png" 
-                    alt="InstaKey Logo" 
-                    width={170} 
-                    height={170}
-                    className="object-contain w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 -ml-2"
-                    priority
-                  />
-                </button>
-              </div>
-
-              {/* Home Button - Hidden on mobile */}
-              <Link 
-                href="/" 
-                className="hidden sm:block px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
-              >
-                Home
-              </Link>
-
+            {/* Logo Section - Desktop shows normally, Mobile has centered logo */}
+            <div className="flex items-center space-x-2 sm:space-x-4 lg:relative">
               {/* Sidebar Toggle Button - hide on admin pages */}
               {!pathname.startsWith('/admin') && (
                 <button
@@ -257,6 +312,39 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                   )}
                 </button>
               )}
+
+              {/* Logo - Centered on mobile only, normal position on desktop */}
+              <div className="lg:flex lg:items-center lg:static absolute left-1/2 lg:left-auto transform lg:transform-none -translate-x-1/2 lg:translate-x-0">
+                <button 
+                  onClick={() => {
+                    // Clear vehicle filters when logo is clicked
+                    setSelectedMake('');
+                    setSelectedModel('');
+                    setSelectedYear('');
+                    onClearVehicleFilters?.();
+                    // Also navigate to home
+                    router.push('/');
+                  }}
+                  className="hover:opacity-80 transition-opacity duration-200"
+                >
+                  <Image 
+                    src="/Untitled design.png" 
+                    alt="InstaKey Logo" 
+                    width={170} 
+                    height={170}
+                    className="object-contain w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40"
+                    priority
+                  />
+                </button>
+              </div>
+
+              {/* Home Button - Hidden on mobile */}
+              <Link 
+                href="/" 
+                className="hidden sm:block px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
+              >
+                Home
+              </Link>
             </div>
 
             {/* Search Bar - Desktop */}
@@ -407,65 +495,344 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 </div>
               )}
 
-              {/* Mobile Vehicle Filter Dropdown */}
-              {filterOpen && (
-                <div className="mobile-filter-dropdown absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200/50 backdrop-blur-xl z-50">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-gray-900">Vehicle Filters</h3>
-                      <button 
-                        onClick={() => setFilterOpen(false)}
-                        className="text-gray-400 hover:text-gray-600"
+              {/* Mobile Filter Collapsible Sub-Header */}
+              {mobileFilterOpen && (
+                <div className="mobile-filter-container mobile-filter-expanded absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-2.5 z-50">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-semibold text-gray-900">Vehicle Filters</h3>
+                    <button 
+                      onClick={() => {
+                        setMobileFilterOpen(false);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 p-0.5"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    {/* Make Dropdown */}
+                    <div className="relative" ref={makeDropdownRef}>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">Make</label>
+                      <button
+                        type="button"
+                        onClick={() => setOpenDropdown(openDropdown === 'make' ? null : 'make')}
+                        disabled={loadingVehicleData}
+                        className="custom-dropdown-trigger w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md bg-white text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <XMarkIcon className="h-4 w-4" />
+                        <span className={selectedMake ? 'text-gray-900' : 'text-gray-500'}>
+                          {loadingVehicleData ? 'Loading...' : selectedMake || 'Select Make'}
+                        </span>
+                        <svg className={`w-3 h-3 text-gray-400 transition-transform ${openDropdown === 'make' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
                       </button>
+                      {openDropdown === 'make' && (
+                        isMounted && typeof window !== 'undefined' && window.innerWidth <= 1024 && dropdownPosition ? (
+                          createPortal(
+                            <div 
+                              className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                              style={{
+                                position: 'fixed',
+                                top: `${dropdownPosition.top}px`,
+                                left: `${dropdownPosition.left}px`,
+                                width: `${dropdownPosition.width}px`
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedMake('');
+                                  setOpenDropdown(null);
+                                  setDropdownPosition(null);
+                                }}
+                                className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedMake ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                              >
+                                Select Make
+                              </button>
+                              {!loadingVehicleData && Object.keys(vehicleData).map(make => (
+                                <button
+                                  key={make}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedMake(make);
+                                    setSelectedModel('');
+                                    setSelectedYear('');
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedMake === make ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                                >
+                                  {make}
+                                </button>
+                              ))}
+                            </div>,
+                            document.body
+                          )
+                        ) : (
+                          <div 
+                            className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              marginTop: '4px'
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedMake('');
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedMake ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                            >
+                              Select Make
+                            </button>
+                            {!loadingVehicleData && Object.keys(vehicleData).map(make => (
+                              <button
+                                key={make}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedMake(make);
+                                  setSelectedModel('');
+                                  setSelectedYear('');
+                                  setOpenDropdown(null);
+                                }}
+                                className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedMake === make ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                              >
+                                {make}
+                              </button>
+                            ))}
+                          </div>
+                        )
+                      )}
                     </div>
                     
-
-                    
-                    <div className="space-y-3">
-                      <select 
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        value={selectedMake}
-                        onChange={(e) => setSelectedMake(e.target.value)}
-                        disabled={loadingVehicleData}
-                      >
-                        <option value="">{loadingVehicleData ? 'Loading...' : 'Select Make'}</option>
-                        {!loadingVehicleData && Object.keys(vehicleData).map(make => (
-                          <option key={make} value={make}>{make}</option>
-                        ))}
-                      </select>
-                      
-                      <select 
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        value={selectedModel}
-                        onChange={(e) => setSelectedModel(e.target.value)}
+                    {/* Model Dropdown */}
+                    <div className="relative" ref={modelDropdownRef}>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">Model</label>
+                      <button
+                        type="button"
+                        onClick={() => setOpenDropdown(openDropdown === 'model' ? null : 'model')}
                         disabled={!selectedMake}
+                        className="custom-dropdown-trigger w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md bg-white text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">Select Model</option>
-                        {selectedMake && vehicleData[selectedMake] && Object.keys(vehicleData[selectedMake]).map((model: string) => (
-                          <option key={model} value={model}>{model}</option>
-                        ))}
-                      </select>
-                      
-                      <select 
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
+                        <span className={selectedModel ? 'text-gray-900' : 'text-gray-500'}>
+                          {selectedModel || 'Select Model'}
+                        </span>
+                        <svg className={`w-3 h-3 text-gray-400 transition-transform ${openDropdown === 'model' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {openDropdown === 'model' && selectedMake && vehicleData[selectedMake] && (
+                        isMounted && typeof window !== 'undefined' && window.innerWidth <= 1024 && dropdownPosition ? (
+                          createPortal(
+                            <div 
+                              className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                              style={{
+                                position: 'fixed',
+                                top: `${dropdownPosition.top}px`,
+                                left: `${dropdownPosition.left}px`,
+                                width: `${dropdownPosition.width}px`
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedModel('');
+                                  setSelectedYear('');
+                                  setOpenDropdown(null);
+                                  setDropdownPosition(null);
+                                }}
+                                className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedModel ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                              >
+                                Select Model
+                              </button>
+                              {Object.keys(vehicleData[selectedMake]).map((model: string) => (
+                                <button
+                                  key={model}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedModel(model);
+                                    setSelectedYear('');
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedModel === model ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                                >
+                                  {model}
+                                </button>
+                              ))}
+                            </div>,
+                            document.body
+                          )
+                        ) : (
+                          <div 
+                            className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              marginTop: '4px'
+                            }}
+                          >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedModel('');
+                              setSelectedYear('');
+                              setOpenDropdown(null);
+                            }}
+                            className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedModel ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                          >
+                            Select Model
+                          </button>
+                          {Object.keys(vehicleData[selectedMake]).map((model: string) => (
+                            <button
+                              key={model}
+                              type="button"
+                              onClick={() => {
+                                setSelectedModel(model);
+                                setSelectedYear('');
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedModel === model ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                            >
+                              {model}
+                            </button>
+                          ))}
+                          </div>
+                        )
+                      )}
+                    </div>
+                    
+                    {/* Year Range Dropdown */}
+                    <div className="relative" ref={yearDropdownRef}>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">Year Range</label>
+                      <button
+                        type="button"
+                        onClick={() => setOpenDropdown(openDropdown === 'year' ? null : 'year')}
                         disabled={!selectedMake || !selectedModel}
+                        className="custom-dropdown-trigger w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md bg-white text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">Select Year Range</option>
-                        {selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && vehicleData[selectedMake][selectedModel].length > 0 ? (
-                          vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
-                            <option key={yearRange} value={yearRange}>{yearRange}</option>
-                          ))
-                        ) : selectedMake && selectedModel ? (
-                          <option value="" disabled>No year ranges available</option>
-                        ) : null}
-                      </select>
-                      
+                        <span className={selectedYear ? 'text-gray-900' : 'text-gray-500'}>
+                          {selectedYear || 'Select Year Range'}
+                        </span>
+                        <svg className={`w-3 h-3 text-gray-400 transition-transform ${openDropdown === 'year' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {openDropdown === 'year' && selectedMake && selectedModel && vehicleData[selectedMake] && vehicleData[selectedMake][selectedModel] && (
+                        isMounted && typeof window !== 'undefined' && window.innerWidth <= 1024 && dropdownPosition ? (
+                          createPortal(
+                            <div 
+                              className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                              style={{
+                                position: 'fixed',
+                                top: `${dropdownPosition.top}px`,
+                                left: `${dropdownPosition.left}px`,
+                                width: `${dropdownPosition.width}px`
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedYear('');
+                                  setOpenDropdown(null);
+                                  setDropdownPosition(null);
+                                }}
+                                className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedYear ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                              >
+                                Select Year Range
+                              </button>
+                              {vehicleData[selectedMake][selectedModel].length > 0 ? (
+                                vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
+                                  <button
+                                    key={yearRange}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedYear(yearRange);
+                                      setOpenDropdown(null);
+                                      setDropdownPosition(null);
+                                      // Auto-apply filters when year is selected
+                                      if (selectedMake) {
+                                        const params = new URLSearchParams();
+                                        params.set('make', selectedMake);
+                                        if (selectedModel) params.set('model', selectedModel);
+                                        params.set('yearRange', yearRange);
+                                        window.location.href = `/filter-results?${params.toString()}`;
+                                        setMobileFilterOpen(false);
+                                      }
+                                    }}
+                                    className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedYear === yearRange ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                                  >
+                                    {yearRange}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-2.5 py-1.5 text-xs text-gray-500">No year ranges available</div>
+                              )}
+                            </div>,
+                            document.body
+                          )
+                        ) : (
+                          <div 
+                            className="custom-dropdown-menu bg-white border border-gray-300 rounded-md shadow-lg z-[10001] max-h-64 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              marginTop: '4px'
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedYear('');
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${!selectedYear ? 'bg-blue-50 text-blue-600' : 'text-gray-900'}`}
+                            >
+                              Select Year Range
+                            </button>
+                            {vehicleData[selectedMake][selectedModel].length > 0 ? (
+                              vehicleData[selectedMake][selectedModel].map((yearRange: string) => (
+                                <button
+                                  key={yearRange}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedYear(yearRange);
+                                    setOpenDropdown(null);
+                                    // Auto-apply filters when year is selected
+                                    if (selectedMake) {
+                                      const params = new URLSearchParams();
+                                      params.set('make', selectedMake);
+                                      if (selectedModel) params.set('model', selectedModel);
+                                      params.set('yearRange', yearRange);
+                                      window.location.href = `/filter-results?${params.toString()}`;
+                                      setMobileFilterOpen(false);
+                                    }
+                                  }}
+                                  className={`w-full px-2.5 py-1.5 text-xs text-left hover:bg-gray-100 ${selectedYear === yearRange ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'}`}
+                                >
+                                  {yearRange}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-2.5 py-1.5 text-xs text-gray-500">No year ranges available</div>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-1.5 pt-1 justify-center items-center">
                       <button 
-                        className="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="apply-filters-button"
                         onClick={() => {
                           if (selectedMake) {
                             // Build URL for filter results page
@@ -476,12 +843,25 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                             
                             // Navigate to filter results page
                             window.location.href = `/filter-results?${params.toString()}`;
-                            setFilterOpen(false);
+                            setMobileFilterOpen(false);
                           }
                         }}
                         disabled={!selectedMake}
                       >
                         Apply Filters
+                      </button>
+                      <button 
+                        className="clear-filters-button"
+                        onClick={() => {
+                          setSelectedMake('');
+                          setSelectedModel('');
+                          setSelectedYear('');
+                          if (onClearVehicleFilters) {
+                            onClearVehicleFilters();
+                          }
+                        }}
+                      >
+                        Clear
                       </button>
                     </div>
                   </div>
@@ -509,7 +889,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     <div className="p-4">
                       <div className="grid grid-cols-2 gap-3">
                                               <select 
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={selectedMake}
                         onChange={(e) => setSelectedMake(e.target.value)}
                         disabled={loadingVehicleData}
@@ -520,7 +900,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         ))}
                       </select>
                         <select 
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={selectedModel}
                           onChange={(e) => setSelectedModel(e.target.value)}
                         >
@@ -530,7 +910,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                           ))}
                         </select>
                                               <select 
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
                         disabled={!selectedMake || !selectedModel}
@@ -545,7 +925,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                         ) : null}
                       </select>
                         <button 
-                          className="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors active:scale-95"
+                          className="apply-filters-button w-full"
                           onClick={() => {
                             // Apply filters only when button is clicked
                             if (selectedMake) {
@@ -609,22 +989,59 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               {/* Mobile Search & Filter Icons - Moved to Right */}
               <div className="lg:hidden flex items-center space-x-2">
                 {/* Mobile Search Icon - Click to expand */}
-                {!mobileSearchOpen && (
-                  <button
-                    onClick={() => setMobileSearchOpen(true)}
-                    onTouchStart={() => setMobileSearchOpen(true)}
-                    className="mobile-nav-button p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200 active:scale-95"
-                    aria-label="Search"
-                  >
-                    <MagnifyingGlassIcon className="h-5 w-5" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                  onTouchStart={() => setMobileSearchOpen(!mobileSearchOpen)}
+                  className={`mobile-nav-button p-2 rounded-xl transition-all duration-200 active:scale-95 ${
+                    mobileSearchOpen 
+                      ? 'text-blue-600' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
+                  aria-label="Search"
+                >
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                </button>
 
                 {/* Mobile Filter Button */}
                 <button
-                  onClick={() => setFilterOpen(!filterOpen)}
-                  onTouchStart={() => setFilterOpen(!filterOpen)}
-                  className="mobile-nav-button p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200 active:scale-95"
+                  ref={filterButtonRef}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Set flag immediately to prevent click-outside handler from interfering
+                    isFilterButtonClick.current = true;
+                    // Toggle the state immediately
+                    setMobileFilterOpen((prev) => {
+                      const newValue = !prev;
+                      return newValue;
+                    });
+                    if (mobileSearchOpen) {
+                      setMobileSearchOpen(false);
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Set flag immediately to prevent click-outside handler from interfering
+                    isFilterButtonClick.current = true;
+                    // Toggle the state immediately
+                    setMobileFilterOpen((prev) => {
+                      const newValue = !prev;
+                      return newValue;
+                    });
+                    if (mobileSearchOpen) {
+                      setMobileSearchOpen(false);
+                    }
+                  }}
+                  className={`mobile-filter-button mobile-nav-button p-2 rounded-xl transition-all duration-200 active:scale-95 ${
+                    mobileFilterOpen 
+                      ? 'text-blue-600' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
                   aria-label="Filters"
                 >
                   <FunnelIcon className="h-5 w-5" />

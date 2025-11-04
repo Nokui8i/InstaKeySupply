@@ -53,8 +53,91 @@ body {
   flex-direction: column;
 }
 
+/* From Uiverse.io by suda-code */
+.apply-filters-button {
+  padding: 2px 12px;
+  border: 0;
+  border-radius: 100px;
+  background-color: #2ba8fb;
+  color: #ffffff;
+  font-weight: Bold;
+  font-size: 11px;
+  transition: all 0.5s;
+  -webkit-transition: all 0.5s;
+}
+
+.apply-filters-button:hover {
+  background-color: #6fc5ff;
+  box-shadow: 0 0 20px #6fc5ff50;
+  transform: scale(1.1);
+}
+
+.apply-filters-button:active {
+  background-color: #3d94cf;
+  transition: all 0.25s;
+  -webkit-transition: all 0.25s;
+  box-shadow: none;
+  transform: scale(0.98);
+}
+
+.apply-filters-button.w-full {
+  width: 100%;
+}
+
+/* Mobile-specific: Button sizing */
+@media (max-width: 1024px) {
+  .apply-filters-button {
+    padding: 6px 16px !important;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  
+  /* Clear button style - matches Apply Filters but in white */
+  .clear-filters-button {
+    padding: 6px 16px;
+    border: 1px solid #2ba8fb;
+    border-radius: 100px;
+    background-color: #ffffff;
+    color: #2ba8fb;
+    font-weight: Bold;
+    font-size: 12px;
+    line-height: 1.3;
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+  }
+  
+  .clear-filters-button:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 0 20px rgba(43, 168, 251, 0.3);
+    transform: scale(1.1);
+  }
+  
+  .clear-filters-button:active {
+    background-color: #e0e0e0;
+    transition: all 0.25s;
+    -webkit-transition: all 0.25s;
+    box-shadow: none;
+    transform: scale(0.98);
+  }
+}
+
 html {
   height: 100%;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Prevent horizontal scrolling on all pages */
+* {
+  box-sizing: border-box;
 }
 
 /* Mobile navbar optimizations */
@@ -71,16 +154,59 @@ html {
   transform: translateZ(0);
 }
 
-/* Ensure mobile filter dropdown is properly positioned */
+/* Ensure mobile filter container is properly positioned */
 @media (max-width: 1024px) {
-  .mobile-filter-dropdown {
+  .mobile-filter-container {
     position: fixed !important;
-    top: 64px !important;
+    top: 64px !important; /* Adjust based on navbar height */
+    left: 0 !important;
     right: 0 !important;
     z-index: 9999 !important;
-    max-width: 90vw;
-    /* Ensure it doesn't get affected by search expansion */
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    /* Ensure it doesn't affect other elements */
     transform: translateZ(0);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    /* Allow dropdowns to overflow the container */
+    overflow-x: visible !important;
+  }
+  
+  .mobile-filter-expanded {
+    position: fixed !important;
+    z-index: 9999 !important;
+  }
+  
+  /* Allow dropdown menus to overflow the filter container */
+  .mobile-filter-container .custom-dropdown-menu {
+    position: fixed !important;
+    z-index: 10001 !important;
+    /* Position will be calculated dynamically via JavaScript */
+  }
+  
+  /* Ensure parent containers don't clip dropdowns */
+  .mobile-filter-container > * {
+    overflow: visible !important;
+  }
+  
+  .mobile-filter-container .relative {
+    overflow: visible !important;
+  }
+  
+  .mobile-filter-container .space-y-1\.5,
+  .mobile-filter-container .space-y-1 {
+    overflow: visible !important;
+  }
+  
+  /* Ensure all nested divs allow overflow */
+  .mobile-filter-container div {
+    overflow: visible !important;
+  }
+  
+  /* Remove max-height constraints that might clip dropdowns */
+  .mobile-filter-container {
+    contain: none !important;
   }
 }
 
@@ -116,9 +242,16 @@ html {
   will-change: opacity, transform;
 }
 
-/* Prevent body scroll when mobile search is open */
-body.mobile-search-open {
+/* Prevent body scroll when mobile search or filter is open */
+body.mobile-search-open,
+body.mobile-filter-open {
   overflow: hidden;
+}
+
+/* Allow dropdowns to overflow even when body is hidden */
+body.mobile-filter-open .custom-dropdown-menu {
+  position: fixed !important;
+  z-index: 10001 !important;
 }
 
 /* Ensure mobile search doesn't affect filter button layout */
@@ -588,4 +721,13 @@ body {
   contain: layout style paint;
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/* Ensure watermarked product images display correctly */
+.product-card-watermarked img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  max-width: 100% !important;
 }

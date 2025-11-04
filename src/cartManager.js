@@ -22,9 +22,28 @@ async function loadCartFromFirebase(userId) {
   return cartDoc.exists() ? cartDoc.data().items || [] : [];
 }
 
+// Helper function to remove undefined values from objects
+function removeUndefined(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefined(item));
+  } else if (obj !== null && typeof obj === 'object') {
+    const cleaned = {};
+    for (const key in obj) {
+      if (obj[key] !== undefined) {
+        cleaned[key] = removeUndefined(obj[key]);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 async function saveCartToFirebase(userId, cartItems) {
+  // Remove undefined values from cart items before saving to Firestore
+  const cleanedItems = removeUndefined(cartItems);
+  
   await setDoc(doc(db, 'userCarts', userId), { 
-    items: cartItems,
+    items: cleanedItems,
     updatedAt: new Date().toISOString(),
     userId: userId
   }, { merge: true });

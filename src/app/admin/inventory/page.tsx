@@ -110,6 +110,109 @@ interface Product {
   updatedAt?: any;
 }
 
+// Recursive Category Tree Selector Component
+interface CategoryTreeSelectorProps {
+  categories: any[];
+  selectedCategoryId: string;
+  onSelect: (categoryId: string) => void;
+  level: number;
+  parentId?: string | null;
+}
+
+function CategoryTreeSelector({ 
+  categories, 
+  selectedCategoryId, 
+  onSelect, 
+  level, 
+  parentId = null 
+}: CategoryTreeSelectorProps) {
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+  
+  // Get direct children of current parent
+  const children = categories.filter(cat => {
+    if (parentId === null) {
+      return !cat.parentId; // Main categories
+    }
+    return cat.parentId === parentId;
+  });
+
+  const toggleExpanded = (categoryId: string) => {
+    setExpanded(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  if (children.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={`${level > 0 ? 'ml-4 border-l-2 border-gray-200 pl-3' : ''}`}>
+      {children.map((category) => {
+        const hasChildren = categories.some(cat => cat.parentId === category.id);
+        const isSelected = selectedCategoryId === category.id;
+        const isExpanded = expanded[category.id] || false;
+
+        return (
+          <div key={category.id} className="mb-1">
+            <div
+              className={`
+                flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors
+                ${isSelected 
+                  ? 'bg-blue-100 border-2 border-blue-500' 
+                  : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                }
+              `}
+              onClick={() => onSelect(category.id)}
+            >
+              <div className="flex items-center gap-2 flex-1">
+                {hasChildren && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpanded(category.id);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200 transition-colors"
+                    title={isExpanded ? "Collapse" : "Expand"}
+                  >
+                    <svg
+                      className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
+                {!hasChildren && <span className="w-6" />}
+                <span className={`text-sm flex-1 ${isSelected ? 'font-semibold text-blue-700' : 'text-gray-700'}`}>
+                  {category.name}
+                </span>
+                {isSelected && (
+                  <span className="ml-2 text-xs text-blue-600 font-medium whitespace-nowrap">✓ Selected</span>
+                )}
+              </div>
+            </div>
+
+            {/* Recursively render children */}
+            {hasChildren && isExpanded && (
+              <CategoryTreeSelector
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelect={onSelect}
+                level={level + 1}
+                parentId={category.id}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AdminInventoryContent() {
   const { isAuthenticated, isLoading, logout } = useAdminAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -133,6 +236,9 @@ function AdminInventoryContent() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
+  const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
+  const [bulkCategoryId, setBulkCategoryId] = useState('');
+  const [bulkSelectedPath, setBulkSelectedPath] = useState<string[]>([]); // Track selection path for nested categories
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20);
@@ -934,6 +1040,18 @@ function AdminInventoryContent() {
         }
       }
       
+      // Determine category and categoryId - prioritize formData, then existing product, then lookup
+      let finalCategoryId = formData.categoryId || editingProduct.categoryId || null;
+      let finalCategory = formData.category || editingProduct.category || null;
+      
+      // If we have a categoryId but no category name, look it up
+      if (finalCategoryId && !finalCategory) {
+        finalCategory = getCategoryName(finalCategoryId);
+        // If lookup returns "Unknown Category" or "No Category", set to null
+        if (finalCategory === "Unknown Category" || finalCategory === "No Category") {
+          finalCategory = null;
+        }
+      }
       
       const updateData: any = {
         title: formData.title,
@@ -942,8 +1060,8 @@ function AdminInventoryContent() {
         oldPrice: formData.oldPrice || null,
         imageUrl: imageUrls[0] || "", // Keep main image for backward compatibility
         images: imageUrls, // Store all images in array
-        category: formData.category || "Car Keys",
-        categoryId: formData.categoryId || null,
+        category: finalCategory,
+        categoryId: finalCategoryId,
         description: formData.description || "",
         sku: formData.sku || "",
         stock: formData.stock ? parseInt(formData.stock) : 0,
@@ -956,6 +1074,9 @@ function AdminInventoryContent() {
         compatibility: formData.compatibility || [], // Add this for consistent filtering
         vehicleTypes: formData.vehicleTypes || [],
         categories: formData.categories || [],
+        shortDescription: formData.shortDescription || "",
+        customFields: formData.customFields || [],
+        allowReviews: formData.allowReviews ?? true,
         updatedAt: new Date()
       };
 
@@ -1143,6 +1264,90 @@ function AdminInventoryContent() {
   // Clear selection
   const clearSelection = () => {
     setSelectedProducts([]);
+    setShowBulkCategoryModal(false);
+    setBulkCategoryId('');
+    setBulkSelectedPath([]);
+  };
+
+  // Helper function to get all children of a category (recursive)
+  const getCategoryChildren = useCallback((parentId: string | null): any[] => {
+    return availableCategories.filter(cat => cat.parentId === parentId);
+  }, [availableCategories]);
+
+  // Helper function to get category path (breadcrumb)
+  const getCategoryPath = useCallback((categoryId: string): string[] => {
+    const path: string[] = [];
+    let currentId: string | null = categoryId;
+    
+    while (currentId) {
+      const category = availableCategories.find(cat => cat.id === currentId);
+      if (!category) break;
+      path.unshift(category.id);
+      currentId = category.parentId || null;
+    }
+    
+    return path;
+  }, [availableCategories]);
+
+  // Handle category selection at any level
+  const handleBulkCategorySelect = (categoryId: string, isSelectable: boolean = true) => {
+    if (!isSelectable) return;
+    
+    setBulkCategoryId(categoryId);
+    setBulkSelectedPath(getCategoryPath(categoryId));
+  };
+
+  // Bulk category update
+  const handleBulkCategoryUpdate = async () => {
+    if (selectedProducts.length === 0 || !bulkCategoryId) {
+      showNotification('error', 'Please select a category');
+      return;
+    }
+    
+    const selectedCategory = availableCategories.find(cat => cat.id === bulkCategoryId);
+    if (!selectedCategory) {
+      showNotification('error', 'Selected category not found');
+      return;
+    }
+    
+    const categoryName = selectedCategory.name;
+    const confirmed = window.confirm(
+      `Are you sure you want to assign "${categoryName}" to ${selectedProducts.length} selected product(s)?`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+    
+    setUploading(true);
+    
+    try {
+      // Update each selected product
+      for (const productId of selectedProducts) {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, {
+          category: categoryName,
+          categoryId: bulkCategoryId,
+          updatedAt: new Date()
+        });
+      }
+      
+      showNotification('success', `Successfully updated ${selectedProducts.length} product(s) to "${categoryName}"`);
+      
+      // Clear selection and modal
+      setSelectedProducts([]);
+      setShowBulkCategoryModal(false);
+      setBulkCategoryId('');
+      setBulkSelectedPath([]);
+      
+      // Refresh data
+      await fetchProducts();
+    } catch (error) {
+      console.error("Error bulk updating categories:", error);
+      showNotification('error', 'Failed to update product categories');
+    }
+    
+    setUploading(false);
   };
 
   // Add sample products for testing
@@ -1507,6 +1712,13 @@ function AdminInventoryContent() {
                   </span>
                   <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
                     <button
+                      onClick={() => setShowBulkCategoryModal(true)}
+                      disabled={uploading || loading}
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition disabled:opacity-50 text-xs"
+                    >
+                      Change Category
+                    </button>
+                    <button
                       onClick={handleBulkDelete}
                       disabled={loading}
                       className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded transition disabled:opacity-50 text-xs"
@@ -1844,6 +2056,62 @@ function AdminInventoryContent() {
                   uploading={uploading}
                   nextAvailableSKU={getNextAvailableSKU()}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Category Update Modal */}
+          {showBulkCategoryModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setShowBulkCategoryModal(false)} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 sm:p-6 flex-shrink-0 border-b">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Change Category for {selectedProducts.length} Product(s)</h3>
+                  <p className="text-sm text-gray-600">
+                    Select a category at any level to assign to all selected products.
+                  </p>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                  {/* Recursive Category Tree */}
+                  <CategoryTreeSelector
+                    categories={availableCategories}
+                    selectedCategoryId={bulkCategoryId}
+                    onSelect={handleBulkCategorySelect}
+                    level={0}
+                  />
+                </div>
+
+                {/* Selected Category Display */}
+                {bulkCategoryId && (
+                  <div className="px-4 sm:px-6 pb-4 flex-shrink-0">
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Selected Category:</span>{' '}
+                        {getCategoryName(bulkCategoryId)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 p-4 sm:p-6 border-t flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      setShowBulkCategoryModal(false);
+                      setBulkCategoryId('');
+                      setBulkSelectedPath([]);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkCategoryUpdate}
+                    disabled={!bulkCategoryId || uploading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {uploading ? 'Updating...' : `Update ${selectedProducts.length} Product(s)`}
+                  </button>
+                </div>
               </div>
             </div>
           )}

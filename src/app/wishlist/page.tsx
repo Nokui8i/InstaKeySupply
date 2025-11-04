@@ -77,6 +77,7 @@ export default function WishlistPage() {
                 model={product.model}
                 price={product.price}
                 oldPrice={product.oldPrice}
+                isOem={product.isOem}
               />
               <button
                 className="absolute top-2 right-2 bg-white/80 hover:bg-red-100 text-red-600 rounded-full p-1 shadow transition-opacity opacity-0 group-hover:opacity-100"

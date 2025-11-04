@@ -76,8 +76,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="apple-touch-icon" sizes="57x57" href="/Untitled design.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-gray-900 min-h-screen transition-colors duration-500`}
-        style={{ backgroundAttachment: 'fixed' }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-gray-900 min-h-screen transition-colors duration-500 overflow-x-hidden`}
+        style={{ backgroundAttachment: 'fixed', maxWidth: '100vw', width: '100%' }}
       >
         <ClientLayout>{children}</ClientLayout>
       </body>

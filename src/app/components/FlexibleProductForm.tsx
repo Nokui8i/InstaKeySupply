@@ -842,14 +842,14 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
         ctx.drawImage(img, 0, 0);
         
         // Set watermark properties
-        const fontSize = Math.max(22, img.width * 0.05); // Responsive font size - increased
+        const fontSize = Math.max(36, img.width * 0.08); // Responsive font size - increased for better visibility
         ctx.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         // Calculate position based on selected position
         let x, y;
-        const padding = 35; // Increased padding
+        const padding = 40; // Increased padding for larger watermark
         
         switch (position) {
           case 'top-left':
@@ -876,7 +876,7 @@ const FlexibleProductForm = memo(function FlexibleProductForm({
         // Draw premium background with solid color for better quality
         const textWidth = ctx.measureText(watermarkText).width;
         const textHeight = fontSize;
-        const rectPadding = 16; // Increased padding for larger text
+        const rectPadding = 20; // Increased padding for larger text
         const rectX = x - textWidth / 2 - rectPadding;
         const rectY = y - textHeight / 2 - rectPadding;
         const rectWidth = textWidth + rectPadding * 2;

@@ -1,6 +1,7 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { addWatermarkToImage } from "@/app/utils/watermark";
 
 interface ProductCardProps {
   id: string;
@@ -120,21 +121,50 @@ export default function ProductCard({
   isSale,
   vehicleCompatibility,
   discountInfo,
+  isOem,
 }: ProductCardProps) {
   const router = useRouter();
   const [imageLoading, setImageLoading] = useState(true);
+  const [displayImage, setDisplayImage] = useState<string>(image || '/sample-key-1.png');
 
   const handleCardClick = () => {
     router.push(`/products/${id}`);
   };
 
+  // Apply watermark to existing products if isOem is true
+  useEffect(() => {
+    const applyWatermark = async () => {
+      if (isOem && image) {
+        // Skip if already a data URL (already watermarked)
+        if (image.startsWith('data:')) {
+          setDisplayImage(image);
+          return;
+        }
+        
+        try {
+          // Apply watermark to the image
+          const watermarked = await addWatermarkToImage(image, 'OEM', 'top-left');
+          setDisplayImage(watermarked);
+        } catch (error) {
+          console.error('Error applying watermark to existing product:', error);
+          // Fallback to original image if watermarking fails (e.g., CORS issues)
+          setDisplayImage(image);
+        }
+      } else {
+        setDisplayImage(image || '/sample-key-1.png');
+      }
+    };
+    
+    applyWatermark();
+  }, [image, isOem]);
+
   // Ensure image has a valid URL
-  const imageUrl = image || '/sample-key-1.png'; // Fallback image
+  const imageUrl = displayImage || '/sample-key-1.png'; // Fallback image
 
   return (
     <div 
       onClick={handleCardClick}
-      className="group bg-white rounded-lg shadow-md border border-gray-200 p-2 sm:p-3 md:p-4 max-w-[180px] sm:max-w-xs w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-lg relative overflow-hidden cursor-pointer"
+      className="group bg-white rounded-lg shadow-md border border-gray-200 p-2 sm:p-3 md:p-4 w-full max-w-full mx-auto flex flex-col items-center transition-all duration-300 hover:shadow-lg relative overflow-hidden cursor-pointer"
     >
       {/* Badges */}
       {/* Product Image */}
@@ -144,23 +174,44 @@ export default function ProductCard({
             <div className="w-5 h-5 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
-        <Image 
-          src={imageUrl} 
-          alt={title} 
-          width={160} 
-          height={160} 
-          className={`object-contain p-2 transition-all duration-500 ${imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-          priority={true}
-          loading="eager"
-          placeholder="empty"
-          onLoad={() => setImageLoading(false)}
-          onError={(e) => {
-            // Fallback to sample image if main image fails
-            const target = e.target as HTMLImageElement;
-            target.src = '/sample-key-1.png';
-            setImageLoading(false);
-          }}
-        />
+        {displayImage.startsWith('data:') ? (
+          // Use regular img for watermarked images (data URLs)
+          <img 
+            src={displayImage} 
+            alt={title} 
+            className={`object-contain p-2 transition-all duration-500 w-full h-full ${imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+            style={{ 
+              maxWidth: '100%', 
+              height: 'auto',
+              display: 'block'
+            }}
+            onLoad={() => setImageLoading(false)}
+            onError={(e) => {
+              // Fallback to sample image if main image fails
+              const target = e.target as HTMLImageElement;
+              target.src = '/sample-key-1.png';
+              setImageLoading(false);
+            }}
+          />
+        ) : (
+          <Image 
+            src={imageUrl} 
+            alt={title} 
+            width={160} 
+            height={160} 
+            className={`object-contain p-2 transition-all duration-500 ${imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+            priority={true}
+            loading="eager"
+            placeholder="empty"
+            onLoad={() => setImageLoading(false)}
+            onError={(e) => {
+              // Fallback to sample image if main image fails
+              const target = e.target as HTMLImageElement;
+              target.src = '/sample-key-1.png';
+              setImageLoading(false);
+            }}
+          />
+        )}
       </div>
       
       {/* Product Details */}
