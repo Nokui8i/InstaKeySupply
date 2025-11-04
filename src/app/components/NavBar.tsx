@@ -313,6 +313,19 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                 </button>
               )}
 
+              {/* Cart Icon - Mobile only, next to sidebar button */}
+              <Link 
+                href="/cart" 
+                className="lg:hidden mobile-nav-button p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 group relative active:scale-95"
+              >
+                <ShoppingBagIcon className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
               {/* Logo - Centered on mobile only, normal position on desktop */}
               <div className="lg:flex lg:items-center lg:static absolute left-1/2 lg:left-auto transform lg:transform-none -translate-x-1/2 lg:translate-x-0">
                 <button 
