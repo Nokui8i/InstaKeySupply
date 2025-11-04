@@ -50,11 +50,16 @@ async function saveCartToFirebase(userId, cartItems) {
 }
 
 // ======== Main Cart Manager ========
+let globalCartUpdateCallback = null;
+
 export async function initCart(onCartUpdate) {
   let currentCart = [];
   let isInitialized = false;
   let lastUpdateTime = 0;
   let updateTimeout = null;
+  
+  // Store the callback globally so cart actions can trigger updates
+  globalCartUpdateCallback = onCartUpdate;
   
   auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -96,8 +101,38 @@ export async function initCart(onCartUpdate) {
       currentCart = localCart;
       onCartUpdate(localCart);
       isInitialized = true;
+      
+      // Listen to localStorage changes for guest users
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'guestCart') {
+          const newCart = e.newValue ? JSON.parse(e.newValue) : [];
+          if (JSON.stringify(newCart) !== JSON.stringify(currentCart)) {
+            currentCart = newCart;
+            onCartUpdate(newCart);
+          }
+        }
+      });
     }
   });
+}
+
+// Helper function to trigger cart update after local operations
+function triggerCartUpdate() {
+  if (globalCartUpdateCallback) {
+    const user = auth.currentUser;
+    if (user) {
+      // For logged-in users, manually trigger update to avoid onSnapshot delay
+      loadCartFromFirebase(user.uid).then(cart => {
+        globalCartUpdateCallback(cart);
+      }).catch(err => {
+        console.error('Error loading cart for update:', err);
+      });
+    } else {
+      // For guest users, read from localStorage and update
+      const localCart = loadCartFromLocal();
+      globalCartUpdateCallback(localCart);
+    }
+  }
 }
 
 // ======== Cart Actions ========
@@ -107,10 +142,14 @@ export async function addToCart(item) {
     const firebaseCart = await loadCartFromFirebase(user.uid);
     const updatedCart = mergeCarts(firebaseCart, [item]);
     await saveCartToFirebase(user.uid, updatedCart);
+    // Trigger immediate update (onSnapshot has a 1 second buffer)
+    triggerCartUpdate();
   } else {
     const localCart = loadCartFromLocal();
     const updatedCart = mergeCarts(localCart, [item]);
     saveCartToLocal(updatedCart);
+    // Trigger immediate update for guest users
+    triggerCartUpdate();
   }
 }
 
@@ -120,10 +159,14 @@ export async function removeFromCart(productId) {
     const firebaseCart = await loadCartFromFirebase(user.uid);
     const updatedCart = firebaseCart.filter(i => i.id !== productId);
     await saveCartToFirebase(user.uid, updatedCart);
+    // Trigger immediate update (onSnapshot has a 1 second buffer)
+    triggerCartUpdate();
   } else {
     const localCart = loadCartFromLocal();
     const updatedCart = localCart.filter(i => i.id !== productId);
     saveCartToLocal(updatedCart);
+    // Trigger immediate update for guest users
+    triggerCartUpdate();
   }
 }
 
@@ -131,8 +174,12 @@ export async function clearCart() {
   const user = auth.currentUser;
   if (user) {
     await saveCartToFirebase(user.uid, []);
+    // Trigger immediate update (onSnapshot has a 1 second buffer)
+    triggerCartUpdate();
   } else {
     clearLocalCart();
+    // Trigger immediate update for guest users
+    triggerCartUpdate();
   }
 }
 
@@ -144,12 +191,16 @@ export async function updateQuantity(productId, newQuantity) {
       item.id === productId ? { ...item, quantity: newQuantity } : item
     ).filter(item => item.quantity > 0);
     await saveCartToFirebase(user.uid, updatedCart);
+    // Trigger immediate update (onSnapshot has a 1 second buffer)
+    triggerCartUpdate();
   } else {
     const localCart = loadCartFromLocal();
     const updatedCart = localCart.map(item => 
       item.id === productId ? { ...item, quantity: newQuantity } : item
     ).filter(item => item.quantity > 0);
     saveCartToLocal(updatedCart);
+    // Trigger immediate update for guest users
+    triggerCartUpdate();
   }
 }
 

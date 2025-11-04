@@ -278,8 +278,6 @@ export default function ProductDetail() {
       model: product.model,
       discountInfo: product.discountInfo,
     }, quantity);
-    setNotification('Added to cart!');
-    setTimeout(() => setNotification(null), 2000);
   };
 
   const handleBuyNow = () => {
@@ -731,11 +729,6 @@ export default function ProductDetail() {
           )}
         </section>
       </div>
-      {notification && (
-        <div className="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg bg-green-500 text-white font-semibold">
-          {notification}
-        </div>
-      )}
       {wishlistMsg && (
         <div className="fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg bg-blue-600 text-white text-xs font-semibold">
           {wishlistMsg}
