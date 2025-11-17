@@ -244,6 +244,10 @@ function AdminInventoryContent() {
   const [productsPerPage] = useState(20);
   const [sortField, setSortField] = useState<'title' | 'sku' | 'price' | 'stock' | 'status'>('title');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  // Inline editing state
+  const [editingCell, setEditingCell] = useState<{ productId: string; field: 'price' | 'stock' | 'title' | 'sku' | 'category' | 'status' } | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+  const [savingCell, setSavingCell] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     model: "",
@@ -330,6 +334,233 @@ function AdminInventoryContent() {
       return `$${numPrice.toFixed(2)}`;
     }
     return `$${price.toFixed(2)}`;
+  };
+
+  // Inline editing functions
+  const startEditing = (productId: string, field: 'price' | 'stock' | 'title' | 'sku' | 'category' | 'status', currentValue: string | number) => {
+    let value: string;
+    
+    if (field === 'price') {
+      // Remove $ from price if present
+      value = typeof currentValue === 'string' && currentValue.startsWith('$') 
+        ? currentValue.replace('$', '') 
+        : String(currentValue);
+    } else if (field === 'category') {
+      // For category, use categoryId if available, otherwise use category name
+      const product = products.find(p => p.id === productId);
+      value = product?.categoryId || '';
+    } else {
+      value = String(currentValue || '');
+    }
+    
+    setEditingCell({ productId, field });
+    setEditingValue(value);
+  };
+
+  const cancelEditing = () => {
+    setEditingCell(null);
+    setEditingValue('');
+  };
+
+  const saveInlineEdit = async () => {
+    if (!editingCell) return;
+    
+    // Find the product to compare values
+    const product = products.find(p => p.id === editingCell.productId);
+    if (!product) {
+      cancelEditing();
+      return;
+    }
+    
+    // Check if value actually changed
+    let hasChanged = false;
+    if (editingCell.field === 'price') {
+      const priceValue = editingValue.replace('$', '').trim();
+      const numPrice = parseFloat(priceValue);
+      const currentPrice = typeof product.price === 'string' 
+        ? parseFloat(product.price.replace('$', '')) 
+        : product.price;
+      hasChanged = Math.abs(numPrice - currentPrice) > 0.01; // Allow for floating point precision
+    } else if (editingCell.field === 'stock') {
+      const stockValue = parseInt(editingValue);
+      hasChanged = stockValue !== (product.stock || 0);
+    } else if (editingCell.field === 'title') {
+      hasChanged = editingValue.trim() !== (product.title || '');
+    } else if (editingCell.field === 'sku') {
+      hasChanged = editingValue.trim() !== (product.sku || '');
+    } else if (editingCell.field === 'category') {
+      hasChanged = editingValue !== (product.categoryId || '');
+    } else if (editingCell.field === 'status') {
+      hasChanged = editingValue !== (product.status || 'active');
+    }
+    
+    // If no change, just cancel
+    if (!hasChanged) {
+      cancelEditing();
+      return;
+    }
+    
+    setSavingCell(true);
+    try {
+      const productRef = doc(db, "products", editingCell.productId);
+      const updateData: any = {};
+      
+      if (editingCell.field === 'price') {
+        // Remove $ if present and validate
+        const priceValue = editingValue.replace('$', '').trim();
+        const numPrice = parseFloat(priceValue);
+        if (isNaN(numPrice) || numPrice < 0) {
+          showNotification('error', 'Please enter a valid price');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.price = formatPrice(numPrice);
+      } else if (editingCell.field === 'stock') {
+        const stockValue = parseInt(editingValue);
+        if (isNaN(stockValue) || stockValue < 0) {
+          showNotification('error', 'Please enter a valid stock number');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.stock = stockValue;
+      } else if (editingCell.field === 'title') {
+        const titleValue = editingValue.trim();
+        if (!titleValue) {
+          showNotification('error', 'Product name cannot be empty');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.title = titleValue;
+      } else if (editingCell.field === 'sku') {
+        updateData.sku = editingValue.trim();
+      } else if (editingCell.field === 'category') {
+        const categoryId = editingValue;
+        const selectedCategory = availableCategories.find(cat => cat.id === categoryId);
+        if (!selectedCategory && categoryId) {
+          showNotification('error', 'Selected category not found');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.categoryId = categoryId || null;
+        updateData.category = selectedCategory?.name || null;
+      } else if (editingCell.field === 'status') {
+        const validStatuses = ['active', 'inactive', 'out-of-stock', 'coming-soon'];
+        if (!validStatuses.includes(editingValue)) {
+          showNotification('error', 'Please select a valid status');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.status = editingValue;
+      }
+      
+      updateData.updatedAt = new Date();
+      
+      await updateDoc(productRef, updateData);
+      const fieldNames: { [key: string]: string } = {
+        price: 'Price',
+        stock: 'Stock',
+        title: 'Product name',
+        sku: 'SKU',
+        category: 'Category',
+        status: 'Status'
+      };
+      showNotification('success', `${fieldNames[editingCell.field] || 'Field'} updated successfully`);
+      
+      // Update local state immediately for better UX
+      setProducts(prev => prev.map(p => 
+        p.id === editingCell.productId 
+          ? { ...p, ...updateData }
+          : p
+      ));
+      
+      cancelEditing();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      showNotification('error', 'Failed to update product');
+    }
+    setSavingCell(false);
+  };
+
+  // Handle Enter key to save, Escape to cancel
+  const handleInlineEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveInlineEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEditing();
+    }
+  };
+
+  // Handle select dropdown changes - save immediately
+  const handleSelectChange = async (e: React.ChangeEvent<HTMLSelectElement>, field: 'category' | 'status') => {
+    if (!editingCell) return;
+    
+    const newValue = e.target.value;
+    const product = products.find(p => p.id === editingCell.productId);
+    if (!product) {
+      cancelEditing();
+      return;
+    }
+    
+    // Check if value changed
+    const currentValue = field === 'category' ? (product.categoryId || '') : (product.status || 'active');
+    if (newValue === currentValue) {
+      cancelEditing();
+      return;
+    }
+    
+    setEditingValue(newValue);
+    setSavingCell(true);
+    
+    try {
+      const productRef = doc(db, "products", editingCell.productId);
+      const updateData: any = {};
+      
+      if (field === 'category') {
+        const selectedCategory = availableCategories.find(cat => cat.id === newValue);
+        if (!selectedCategory && newValue) {
+          showNotification('error', 'Selected category not found');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.categoryId = newValue || null;
+        updateData.category = selectedCategory?.name || null;
+      } else if (field === 'status') {
+        const validStatuses = ['active', 'inactive', 'out-of-stock', 'coming-soon'];
+        if (!validStatuses.includes(newValue)) {
+          showNotification('error', 'Please select a valid status');
+          cancelEditing();
+          setSavingCell(false);
+          return;
+        }
+        updateData.status = newValue;
+      }
+      
+      updateData.updatedAt = new Date();
+      
+      await updateDoc(productRef, updateData);
+      showNotification('success', `${field === 'category' ? 'Category' : 'Status'} updated successfully`);
+      
+      // Update local state immediately
+      setProducts(prev => prev.map(p => 
+        p.id === editingCell.productId 
+          ? { ...p, ...updateData }
+          : p
+      ));
+      
+      cancelEditing();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      showNotification('error', 'Failed to update product');
+    }
+    setSavingCell(false);
   };
 
   // Helper function to get the best available image
@@ -1835,35 +2066,159 @@ function AdminInventoryContent() {
                             }}
                           />
                         </td>
-                        <td className="px-3 py-2">
-                          <div>
-                            <div className="font-medium text-gray-900 text-xs">{product.title}</div>
-                            <div className="text-xs text-gray-500">{product.model}</div>
-                          </div>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'title', product.title)}
+                          title="Double-click to edit product name"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'title' ? (
+                            <input
+                              type="text"
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onKeyDown={handleInlineEditKeyDown}
+                              onBlur={saveInlineEdit}
+                              autoFocus
+                              className="w-full px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-medium text-gray-900 text-xs">{product.title}</div>
+                              <div className="text-xs text-gray-500">{product.model}</div>
+                            </div>
+                          )}
                         </td>
-                        <td className="px-3 py-2 text-xs text-gray-900">{product.sku || "-"}</td>
-                        <td className="px-3 py-2">
-                          <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {getCategoryName(product.categoryId || "")}
-                          </span>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'sku', product.sku || '')}
+                          title="Double-click to edit SKU"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'sku' ? (
+                            <input
+                              type="text"
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onKeyDown={handleInlineEditKeyDown}
+                              onBlur={saveInlineEdit}
+                              autoFocus
+                              className="w-20 px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-900">{product.sku || "-"}</span>
+                          )}
                         </td>
-                        <td className="px-3 py-2">
-                          <div>
-                            <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
-                            {product.oldPrice && (
-                              <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
-                            )}
-                          </div>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'category', product.categoryId || '')}
+                          title="Double-click to edit category"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'category' ? (
+                            <select
+                              value={editingValue}
+                              onChange={(e) => handleSelectChange(e, 'category')}
+                              onKeyDown={handleInlineEditKeyDown}
+                              autoFocus
+                              className="w-full px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            >
+                              <option value="">No Category</option>
+                              {availableCategories.map(category => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {getCategoryName(product.categoryId || "")}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-3 py-2 text-xs text-gray-900">{product.stock || 0}</td>
-                        <td className="px-3 py-2">
-                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-                            product.status === 'active' ? 'bg-green-100 text-green-800' :
-                            product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {product.status || 'active'}
-                          </span>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'price', product.price)}
+                          title="Double-click to edit price"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'price' ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">$</span>
+                              <input
+                                type="text"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={handleInlineEditKeyDown}
+                                onBlur={saveInlineEdit}
+                                autoFocus
+                                className="w-20 px-1 py-0.5 border border-blue-500 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={savingCell}
+                              />
+                              {savingCell && (
+                                <span className="text-xs text-gray-500">Saving...</span>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
+                              {product.oldPrice && (
+                                <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'stock', product.stock || 0)}
+                          title="Double-click to edit stock"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'stock' ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={handleInlineEditKeyDown}
+                                onBlur={saveInlineEdit}
+                                autoFocus
+                                min="0"
+                                className="w-16 px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={savingCell}
+                              />
+                              {savingCell && (
+                                <span className="text-xs text-gray-500">Saving...</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-900">{product.stock || 0}</span>
+                          )}
+                        </td>
+                        <td 
+                          className="px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'status', product.status || 'active')}
+                          title="Double-click to edit status"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'status' ? (
+                            <select
+                              value={editingValue}
+                              onChange={(e) => handleSelectChange(e, 'status')}
+                              onKeyDown={handleInlineEditKeyDown}
+                              autoFocus
+                              className="w-full px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="out-of-stock">Out of Stock</option>
+                              <option value="coming-soon">Coming Soon</option>
+                            </select>
+                          ) : (
+                            <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+                              product.status === 'active' ? 'bg-green-100 text-green-800' :
+                              product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {product.status || 'active'}
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex gap-1">
@@ -1948,34 +2303,166 @@ function AdminInventoryContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 text-xs truncate">{product.title}</h3>
+                          {editingCell?.productId === product.id && editingCell?.field === 'title' ? (
+                            <input
+                              type="text"
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onKeyDown={handleInlineEditKeyDown}
+                              onBlur={saveInlineEdit}
+                              autoFocus
+                              className="w-full px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 mb-1"
+                              disabled={savingCell}
+                            />
+                          ) : (
+                            <h3 
+                              className="font-medium text-gray-900 text-xs truncate cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 transition-colors"
+                              onDoubleClick={() => startEditing(product.id, 'title', product.title)}
+                              title="Double-click to edit product name"
+                            >
+                              {product.title}
+                            </h3>
+                          )}
                           <p className="text-xs text-gray-500">{product.model}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">SKU: {product.sku || "-"}</p>
+                          {editingCell?.productId === product.id && editingCell?.field === 'sku' ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs text-gray-400">SKU:</span>
+                              <input
+                                type="text"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={handleInlineEditKeyDown}
+                                onBlur={saveInlineEdit}
+                                autoFocus
+                                className="flex-1 px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={savingCell}
+                              />
+                            </div>
+                          ) : (
+                            <p 
+                              className="text-xs text-gray-400 mt-0.5 cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 transition-colors"
+                              onDoubleClick={() => startEditing(product.id, 'sku', product.sku || '')}
+                              title="Double-click to edit SKU"
+                            >
+                              SKU: {product.sku || "-"}
+                            </p>
+                          )}
                         </div>
                         
                         {/* Price */}
-                        <div className="text-right">
-                          <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
-                          {product.oldPrice && (
-                            <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
+                        <div 
+                          className="text-right cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 transition-colors"
+                          onDoubleClick={() => startEditing(product.id, 'price', product.price)}
+                          title="Double-click to edit price"
+                        >
+                          {editingCell?.productId === product.id && editingCell?.field === 'price' ? (
+                            <div className="flex items-center gap-1 justify-end">
+                              <span className="text-xs text-gray-500">$</span>
+                              <input
+                                type="text"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={handleInlineEditKeyDown}
+                                onBlur={saveInlineEdit}
+                                autoFocus
+                                className="w-16 px-1 py-0.5 border border-blue-500 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={savingCell}
+                              />
+                              {savingCell && (
+                                <span className="text-xs text-gray-500">...</span>
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium text-green-600 text-xs">{formatPrice(product.price)}</div>
+                              {product.oldPrice && (
+                                <div className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
                       
                       {/* Status and Stock */}
                       <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-1">
-                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-                            product.status === 'active' ? 'bg-green-100 text-green-800' :
-                            product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {product.status || 'active'}
-                          </span>
-                          <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {getCategoryName(product.categoryId || "")}
-                          </span>
-                          <span className="text-xs text-gray-500">Stock: {product.stock || 0}</span>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {editingCell?.productId === product.id && editingCell?.field === 'status' ? (
+                            <select
+                              value={editingValue}
+                              onChange={(e) => handleSelectChange(e, 'status')}
+                              onKeyDown={handleInlineEditKeyDown}
+                              autoFocus
+                              className="px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="out-of-stock">Out of Stock</option>
+                              <option value="coming-soon">Coming Soon</option>
+                            </select>
+                          ) : (
+                            <span 
+                              className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                product.status === 'active' ? 'bg-green-100 text-green-800' :
+                                product.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                                'bg-red-100 text-red-800'
+                              }`}
+                              onDoubleClick={() => startEditing(product.id, 'status', product.status || 'active')}
+                              title="Double-click to edit status"
+                            >
+                              {product.status || 'active'}
+                            </span>
+                          )}
+                          {editingCell?.productId === product.id && editingCell?.field === 'category' ? (
+                            <select
+                              value={editingValue}
+                              onChange={(e) => handleSelectChange(e, 'category')}
+                              onKeyDown={handleInlineEditKeyDown}
+                              autoFocus
+                              className="px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              disabled={savingCell}
+                            >
+                              <option value="">No Category</option>
+                              {availableCategories.map(category => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span 
+                              className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 cursor-pointer hover:opacity-80 transition-opacity"
+                              onDoubleClick={() => startEditing(product.id, 'category', product.categoryId || '')}
+                              title="Double-click to edit category"
+                            >
+                              {getCategoryName(product.categoryId || "")}
+                            </span>
+                          )}
+                          {editingCell?.productId === product.id && editingCell?.field === 'stock' ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">Stock:</span>
+                              <input
+                                type="number"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={handleInlineEditKeyDown}
+                                onBlur={saveInlineEdit}
+                                autoFocus
+                                min="0"
+                                className="w-12 px-1 py-0.5 border border-blue-500 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={savingCell}
+                              />
+                              {savingCell && (
+                                <span className="text-xs text-gray-500">...</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span 
+                              className="text-xs text-gray-500 cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 transition-colors"
+                              onDoubleClick={() => startEditing(product.id, 'stock', product.stock || 0)}
+                              title="Double-click to edit stock"
+                            >
+                              Stock: {product.stock || 0}
+                            </span>
+                          )}
                         </div>
                       </div>
 
