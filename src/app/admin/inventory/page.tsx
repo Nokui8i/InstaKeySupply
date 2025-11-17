@@ -1860,18 +1860,18 @@ function AdminInventoryContent() {
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => setShowExportConfirmation(true)}
-                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center justify-center gap-1 text-xs font-medium"
+                    className="btn-mobile-compact w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Export to Excel
                   </button>
                   <button
                     onClick={() => setShowFlexibleUploadModal(true)}
-                    className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded flex items-center justify-center gap-1 text-xs font-medium"
+                    className="btn-mobile-compact w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add Product
@@ -2470,14 +2470,14 @@ function AdminInventoryContent() {
                       <div className="flex gap-1 mt-2">
                         <button 
                           onClick={() => handleEdit(product)}
-                          className="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition"
+                          className="btn-mobile-compact flex-1 px-1 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold rounded transition"
                         >
                           Edit
                         </button>
                         <button 
                           onClick={() => handleDelete(product.id, product.imageUrl)}
                           disabled={loading}
-                          className="flex-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition disabled:opacity-50"
+                          className="btn-mobile-compact flex-1 px-1 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-semibold rounded transition disabled:opacity-50"
                         >
                           Delete
                         </button>

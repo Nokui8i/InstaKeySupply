@@ -121,6 +121,21 @@ body {
   }
 }
 
+.btn-mobile-compact {
+  --btn-mobile-padding-y: 0.25rem;
+  --btn-mobile-padding-x: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .btn-mobile-compact {
+    padding: var(--btn-mobile-padding-y) var(--btn-mobile-padding-x) !important;
+    font-size: 0.625rem !important;
+    line-height: 1 !important;
+    border-radius: 0.35rem !important;
+    min-height: 1.65rem;
+  }
+}
+
 html {
   height: 100%;
   overflow-x: hidden;
