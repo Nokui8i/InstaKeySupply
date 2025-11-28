@@ -50,6 +50,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const { cart } = useCart();
   const cartCount = cart.length;
   const { user, logout } = useAuth();
@@ -66,6 +67,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
   const isFilterButtonClick = useRef(false);
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const desktopSearchRef = useRef<HTMLFormElement>(null);
   
   // Track if component is mounted for portal rendering
   useEffect(() => {
@@ -147,11 +149,17 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
   // Debounced search
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchProducts(searchTerm);
-    }, 300);
+    if (searchTerm.trim()) {
+      setShowSearchDropdown(true);
+      const timeoutId = setTimeout(() => {
+        searchProducts(searchTerm);
+      }, 300);
 
-    return () => clearTimeout(timeoutId);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setShowSearchDropdown(false);
+      setSearchResults([]);
+    }
   }, [searchTerm]);
 
   // Handle search result click
@@ -160,14 +168,41 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
     setMobileSearchOpen(false);
     setSearchTerm("");
     setSearchResults([]);
+    setShowSearchDropdown(false);
     // Navigate to product page
     window.location.href = `/products/${productId}`;
+  };
+
+  // Handle search submission (Enter key or search button click)
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    if (searchTerm.trim()) {
+      // Close mobile search if open
+      setMobileSearchOpen(false);
+      // Close dropdown
+      setShowSearchDropdown(false);
+      // Navigate to search results page
+      router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      // Clear search term and results
+      setSearchTerm("");
+      setSearchResults([]);
+    }
   };
 
   // Close mobile search and filter when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (mobileSearchOpen && !(event.target as Element).closest('.mobile-search-container')) {
+      const target = event.target as Element;
+      
+      // Close desktop search dropdown when clicking outside
+      if (showSearchDropdown && desktopSearchRef.current && !desktopSearchRef.current.contains(target)) {
+        setShowSearchDropdown(false);
+        // Don't clear searchTerm or results, just hide the dropdown
+      }
+      
+      if (mobileSearchOpen && !target.closest('.mobile-search-container')) {
         setMobileSearchOpen(false);
         setSearchTerm("");
         setSearchResults([]);
@@ -181,15 +216,14 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
       
       // Close dropdowns when clicking outside (check this first before closing filter)
       if (openDropdown && 
-          !(event.target as Element).closest('.custom-dropdown-trigger') &&
-          !(event.target as Element).closest('.custom-dropdown-menu')) {
+          !target.closest('.custom-dropdown-trigger') &&
+          !target.closest('.custom-dropdown-menu')) {
         setOpenDropdown(null);
         setDropdownPosition(null);
       }
       
       // Close mobile filter when clicking outside (but not when clicking the filter button itself or dropdowns)
       // IMPORTANT: Check for dropdown menus first since they're portaled to document.body
-      const target = event.target as Element;
       const isClickOnDropdown = target.closest('.custom-dropdown-menu');
       const isClickOnDropdownTrigger = target.closest('.custom-dropdown-trigger');
       const isClickInFilter = target.closest('.mobile-filter-container');
@@ -206,7 +240,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileSearchOpen, mobileFilterOpen, openDropdown]);
+  }, [mobileSearchOpen, mobileFilterOpen, openDropdown, searchTerm]);
 
   // Prevent body scroll when mobile search or filter is open
   useEffect(() => {
@@ -362,25 +396,35 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
             {/* Search Bar - Desktop */}
             <div className="hidden lg:flex flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
+              <form ref={desktopSearchRef} onSubmit={handleSearchSubmit} className="relative w-full">
                 <input
                   type="text"
                   placeholder="Search for keys, remotes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearchSubmit(e);
+                    }
+                  }}
+                  className="block w-full pl-3 pr-12 py-2 border border-gray-300 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                 />
+                <button
+                  type="submit"
+                  onClick={handleSearchSubmit}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
+                  aria-label="Search"
+                >
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                </button>
                 
                 {/* Desktop search results dropdown */}
-                {searchTerm && (
+                {showSearchDropdown && searchTerm && (
                   <div className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-200/50 max-h-80 overflow-hidden z-50">
                     <div className="max-h-80 overflow-y-auto">
                       {isSearching ? (
                         <div className="p-6 text-center text-gray-500">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                           <p className="mt-3 text-sm font-medium">Searching products...</p>
                         </div>
                       ) : searchResults.length > 0 ? (
@@ -389,7 +433,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                             <button
                               key={product.id}
                               onClick={() => handleResultClick(product.id)}
-                              className="w-full px-4 py-3 text-left hover:bg-purple-50/80 transition-all duration-200 border-b border-gray-100/50 last:border-b-0 group"
+                              className="w-full px-4 py-3 text-left hover:bg-blue-50/80 transition-all duration-200 border-b border-gray-100/50 last:border-b-0 group"
                             >
                               <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm group-hover:shadow-md transition-shadow duration-200">
@@ -402,12 +446,12 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-gray-900 truncate group-hover:text-purple-700 transition-colors duration-200">{product.title}</h4>
+                                  <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors duration-200">{product.title}</h4>
                                   <p className="text-sm text-gray-600 truncate">{product.model}</p>
-                                  <p className="text-sm font-bold text-purple-600 group-hover:text-purple-700 transition-colors duration-200">${product.price}</p>
+                                  <p className="text-sm font-bold text-blue-600 group-hover:text-blue-700 transition-colors duration-200">${product.price}</p>
                                 </div>
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                  <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </div>
@@ -415,9 +459,12 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                             </button>
                           ))}
                           {searchResults.length > 6 && (
-                            <div className="px-4 py-3 text-center text-sm text-gray-500 border-t border-gray-100/50">
-                              +{searchResults.length - 6} more results
-                            </div>
+                            <button
+                              onClick={handleSearchSubmit}
+                              className="w-full px-4 py-3 text-center text-sm text-blue-600 hover:bg-blue-50 border-t border-gray-100/50 font-medium transition-colors"
+                            >
+                              View all {searchResults.length} results →
+                            </button>
                           )}
                         </div>
                       ) : (
@@ -429,7 +476,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     </div>
                   </div>
                 )}
-              </div>
+              </form>
             </div>
 
             {/* Mobile Search & Filter Section */}
@@ -437,19 +484,30 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               {/* Mobile Search Bar - Expanded */}
               {mobileSearchOpen && (
                 <div className="mobile-search-container mobile-search-expanded absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-3 z-50">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                    </div>
+                  <form onSubmit={handleSearchSubmit} className="relative">
                     <input
                       type="text"
                       placeholder="Search products..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchSubmit(e);
+                        }
+                      }}
+                      className="block w-full pl-3 pr-20 py-2 border border-gray-300 rounded-lg bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                       autoFocus
                     />
                     <button
+                      type="submit"
+                      onClick={handleSearchSubmit}
+                      className="absolute inset-y-0 right-10 pr-2 flex items-center text-gray-400 hover:text-blue-600 transition-colors"
+                      aria-label="Search"
+                    >
+                      <MagnifyingGlassIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setMobileSearchOpen(false);
                         setSearchTerm("");
@@ -459,7 +517,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                     >
                       <XMarkIcon className="h-4 w-4" />
                     </button>
-                  </div>
+                  </form>
                   
                   {/* Mobile search results */}
                   {searchTerm && (
@@ -467,7 +525,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                       <div className="max-h-64 overflow-y-auto">
                         {isSearching ? (
                           <div className="p-4 text-center text-gray-500">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                             <p className="mt-2 text-xs font-medium">Searching...</p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -476,7 +534,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                               <button
                                 key={product.id}
                                 onClick={() => handleResultClick(product.id)}
-                                className="w-full px-3 py-2 text-left hover:bg-purple-50/80 transition-all duration-200 border-b border-gray-100/50 last:border-b-0 group"
+                                className="w-full px-3 py-2 text-left hover:bg-blue-50/80 transition-all duration-200 border-b border-gray-100/50 last:border-b-0 group"
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center overflow-hidden shadow-sm">
@@ -491,11 +549,19 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
                                   <div className="flex-1 min-w-0">
                                     <h4 className="font-medium text-gray-900 truncate text-sm">{product.title}</h4>
                                     <p className="text-xs text-gray-600 truncate">{product.model}</p>
-                                    <p className="text-xs font-bold text-purple-600">${product.price}</p>
+                                    <p className="text-xs font-bold text-blue-600">${product.price}</p>
                                   </div>
                                 </div>
                               </button>
                             ))}
+                            {searchResults.length > 4 && (
+                              <button
+                                onClick={handleSearchSubmit}
+                                className="w-full px-3 py-2 text-center text-xs text-blue-600 hover:bg-blue-50 border-t border-gray-100/50 font-medium transition-colors"
+                              >
+                                View all {searchResults.length} results →
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="p-3 text-center text-gray-500">
