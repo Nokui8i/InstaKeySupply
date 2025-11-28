@@ -30,6 +30,68 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT: Reorder makes, models, or year ranges
+export async function PUT(request: NextRequest) {
+  try {
+    const { make, model, orderedMakes, orderedModels, orderedYearRanges } = await request.json();
+    const data = JSON.parse(await fs.readFile(DATA_PATH, 'utf-8'));
+    
+    // Reorder makes
+    if (orderedMakes && Array.isArray(orderedMakes)) {
+      const newData: { [key: string]: { [key: string]: string[] } } = {};
+      orderedMakes.forEach((makeName: string) => {
+        if (data[makeName]) {
+          newData[makeName] = data[makeName];
+        }
+      });
+      // Add any remaining makes that weren't in the ordered list
+      Object.keys(data).forEach(makeName => {
+        if (!newData[makeName]) {
+          newData[makeName] = data[makeName];
+        }
+      });
+      // Update data object
+      Object.keys(data).forEach(key => delete data[key]);
+      Object.assign(data, newData);
+    }
+    
+    // Reorder models
+    if (make && orderedModels && Array.isArray(orderedModels)) {
+      if (!data[make]) {
+        return NextResponse.json({ error: 'Make not found.' }, { status: 404 });
+      }
+      const newModelsObject: { [key: string]: string[] } = {};
+      orderedModels.forEach((modelName: string) => {
+        if (data[make][modelName]) {
+          newModelsObject[modelName] = data[make][modelName];
+        }
+      });
+      // Add any remaining models that weren't in the ordered list
+      Object.keys(data[make]).forEach(modelName => {
+        if (!newModelsObject[modelName]) {
+          newModelsObject[modelName] = data[make][modelName];
+        }
+      });
+      data[make] = newModelsObject;
+    }
+    
+    // Reorder year ranges
+    if (make && model && orderedYearRanges && Array.isArray(orderedYearRanges)) {
+      if (!data[make]) {
+        return NextResponse.json({ error: 'Make not found.' }, { status: 404 });
+      }
+      if (data[make][model]) {
+        data[make][model] = orderedYearRanges;
+      }
+    }
+    
+    await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2));
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    return NextResponse.json({ error: 'Could not reorder makes/models/year ranges.' }, { status: 500 });
+  }
+}
+
 // DELETE: Remove year range, model, or make
 export async function DELETE(request: NextRequest) {
   try {

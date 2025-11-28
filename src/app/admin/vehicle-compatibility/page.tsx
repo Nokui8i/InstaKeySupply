@@ -1,11 +1,290 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import AdminLayout from "../layout";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 
 interface VehicleData {
   [make: string]: {
     [model: string]: string[];
   };
+}
+
+// Sortable Make Item Component
+function SortableMakeItem({
+  make,
+  selectedMake,
+  onSelect,
+  onRemove
+}: {
+  make: string;
+  selectedMake: string;
+  onSelect: () => void;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: make });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-2 sm:p-3 rounded border cursor-pointer transition-colors ${selectedMake === make ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2 flex-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1 hover:bg-gray-200 rounded transition-colors cursor-grab active:cursor-grabbing"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Bars3Icon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+        </button>
+        <span className={`${selectedMake === make ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{make}</span>
+      </div>
+      <button
+        className="text-red-500 hover:text-red-700 p-1"
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+// Sortable Model Item Component
+function SortableModelItem({ 
+  model, 
+  selectedModel, 
+  selectedMake,
+  editingModel,
+  editingModelValue,
+  onSelect,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onRemove,
+  onEditingValueChange
+}: {
+  model: string;
+  selectedModel: string;
+  selectedMake: string;
+  editingModel: string;
+  editingModelValue: string;
+  onSelect: () => void;
+  onStartEdit: () => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onRemove: () => void;
+  onEditingValueChange: (value: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: model, disabled: editingModel === model });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (editingModel === model) {
+    return (
+      <div className="p-3 rounded border bg-blue-50 border-blue-300 flex items-center gap-2">
+        <input
+          type="text"
+          value={editingModelValue}
+          onChange={(e) => onEditingValueChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSaveEdit();
+            if (e.key === 'Escape') onCancelEdit();
+          }}
+          className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          autoFocus
+        />
+        <button
+          className="px-2 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition"
+          onClick={onSaveEdit}
+        >
+          ✓
+        </button>
+        <button
+          className="px-2 py-1 bg-gray-500 text-white rounded text-xs font-medium hover:bg-gray-600 transition"
+          onClick={onCancelEdit}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-2 sm:p-3 rounded border cursor-pointer transition-colors ${selectedModel === model ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2 flex-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1 hover:bg-gray-200 rounded transition-colors cursor-grab active:cursor-grabbing"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Bars3Icon className="w-4 h-4 text-gray-400" />
+        </button>
+        <span className={`${selectedModel === model ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{model}</span>
+      </div>
+      <div className="flex gap-1">
+        <button
+          className="text-blue-600 hover:text-blue-800 p-1"
+          onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
+        >
+          ✏️
+        </button>
+        <button
+          className="text-red-500 hover:text-red-700 p-1"
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Sortable Year Range Item Component
+function SortableYearRangeItem({
+  yearRange,
+  editingYearRange,
+  editingYearRangeValue,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onRemove,
+  onEditingValueChange
+}: {
+  yearRange: string;
+  editingYearRange: string;
+  editingYearRangeValue: string;
+  onStartEdit: () => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onRemove: () => void;
+  onEditingValueChange: (value: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: yearRange, disabled: editingYearRange === yearRange });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (editingYearRange === yearRange) {
+    return (
+      <div className="p-3 rounded border bg-blue-50 border-blue-300 flex items-center gap-2">
+        <input
+          type="text"
+          value={editingYearRangeValue}
+          onChange={(e) => onEditingValueChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSaveEdit();
+            if (e.key === 'Escape') onCancelEdit();
+          }}
+          className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          autoFocus
+        />
+        <button
+          className="px-2 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition"
+          onClick={onSaveEdit}
+        >
+          ✓
+        </button>
+        <button
+          className="px-2 py-1 bg-gray-500 text-white rounded text-xs font-medium hover:bg-gray-600 transition"
+          onClick={onCancelEdit}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-2 sm:p-3 rounded border bg-gray-50 border-gray-200 flex items-center justify-between"
+    >
+      <div className="flex items-center gap-2 flex-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1 hover:bg-gray-200 rounded transition-colors cursor-grab active:cursor-grabbing"
+        >
+          <Bars3Icon className="w-4 h-4 text-gray-400" />
+        </button>
+        <span className="text-gray-700">{yearRange}</span>
+      </div>
+      <div className="flex gap-1">
+        <button
+          className="text-blue-600 hover:text-blue-800 p-1"
+          onClick={onStartEdit}
+        >
+          ✏️
+        </button>
+        <button
+          className="text-red-500 hover:text-red-700 p-1"
+          onClick={onRemove}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function VehicleCompatibilityContent() {
@@ -227,6 +506,120 @@ function VehicleCompatibilityContent() {
     fetchData();
   };
 
+  // Drag and drop handlers
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end for models
+  const handleDragEndModels = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!selectedMake || !over || active.id === over.id) return;
+
+    const models = Object.keys(data[selectedMake] || {});
+    const oldIndex = models.indexOf(active.id as string);
+    const newIndex = models.indexOf(over.id as string);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reorderedModels = arrayMove(models, oldIndex, newIndex);
+      
+      // Update local state immediately
+      const newData = { ...data };
+      const newModelsObject: { [key: string]: string[] } = {};
+      reorderedModels.forEach(modelName => {
+        newModelsObject[modelName] = data[selectedMake][modelName];
+      });
+      newData[selectedMake] = newModelsObject;
+      setData(newData);
+
+      // Save to API
+      try {
+        await fetch('/api/vehicle-compatibility/makes-models', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ make: selectedMake, orderedModels: reorderedModels })
+        });
+      } catch (error) {
+        console.error('Error reordering models:', error);
+        setError('Failed to reorder models');
+        fetchData(); // Revert on error
+      }
+    }
+  };
+
+  // Handle drag end for year ranges
+  const handleDragEndYearRanges = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!selectedMake || !selectedModel || !over || active.id === over.id) return;
+
+    const yearRanges = data[selectedMake]?.[selectedModel] || [];
+    const oldIndex = yearRanges.indexOf(active.id as string);
+    const newIndex = yearRanges.indexOf(over.id as string);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reorderedYearRanges = arrayMove(yearRanges, oldIndex, newIndex);
+      
+      // Update local state immediately
+      const newData = { ...data };
+      newData[selectedMake][selectedModel] = reorderedYearRanges;
+      setData(newData);
+
+      // Save to API
+      try {
+        await fetch('/api/vehicle-compatibility/makes-models', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            make: selectedMake, 
+            model: selectedModel, 
+            orderedYearRanges: reorderedYearRanges 
+          })
+        });
+      } catch (error) {
+        console.error('Error reordering year ranges:', error);
+        setError('Failed to reorder year ranges');
+        fetchData(); // Revert on error
+      }
+    }
+  };
+
+  // Handle drag end for makes
+  const handleDragEndMakes = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const makes = Object.keys(data);
+    const oldIndex = makes.indexOf(active.id as string);
+    const newIndex = makes.indexOf(over.id as string);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reorderedMakes = arrayMove(makes, oldIndex, newIndex);
+      
+      // Update local state immediately
+      const newData: VehicleData = {};
+      reorderedMakes.forEach(make => {
+        newData[make] = data[make];
+      });
+      setData(newData);
+
+      // Save to API
+      try {
+        await fetch('/api/vehicle-compatibility/makes-models', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderedMakes: reorderedMakes })
+        });
+      } catch (error) {
+        console.error('Error reordering makes:', error);
+        setError('Failed to reorder makes');
+        fetchData(); // Revert on error
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -278,24 +671,28 @@ function VehicleCompatibilityContent() {
                  Add
                </button>
              </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {Object.keys(data).sort().map(make => (
-                <div key={make} className={`p-2 rounded border ${selectedMake === make ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'} flex items-center justify-between`}>
-                  <button
-                    className={`text-left flex-1 ${selectedMake === make ? 'font-medium text-blue-900' : 'text-gray-700'}`}
-                    onClick={() => setSelectedMake(make)}
-                  >
-                    {make}
-                  </button>
-                  <button
-                    className="text-red-500 hover:text-red-700 p-1"
-                    onClick={() => handleRemoveMake(make)}
-                  >
-                    ×
-                  </button>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEndMakes}
+            >
+              <SortableContext
+                items={Object.keys(data)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {Object.keys(data).map(make => (
+                    <SortableMakeItem
+                      key={make}
+                      make={make}
+                      selectedMake={selectedMake}
+                      onSelect={() => setSelectedMake(make)}
+                      onRemove={() => handleRemoveMake(make)}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* Models Section */}
@@ -317,32 +714,35 @@ function VehicleCompatibilityContent() {
                    Add
                  </button>
                </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {Object.keys(data[selectedMake] || {}).sort().map(model => (
-                  <div key={model} className={`p-2 rounded border ${selectedModel === model ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'} flex items-center justify-between`}>
-                    <button
-                      className={`text-left flex-1 ${selectedModel === model ? 'font-medium text-blue-900' : 'text-gray-700'}`}
-                      onClick={() => setSelectedModel(model)}
-                    >
-                      {model}
-                    </button>
-                    <div className="flex gap-1">
-                      <button
-                        className="text-blue-600 hover:text-blue-800 p-1"
-                        onClick={() => startEditModel(model)}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="text-red-500 hover:text-red-700 p-1"
-                        onClick={() => handleRemoveModel(selectedMake, model)}
-                      >
-                        ×
-                      </button>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEndModels}
+              >
+                <SortableContext
+                  items={Object.keys(data[selectedMake] || {})}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {Object.keys(data[selectedMake] || {}).map(model => (
+                      <SortableModelItem
+                        key={model}
+                        model={model}
+                        selectedModel={selectedModel}
+                        selectedMake={selectedMake}
+                        editingModel={editingModel}
+                        editingModelValue={editingModelValue}
+                        onSelect={() => setSelectedModel(model)}
+                        onStartEdit={() => startEditModel(model)}
+                        onSaveEdit={saveEditModel}
+                        onCancelEdit={cancelEditModel}
+                        onRemove={() => handleRemoveModel(selectedMake, model)}
+                        onEditingValueChange={setEditingModelValue}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
 
@@ -366,27 +766,32 @@ function VehicleCompatibilityContent() {
                    Add
                  </button>
                </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
-                  <div key={yearRange} className="p-2 rounded border bg-gray-50 border-gray-200 flex items-center justify-between">
-                    <span className="text-gray-700">{yearRange}</span>
-                    <div className="flex gap-1">
-                      <button
-                        className="text-blue-600 hover:text-blue-800 p-1"
-                        onClick={() => startEditYearRange(yearRange)}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="text-red-500 hover:text-red-700 p-1"
-                        onClick={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
-                      >
-                        ×
-                      </button>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEndYearRanges}
+              >
+                <SortableContext
+                  items={data[selectedMake]?.[selectedModel] || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
+                      <SortableYearRangeItem
+                        key={yearRange}
+                        yearRange={yearRange}
+                        editingYearRange={editingYearRange}
+                        editingYearRangeValue={editingYearRangeValue}
+                        onStartEdit={() => startEditYearRange(yearRange)}
+                        onSaveEdit={saveEditYearRange}
+                        onCancelEdit={cancelEditYearRange}
+                        onRemove={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
+                        onEditingValueChange={setEditingYearRangeValue}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </div>
@@ -394,7 +799,7 @@ function VehicleCompatibilityContent() {
                  {/* Desktop Layout */}
          <div className="hidden lg:flex gap-6">
            {/* Makes Panel */}
-           <div className="w-64 flex-shrink-0">
+           <div className="w-80 flex-shrink-0">
              <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
                <h2 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Makes</h2>
                                <div className="flex gap-1 mb-4">
@@ -412,25 +817,34 @@ function VehicleCompatibilityContent() {
                     Add
                   </button>
                 </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {Object.keys(data).sort().map(make => (
-                  <div key={make} className={`p-3 rounded border cursor-pointer transition-colors ${selectedMake === make ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`} onClick={() => setSelectedMake(make)}>
-                    <span className={`${selectedMake === make ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{make}</span>
-                    <button
-                      className="text-red-500 hover:text-red-700 p-1"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveMake(make); }}
-                    >
-                      ×
-                    </button>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEndMakes}
+              >
+                <SortableContext
+                  items={Object.keys(data)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-hide">
+                    {Object.keys(data).map(make => (
+                      <SortableMakeItem
+                        key={make}
+                        make={make}
+                        selectedMake={selectedMake}
+                        onSelect={() => setSelectedMake(make)}
+                        onRemove={() => handleRemoveMake(make)}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
 
                      {/* Models Panel */}
            {selectedMake && (
-             <div className="w-64 flex-shrink-0">
+             <div className="w-80 flex-shrink-0">
                <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Models for {selectedMake}</h2>
                                    <div className="flex gap-1 mb-4">
@@ -448,34 +862,42 @@ function VehicleCompatibilityContent() {
                       Add
                     </button>
                   </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {Object.keys(data[selectedMake] || {}).sort().map(model => (
-                    <div key={model} className={`p-3 rounded border cursor-pointer transition-colors ${selectedModel === model ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} flex items-center justify-between`} onClick={() => setSelectedModel(model)}>
-                      <span className={`${selectedModel === model ? 'font-medium text-blue-900' : 'text-gray-700'}`}>{model}</span>
-                      <div className="flex gap-1">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 p-1"
-                          onClick={(e) => { e.stopPropagation(); startEditModel(model); }}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="text-red-500 hover:text-red-700 p-1"
-                          onClick={(e) => { e.stopPropagation(); handleRemoveModel(selectedMake, model); }}
-                        >
-                          ×
-                        </button>
-                      </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEndModels}
+                >
+                  <SortableContext
+                    items={Object.keys(data[selectedMake] || {})}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-hide">
+                      {Object.keys(data[selectedMake] || {}).map(model => (
+                        <SortableModelItem
+                          key={model}
+                          model={model}
+                          selectedModel={selectedModel}
+                          selectedMake={selectedMake}
+                          editingModel={editingModel}
+                          editingModelValue={editingModelValue}
+                          onSelect={() => setSelectedModel(model)}
+                          onStartEdit={() => startEditModel(model)}
+                          onSaveEdit={saveEditModel}
+                          onCancelEdit={cancelEditModel}
+                          onRemove={() => handleRemoveModel(selectedMake, model)}
+                          onEditingValueChange={setEditingModelValue}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           )}
 
                      {/* Year Ranges Panel */}
            {selectedMake && selectedModel && (
-             <div className="w-64 flex-shrink-0">
+             <div className="w-80 flex-shrink-0">
                <div className="bg-white rounded-lg shadow-sm border p-4 h-fit">
                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Year Ranges for {selectedModel}</h2>
                  <p className="text-sm text-gray-600 mb-4">Format: YYYY or YYYY-YYYY (e.g., 2010 or 2010-2015)</p>
@@ -494,27 +916,32 @@ function VehicleCompatibilityContent() {
                       Add
                     </button>
                   </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
-                    <div key={yearRange} className="p-3 rounded border bg-gray-50 border-gray-200 flex items-center justify-between">
-                      <span className="text-gray-700">{yearRange}</span>
-                      <div className="flex gap-1">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 p-1"
-                          onClick={() => startEditYearRange(yearRange)}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="text-red-500 hover:text-red-700 p-1"
-                          onClick={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
-                        >
-                          ×
-                        </button>
-                      </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEndYearRanges}
+                >
+                  <SortableContext
+                    items={data[selectedMake]?.[selectedModel] || []}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-hide">
+                      {(data[selectedMake]?.[selectedModel] || []).map(yearRange => (
+                        <SortableYearRangeItem
+                          key={yearRange}
+                          yearRange={yearRange}
+                          editingYearRange={editingYearRange}
+                          editingYearRangeValue={editingYearRangeValue}
+                          onStartEdit={() => startEditYearRange(yearRange)}
+                          onSaveEdit={saveEditYearRange}
+                          onCancelEdit={cancelEditYearRange}
+                          onRemove={() => handleRemoveYearRange(selectedMake, selectedModel, yearRange)}
+                          onEditingValueChange={setEditingYearRangeValue}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           )}

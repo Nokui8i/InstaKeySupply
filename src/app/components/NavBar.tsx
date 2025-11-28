@@ -68,6 +68,8 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const desktopSearchRef = useRef<HTMLFormElement>(null);
+  const vehicleFilterRef = useRef<HTMLDivElement>(null);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
   
   // Track if component is mounted for portal rendering
   useEffect(() => {
@@ -202,6 +204,23 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
         // Don't clear searchTerm or results, just hide the dropdown
       }
       
+      // Close desktop Vehicle filter dropdown when clicking outside
+      if (filterOpen && vehicleFilterRef.current && !vehicleFilterRef.current.contains(target)) {
+        setFilterOpen(false);
+      }
+      
+      // Close Sign In dropdown when clicking outside
+      if (authDropdownOpen) {
+        const isClickOnDropdown = target.closest('[class*="animate-scale-in"]') || 
+                                   target.closest('.bg-white.rounded-lg.shadow-2xl');
+        const isClickOnButton = userIconRef.current && userIconRef.current.contains(target);
+        const isClickInContainer = authDropdownRef.current && authDropdownRef.current.contains(target);
+        
+        if (!isClickOnDropdown && !isClickOnButton && !isClickInContainer) {
+          setAuthDropdownOpen(false);
+        }
+      }
+      
       if (mobileSearchOpen && !target.closest('.mobile-search-container')) {
         setMobileSearchOpen(false);
         setSearchTerm("");
@@ -240,7 +259,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileSearchOpen, mobileFilterOpen, openDropdown, searchTerm]);
+  }, [mobileSearchOpen, mobileFilterOpen, openDropdown, searchTerm, filterOpen, authDropdownOpen]);
 
   // Prevent body scroll when mobile search or filter is open
   useEffect(() => {
@@ -952,7 +971,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
             <div className="flex items-center space-x-2 sm:space-x-4">
               
               {/* Vehicle Selector - Desktop */}
-              <div className="relative hidden md:block">
+              <div className="relative hidden md:block" ref={vehicleFilterRef}>
                 <button
                   onClick={() => setFilterOpen(!filterOpen)}
                   className="flex items-center space-x-2 px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100/50 hover:bg-gray-100 rounded-xl transition-all duration-200 border border-gray-200/50 active:scale-95"
@@ -1031,7 +1050,7 @@ export default function NavBar({ onVehicleFiltersChange, onClearVehicleFilters, 
               {/* Action Icons - Desktop Only */}
               <div className="hidden md:flex items-center space-x-2 sm:space-x-3">
                 {/* Account */}
-                <div className="relative">
+                <div className="relative" ref={authDropdownRef}>
                   <button 
                     ref={userIconRef}
                     onClick={() => setAuthDropdownOpen(!authDropdownOpen)}

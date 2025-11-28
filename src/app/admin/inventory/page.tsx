@@ -239,6 +239,8 @@ function AdminInventoryContent() {
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [bulkCategoryId, setBulkCategoryId] = useState('');
   const [bulkSelectedPath, setBulkSelectedPath] = useState<string[]>([]); // Track selection path for nested categories
+  const [showBulkTextRemoveModal, setShowBulkTextRemoveModal] = useState(false);
+  const [textToRemove, setTextToRemove] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20);
@@ -1498,6 +1500,8 @@ function AdminInventoryContent() {
     setShowBulkCategoryModal(false);
     setBulkCategoryId('');
     setBulkSelectedPath([]);
+    setShowBulkTextRemoveModal(false);
+    setTextToRemove('');
   };
 
   // Helper function to get all children of a category (recursive)
@@ -1576,6 +1580,90 @@ function AdminInventoryContent() {
     } catch (error) {
       console.error("Error bulk updating categories:", error);
       showNotification('error', 'Failed to update product categories');
+    }
+    
+    setUploading(false);
+  };
+
+  // Bulk text removal from product titles
+  const handleBulkTextRemove = async () => {
+    if (selectedProducts.length === 0 || !textToRemove.trim()) {
+      showNotification('error', 'Please enter text to remove');
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to remove "${textToRemove}" from ${selectedProducts.length} selected product title(s)?\n\nThis will remove all occurrences of the text from product names.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+    
+    setUploading(true);
+    
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Update each selected product
+      for (const productId of selectedProducts) {
+        try {
+          const product = products.find(p => p.id === productId);
+          if (!product) {
+            errorCount++;
+            continue;
+          }
+          
+          // Remove the text from title (case-insensitive, remove all occurrences)
+          const originalTitle = product.title;
+          const newTitle = originalTitle.replace(new RegExp(textToRemove.trim(), 'gi'), '').trim();
+          
+          // Clean up any double spaces or leading/trailing dashes/spaces
+          const cleanedTitle = newTitle.replace(/\s+/g, ' ').replace(/^[\s\-]+|[\s\-]+$/g, '').trim();
+          
+          if (cleanedTitle === originalTitle) {
+            // No change was made, skip this product
+            continue;
+          }
+          
+          if (cleanedTitle.length === 0) {
+            showNotification('error', `Cannot remove text from product "${originalTitle}" - would result in empty title`);
+            errorCount++;
+            continue;
+          }
+          
+          const productRef = doc(db, "products", productId);
+          await updateDoc(productRef, {
+            title: cleanedTitle,
+            updatedAt: new Date()
+          });
+          
+          successCount++;
+        } catch (error) {
+          console.error(`Error updating product ${productId}:`, error);
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showNotification('success', `Successfully removed "${textToRemove}" from ${successCount} product(s)`);
+      }
+      
+      if (errorCount > 0) {
+        showNotification('error', `Failed to update ${errorCount} product(s)`);
+      }
+      
+      // Clear selection and modal
+      setSelectedProducts([]);
+      setShowBulkTextRemoveModal(false);
+      setTextToRemove('');
+      
+      // Refresh data
+      await fetchProducts();
+    } catch (error) {
+      console.error("Error bulk removing text:", error);
+      showNotification('error', 'Failed to remove text from product titles');
     }
     
     setUploading(false);
@@ -1942,6 +2030,13 @@ function AdminInventoryContent() {
                     {selectedProducts.length} product(s) selected
                   </span>
                   <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
+                    <button
+                      onClick={() => setShowBulkTextRemoveModal(true)}
+                      disabled={uploading || loading}
+                      className="px-2 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded transition disabled:opacity-50 text-xs"
+                    >
+                      Remove Text from Names
+                    </button>
                     <button
                       onClick={() => setShowBulkCategoryModal(true)}
                       disabled={uploading || loading}
@@ -2597,6 +2692,62 @@ function AdminInventoryContent() {
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {uploading ? 'Updating...' : `Update ${selectedProducts.length} Product(s)`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Text Remove Modal */}
+          {showBulkTextRemoveModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setShowBulkTextRemoveModal(false)} style={{ pointerEvents: 'auto' }}>
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Remove Text from {selectedProducts.length} Product Name(s)</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Enter the text you want to remove from all selected product titles. This will remove all occurrences (case-insensitive).
+                </p>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Text to Remove:
+                  </label>
+                  <input
+                    type="text"
+                    value={textToRemove}
+                    onChange={(e) => setTextToRemove(e.target.value)}
+                    placeholder="e.g., BRK, —BRK, etc."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Example: Type "brk" to remove "BRK", "brk", "—BRK", etc. from all selected product names.
+                  </p>
+                </div>
+                
+                {textToRemove.trim() && (
+                  <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Preview:</span> The text "<span className="font-mono bg-orange-100 px-1 rounded">{textToRemove}</span>" will be removed from all {selectedProducts.length} selected product title(s).
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => {
+                      setShowBulkTextRemoveModal(false);
+                      setTextToRemove('');
+                    }}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkTextRemove}
+                    disabled={!textToRemove.trim() || uploading}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded transition disabled:opacity-50"
+                  >
+                    {uploading ? 'Removing...' : `Remove from ${selectedProducts.length} Product(s)`}
                   </button>
                 </div>
               </div>
