@@ -243,7 +243,7 @@ function SearchResultsContent() {
       ) : (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg mb-4">
-            No products found for "{searchTerm}"
+            No products found for &quot;{searchTerm}&quot;
           </p>
           <p className="text-gray-400 text-sm mb-6">
             Try searching with different keywords or check your spelling.

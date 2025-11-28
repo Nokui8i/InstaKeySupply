@@ -2720,14 +2720,14 @@ function AdminInventoryContent() {
                     autoFocus
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Example: Type "brk" to remove "BRK", "brk", "—BRK", etc. from all selected product names.
+                    Example: Type &quot;brk&quot; to remove &quot;BRK&quot;, &quot;brk&quot;, &quot;—BRK&quot;, etc. from all selected product names.
                   </p>
                 </div>
                 
                 {textToRemove.trim() && (
                   <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold">Preview:</span> The text "<span className="font-mono bg-orange-100 px-1 rounded">{textToRemove}</span>" will be removed from all {selectedProducts.length} selected product title(s).
+                      <span className="font-semibold">Preview:</span> The text &quot;<span className="font-mono bg-orange-100 px-1 rounded">{textToRemove}</span>&quot; will be removed from all {selectedProducts.length} selected product title(s).
                     </p>
                   </div>
                 )}
